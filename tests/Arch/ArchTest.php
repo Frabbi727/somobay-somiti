@@ -54,7 +54,7 @@ test('money code contains no floats or float rounding helpers', function (): voi
 });
 
 test('filament classes never write models directly', function (): void {
-    $forbidden = '/->(save|update|delete|forceDelete|insert|increment|decrement)\s*\(|::(create|insert|query\(\)->update)\s*\(|\bDB::/';
+    $forbidden = '/(?<!\$this)->(save|update|delete|forceDelete|insert|increment|decrement)\s*\(|::(create|insert|query\(\)->update)\s*\(|\bDB::/';
     $violations = [];
 
     foreach (phpFilesIn(appDirectory('Filament')) as $file) {

@@ -20,6 +20,12 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable(['name', 'email', 'password', 'locale'])]
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $email
+ * @property string $locale
+ */
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery
 {
@@ -27,9 +33,29 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     use HasFactory, HasRoles, InteractsWithAppAuthentication, InteractsWithAppAuthenticationRecovery, Notifiable;
 
     /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'locale' => 'bn',
+    ];
+
+    /**
      * Staff panel is restricted to users holding a staff role; members use the portal.
      */
     public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->isStaff();
+    }
+
+    /**
+     * Whether the user holds at least one of the given roles.
+     */
+    public function hasAnyOf(Role ...$roles): bool
+    {
+        return $this->hasAnyRole(array_map(fn (Role $role): string => $role->value, $roles));
+    }
+
+    public function isStaff(): bool
     {
         return $this->hasAnyRole(Role::staff());
     }
