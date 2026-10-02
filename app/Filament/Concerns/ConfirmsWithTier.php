@@ -8,6 +8,7 @@ use App\Filament\Support\ChangeSummary;
 use Closure;
 use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Component;
 use Illuminate\Contracts\View\View;
 
 /**
@@ -44,7 +45,10 @@ trait ConfirmsWithTier
             });
     }
 
-    protected static function tier3(Action $action, string|Closure $heading, string|Closure $expected, string|Closure $submitLabel, string|Closure|null $description = null): Action
+    /**
+     * @param  array<Component>  $fields  extra inputs shown above the typed confirmation, e.g. a reason
+     */
+    protected static function tier3(Action $action, string|Closure $heading, string|Closure $expected, string|Closure $submitLabel, string|Closure|null $description = null, array $fields = []): Action
     {
         $expectedText = fn (): string => (string) $action->evaluate($expected);
 
@@ -54,6 +58,7 @@ trait ConfirmsWithTier
             ->modalDescription($description)
             ->modalSubmitActionLabel($submitLabel)
             ->schema([
+                ...$fields,
                 TextInput::make('confirm_text')
                     ->label(fn (): string => __('confirm.type_to_confirm', ['text' => $expectedText()]))
                     ->placeholder($expectedText)

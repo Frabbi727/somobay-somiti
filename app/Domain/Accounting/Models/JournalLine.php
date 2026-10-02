@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Domain\Accounting\Models;
 
+use App\Domain\Shared\Exceptions\ImmutableRecord;
 use App\Support\Money\Money;
 use App\Support\Money\MoneyCast;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * One side of a journal entry. Posting and immutability rules arrive with PostJournal (P1.S2).
+ * One side of a posted journal entry. Append-only, like its entry.
  *
  * @property int $id
  * @property int $journal_entry_id
@@ -20,6 +21,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property Money $debit_poisha
  * @property Money $credit_poisha
  * @property string|null $memo
+ * @property-read Account $account
+ * @property-read JournalEntry $entry
  */
 final class JournalLine extends Model
 {
@@ -27,12 +30,26 @@ final class JournalLine extends Model
 
     protected $guarded = [];
 
+    protected static function booted(): void
+    {
+        self::updating(fn (self $line) => throw ImmutableRecord::for(self::class, $line->getKey()));
+        self::deleting(fn (self $line) => throw ImmutableRecord::for(self::class, $line->getKey()));
+    }
+
     /**
      * @return BelongsTo<Account, $this>
      */
     public function account(): BelongsTo
     {
-        return $this->belongsTo(Account::class);
+        return $this->belongsTo(Account::class)->withTrashed();
+    }
+
+    /**
+     * @return BelongsTo<JournalEntry, $this>
+     */
+    public function entry(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class, 'journal_entry_id');
     }
 
     /**

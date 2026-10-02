@@ -10,4 +10,5 @@ return [
     'old' => 'Before',
     'new' => 'After',
     'value' => 'Value',
+    'word' => 'CONFIRM',
 ];

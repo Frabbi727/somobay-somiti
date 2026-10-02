@@ -3,9 +3,14 @@
 declare(strict_types=1);
 
 use App\Domain\Accounting\Actions\OpenFiscalYear;
+use App\Domain\Accounting\Data\JournalEntryData;
+use App\Domain\Accounting\Data\JournalLineData;
+use App\Domain\Accounting\Enums\VoucherType;
 use App\Domain\Accounting\Models\Account;
 use App\Enums\Role;
 use App\Models\User;
+use App\Support\Money\Money;
+use Carbon\CarbonImmutable;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -65,7 +70,6 @@ function insertRawJournal(Account $debit, Account $credit, int $poisha = 10000):
         'voucher_no' => 'JV-TEST-'.Str::random(6),
         'entry_date' => '2026-07-15',
         'narration' => 'test',
-        'status' => 'posted',
         'posted_by' => $poster->id,
         'posted_at' => now(),
         'created_at' => now(),
@@ -78,4 +82,27 @@ function insertRawJournal(Account $debit, Account $credit, int $poisha = 10000):
     ]);
 
     return $entryId;
+}
+
+function account(string $code): Account
+{
+    return Account::query()->where('code', $code)->sole();
+}
+
+/**
+ * A two-line entry: debit one account, credit another.
+ */
+function simpleEntry(string $debitCode, string $creditCode, string $taka, string $date = '2026-07-15', VoucherType $type = VoucherType::Journal): JournalEntryData
+{
+    $amount = Money::ofTaka($taka);
+
+    return new JournalEntryData(
+        type: $type,
+        entryDate: CarbonImmutable::parse($date, 'Asia/Dhaka'),
+        narration: "Test {$debitCode}/{$creditCode}",
+        lines: [
+            JournalLineData::debit(account($debitCode), $amount),
+            JournalLineData::credit(account($creditCode), $amount),
+        ],
+    );
 }
