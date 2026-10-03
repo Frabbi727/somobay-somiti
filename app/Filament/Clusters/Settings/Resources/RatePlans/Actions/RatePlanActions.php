@@ -13,6 +13,7 @@ use App\Domain\Settings\Actions\SubmitRatePlan;
 use App\Domain\Settings\Data\RatePlanData;
 use App\Domain\Settings\Enums\RatePlanStatus;
 use App\Domain\Settings\Models\RatePlan;
+use App\Domain\Settings\Services\RateImpactPreviewer;
 use App\Filament\Clusters\Settings\Resources\RatePlans\RatePlanResource;
 use App\Filament\Clusters\Settings\Resources\RatePlans\Support\RatePlanPresenter;
 use App\Filament\Concerns\ConfirmsWithTier;
@@ -20,10 +21,14 @@ use App\Filament\Support\ChangeSummary;
 use App\Filament\Support\Display;
 use App\Filament\Support\DomainActionRunner;
 use App\Models\User;
+use App\Reports\RateImpactDocument;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
+use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Rate plan lifecycle: submit (T2), approve (T3), send back, cancel (T3), duplicate, delete (T3).
@@ -55,7 +60,13 @@ final class RatePlanActions
             ),
             description: __('rates.actions.submit_description'),
             showOld: false,
-        );
+        )
+            ->modalContent(fn (RatePlan $record): View => view('filament.rates.submit-confirmation', [
+                'rows' => ChangeSummary::rows(RatePlanPresenter::summaryLabels(), [], RatePlanPresenter::summaryValues(RatePlanData::fromPlan($record))),
+                'preview' => app(RateImpactPreviewer::class)->preview($record),
+            ]))
+            ->extraModalFooterActions([self::downloadImpact()])
+            ->modalWidth(Width::FourExtraLarge);
     }
 
     public static function approve(): Action
@@ -83,7 +94,35 @@ final class RatePlanActions
             fields: [
                 Textarea::make('comment')->label(__('rates.actions.comment'))->rows(2)->maxLength(1000),
             ],
-        );
+        )
+            ->modalContent(fn (RatePlan $record): View => view('filament.rates.impact', [
+                'preview' => app(RateImpactPreviewer::class)->preview($record),
+            ]))
+            ->extraModalFooterActions([self::downloadImpact()])
+            ->modalWidth(Width::FourExtraLarge);
+    }
+
+    /**
+     * Excel download of the full impact preview; usable from modals and page headers.
+     */
+    public static function downloadImpact(): Action
+    {
+        return Action::make('downloadImpact')
+            ->label(__('rates.impact.download'))
+            ->tooltip(__('rates.impact.download'))
+            ->icon(Heroicon::OutlinedArrowDownTray)
+            ->color('gray')
+            ->visible(fn (RatePlan $record): bool => in_array($record->status, [RatePlanStatus::Draft, RatePlanStatus::PendingApproval], true))
+            ->action(function (RatePlan $record): StreamedResponse {
+                $document = app(RateImpactDocument::class);
+                $content = $document->excel($record);
+
+                return response()->streamDownload(function () use ($content): void {
+                    echo $content;
+                }, $document->filename($record), [
+                    'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                ]);
+            });
     }
 
     public static function reject(): Action

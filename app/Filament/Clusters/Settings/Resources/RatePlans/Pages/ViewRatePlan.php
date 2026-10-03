@@ -39,6 +39,7 @@ final class ViewRatePlan extends ViewRecord
             RatePlanActions::submit(),
             RatePlanActions::approve(),
             RatePlanActions::reject(),
+            RatePlanActions::downloadImpact(),
             RatePlanActions::duplicate(),
             RatePlanActions::cancel(),
             RatePlanActions::delete(),

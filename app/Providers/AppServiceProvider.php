@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Domain\Accounting\Services\Reconciliation;
+use App\Domain\Contributions\Contracts\AdvanceBalances;
 use App\Domain\Contributions\Listeners\ChargeRegistrationTopUps;
 use App\Domain\Contributions\Services\DueLedger;
+use App\Domain\Contributions\Services\LedgerAdvanceBalances;
 use App\Domain\Settings\Contracts\GeneratedMonths;
 use App\Domain\Settings\Contracts\RatePlanUsage;
 use App\Domain\Settings\Events\RatePlanApproved;
@@ -31,6 +33,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(GeneratedMonths::class, DueLedger::class);
         $this->app->bind(RatePlanUsage::class, DueLedger::class);
+        $this->app->bind(AdvanceBalances::class, LedgerAdvanceBalances::class);
 
         $this->app->when(Reconciliation::class)
             ->needs('$sources')
