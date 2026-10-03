@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Contributions\Actions;
 
 use App\Domain\Contributions\Data\PaymentData;
+use App\Domain\Contributions\Enums\PaymentMethod;
 use App\Domain\Contributions\Enums\PaymentStatus;
 use App\Domain\Contributions\Models\Payment;
 use App\Domain\Members\Enums\MemberStatus;
@@ -13,6 +14,7 @@ use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use App\Support\Time\YearMonth;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Spatie\Activitylog\Support\CauserResolver;
@@ -40,6 +42,7 @@ final class RecordPayment
         }
 
         $this->assertValid($data);
+        $this->assertMemberSubmission($actor, $data);
 
         return $this->causer->withCauser($actor, fn (): Payment => DB::transaction(fn (): Payment => Payment::query()->create([
             'member_id' => $data->memberId,
@@ -53,6 +56,26 @@ final class RecordPayment
             'notes' => $data->notes,
             'recorded_by' => $actor->id,
         ]), attempts: 3));
+    }
+
+    /**
+     * A member using the portal may only report their own bKash/Nagad payment, with proof.
+     */
+    private function assertMemberSubmission(User $actor, PaymentData $data): void
+    {
+        if ($actor->isStaff()) {
+            return;
+        }
+
+        $own = Member::query()->where('user_id', $actor->id)->value('id');
+
+        if ($own === null || (int) $own !== $data->memberId) {
+            throw new AuthorizationException;
+        }
+
+        if (! in_array($data->method, [PaymentMethod::Bkash, PaymentMethod::Nagad], true) || $data->proofPath === null) {
+            throw DomainRuleViolation::because('payments.errors.member_submission');
+        }
     }
 
     private function assertValid(PaymentData $data): void

@@ -105,6 +105,7 @@ return [
         'empty' => 'No member holds an advance.',
     ],
     'errors' => [
+        'member_submission' => 'Members can report only bKash or Nagad payments, with a screenshot.',
         'member_unavailable' => 'This member cannot receive payments.',
         'amount_positive' => 'The amount must be more than zero.',
         'trx_required' => 'A valid :method transaction ID is required.',

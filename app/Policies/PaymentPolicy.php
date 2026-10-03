@@ -25,9 +25,13 @@ final class PaymentPolicy
         return $user->isStaff();
     }
 
+    /**
+     * Staff who collect money, or a member reporting their own mobile-money payment from the
+     * portal (RecordPayment then limits a member to their own record, bKash/Nagad and proof).
+     */
     public function create(User $user): bool
     {
-        return $user->hasAnyOf(Role::Cashier, Role::Accountant, Role::President);
+        return $user->hasAnyOf(Role::Cashier, Role::Accountant, Role::President, Role::Member);
     }
 
     public function approve(User $user, Payment $payment): bool

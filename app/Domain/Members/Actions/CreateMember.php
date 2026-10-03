@@ -8,6 +8,7 @@ use App\Domain\Members\Data\MemberData;
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Events\MemberJoined;
 use App\Domain\Members\Models\Member;
+use App\Domain\Members\Portal\PortalAccounts;
 use App\Domain\Members\Services\MemberRules;
 use App\Domain\Members\Services\NomineeWriter;
 use App\Domain\Members\Services\ShareChanger;
@@ -27,6 +28,7 @@ final class CreateMember
         private readonly MemberRules $rules,
         private readonly ShareChanger $shares,
         private readonly NomineeWriter $nominees,
+        private readonly PortalAccounts $portal,
         private readonly CauserResolver $causer,
     ) {}
 
@@ -47,6 +49,7 @@ final class CreateMember
 
             $this->nominees->replace($member, $data->nominees);
             $this->shares->increase($actor, $member, $shares, $effectiveFrom, 'Joined');
+            $this->portal->forMember($member);
 
             event(new MemberJoined($member));
 

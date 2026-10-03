@@ -25,6 +25,7 @@ use App\Domain\Settings\Contracts\GeneratedMonths;
 use App\Domain\Settings\Contracts\RatePlanUsage;
 use App\Domain\Settings\Events\RatePlanApproved;
 use App\Enums\Role;
+use App\Http\Middleware\EnsurePortalMember;
 use App\Listeners\RememberUserLocale;
 use App\Models\User;
 use BezhanSalleh\LanguageSwitch\Events\LocaleChanged;
@@ -36,6 +37,7 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -69,6 +71,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Date::use(CarbonImmutable::class);
+
+        Livewire::addPersistentMiddleware([EnsurePortalMember::class]);
 
         Event::listen(LocaleChanged::class, RememberUserLocale::class);
         Event::listen(RatePlanApproved::class, ChargeRegistrationTopUps::class);
