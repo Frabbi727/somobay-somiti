@@ -24,6 +24,22 @@ final class DueLedger implements GeneratedMonths, RatePlanUsage
         return $month === null ? null : YearMonth::parse(substr((string) $month, 0, 10));
     }
 
+    /**
+     * Months that have any dues, newest first.
+     *
+     * @return list<YearMonth>
+     */
+    public function months(int $limit = 36): array
+    {
+        $months = [];
+
+        foreach (Due::query()->toBase()->distinct()->orderByDesc('month')->limit($limit)->pluck('month') as $month) {
+            $months[] = YearMonth::parse(substr((string) $month, 0, 10));
+        }
+
+        return $months;
+    }
+
     public function isReferenced(RatePlan $plan): bool
     {
         return Due::query()->where('rate_plan_id', $plan->id)->exists();

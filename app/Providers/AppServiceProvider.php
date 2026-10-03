@@ -12,6 +12,7 @@ use App\Domain\Contributions\Services\LedgerAdvanceBalances;
 use App\Domain\Settings\Contracts\GeneratedMonths;
 use App\Domain\Settings\Contracts\RatePlanUsage;
 use App\Domain\Settings\Events\RatePlanApproved;
+use App\Enums\Role;
 use App\Listeners\RememberUserLocale;
 use App\Models\User;
 use BezhanSalleh\LanguageSwitch\Events\LocaleChanged;
@@ -51,6 +52,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(RatePlanApproved::class, ChargeRegistrationTopUps::class);
 
         Gate::define('viewReports', fn (User $user): bool => $user->isStaff());
+        Gate::define('generateDues', fn (User $user): bool => $user->hasAnyOf(Role::Accountant, Role::President));
 
         Model::preventLazyLoading(! $this->app->isProduction());
 

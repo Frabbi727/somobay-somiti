@@ -10,11 +10,13 @@ use App\Domain\Members\Models\Member;
 use App\Domain\Members\Models\ShareLot;
 use App\Domain\Settings\Models\RatePlan;
 use App\Domain\Shared\Exceptions\ImmutableRecord;
+use App\Policies\DuePolicy;
 use App\Support\Money\Money;
 use App\Support\Money\MoneyCast;
 use App\Support\Time\YearMonth;
 use App\Support\Time\YearMonthCast;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -41,6 +43,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read Member $member
  * @property-read RatePlan $ratePlan
  */
+#[UsePolicy(DuePolicy::class)]
 final class Due extends Model
 {
     /**
