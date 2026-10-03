@@ -21,3 +21,9 @@ Schedule::command('somiti:late-fees:apply')
     ->timezone('Asia/Dhaka')
     ->withoutOverlapping()
     ->onOneServer();
+
+Schedule::command('somiti:integrity:check')
+    ->dailyAt('02:00')
+    ->timezone('Asia/Dhaka')
+    ->withoutOverlapping()
+    ->onOneServer();

@@ -14,6 +14,17 @@ use App\Domain\Contributions\Listeners\ChargeRegistrationTopUps;
 use App\Domain\Contributions\Services\AdvanceLedger;
 use App\Domain\Contributions\Services\AdvanceSubledger;
 use App\Domain\Contributions\Services\DueLedger;
+use App\Domain\Integrity\Checks\AdvanceChain;
+use App\Domain\Integrity\Checks\BalancedEntries;
+use App\Domain\Integrity\Checks\ControlAccounts;
+use App\Domain\Integrity\Checks\DuePaidAmounts;
+use App\Domain\Integrity\Checks\DueSnapshots;
+use App\Domain\Integrity\Checks\JournalHashChain;
+use App\Domain\Integrity\Checks\PaymentAllocations;
+use App\Domain\Integrity\Checks\VoucherSequences;
+use App\Domain\Integrity\Events\IntegrityCheckFailed;
+use App\Domain\Integrity\InvariantChecker;
+use App\Domain\Integrity\Listeners\AlertIntegrityFailure;
 use App\Domain\Members\Events\MemberJoined;
 use App\Domain\Notifications\Contracts\SmsGateway;
 use App\Domain\Notifications\Gateways\BulkSmsBdGateway;
@@ -51,6 +62,18 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AdvanceBalances::class, AdvanceLedger::class);
         $this->app->tag([AdvanceSubledger::class], 'somiti.subledgers');
 
+        $this->app->tag([
+            BalancedEntries::class,
+            ControlAccounts::class,
+            PaymentAllocations::class,
+            DuePaidAmounts::class,
+            AdvanceChain::class,
+            VoucherSequences::class,
+            DueSnapshots::class,
+            JournalHashChain::class,
+        ], 'somiti.integrity_checks');
+        $this->app->when(InvariantChecker::class)->needs('$checks')->giveTagged('somiti.integrity_checks');
+
         $this->app->bind(SmsGateway::class, fn (): SmsGateway => match (config('services.sms.driver')) {
             'bulksmsbd' => new BulkSmsBdGateway([
                 'url' => (string) config('services.sms.bulksmsbd.url'),
@@ -74,6 +97,7 @@ class AppServiceProvider extends ServiceProvider
 
         Livewire::addPersistentMiddleware([EnsurePortalMember::class]);
 
+        Event::listen(IntegrityCheckFailed::class, AlertIntegrityFailure::class);
         Event::listen(LocaleChanged::class, RememberUserLocale::class);
         Event::listen(RatePlanApproved::class, ChargeRegistrationTopUps::class);
         Event::listen([MonthlyDuesGenerated::class, LateFeesApplied::class], ApplyAdvanceAfterCharges::class);
@@ -85,6 +109,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('viewReports', fn (User $user): bool => $user->isStaff());
         Gate::define('generateDues', fn (User $user): bool => $user->hasAnyOf(Role::Accountant, Role::President));
         Gate::define('refundAdvance', fn (User $user): bool => $user->hasAnyOf(Role::Accountant, Role::President));
+        Gate::define('runIntegrityChecks', fn (User $user): bool => $user->hasAnyOf(Role::SuperAdmin, Role::Accountant, Role::Auditor));
 
         Model::preventLazyLoading(! $this->app->isProduction());
 

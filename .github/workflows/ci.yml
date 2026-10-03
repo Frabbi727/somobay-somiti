@@ -57,3 +57,6 @@ jobs:
 
       - name: Tests
         run: composer test
+
+      - name: Randomised simulation (1,000 seeds)
+        run: composer test:simulation
