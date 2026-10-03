@@ -7,6 +7,11 @@ use App\Domain\Accounting\Data\JournalEntryData;
 use App\Domain\Accounting\Data\JournalLineData;
 use App\Domain\Accounting\Enums\VoucherType;
 use App\Domain\Accounting\Models\Account;
+use App\Domain\Settings\Actions\ApproveRatePlan;
+use App\Domain\Settings\Actions\DraftRatePlan;
+use App\Domain\Settings\Actions\SubmitRatePlan;
+use App\Domain\Settings\Data\RatePlanData;
+use App\Domain\Settings\Models\RatePlan;
 use App\Enums\Role;
 use App\Models\User;
 use App\Support\Money\Money;
@@ -105,4 +110,36 @@ function simpleEntry(string $debitCode, string $creditCode, string $taka, string
             JournalLineData::credit(account($creditCode), $amount),
         ],
     );
+}
+
+/**
+ * Rate plan data with sensible defaults (৳500/share, ৳10 service, ৳100 registration, due on the 10th).
+ *
+ * @param  array<string, mixed>  $overrides  form-style keys
+ */
+function ratePlanData(string $month, string $shareUnit = '500', array $overrides = []): RatePlanData
+{
+    return RatePlanData::fromForm([
+        'effective_from' => $month,
+        'share_unit_poisha' => Money::ofTaka($shareUnit),
+        'service_charge_per_share_poisha' => Money::ofTaka('10'),
+        'registration_fee_per_share_poisha' => Money::ofTaka('100'),
+        'due_day' => 10,
+        'grace_days' => 5,
+        'late_fee_mode' => 'none',
+        ...$overrides,
+    ]);
+}
+
+/**
+ * Drafts, submits and fully approves a plan (president + secretary), returning it fresh.
+ */
+function approvedPlan(string $month, string $shareUnit = '500', array $overrides = []): RatePlan
+{
+    $plan = app(DraftRatePlan::class)(userWithRole(Role::Accountant), ratePlanData($month, $shareUnit, $overrides));
+    app(SubmitRatePlan::class)(User::query()->findOrFail($plan->created_by), $plan);
+    app(ApproveRatePlan::class)(userWithRole(Role::President), $plan);
+    app(ApproveRatePlan::class)(userWithRole(Role::Secretary), $plan);
+
+    return $plan->fresh() ?? throw new RuntimeException('plan vanished');
 }

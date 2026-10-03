@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Domain\Accounting\Services\Reconciliation;
+use App\Domain\Settings\Contracts\GeneratedMonths;
+use App\Domain\Settings\Contracts\RatePlanUsage;
+use App\Domain\Settings\Services\NoDuesYet;
 use App\Listeners\RememberUserLocale;
 use App\Models\User;
 use BezhanSalleh\LanguageSwitch\Events\LocaleChanged;
@@ -24,6 +27,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->bindIf(GeneratedMonths::class, NoDuesYet::class);
+        $this->app->bindIf(RatePlanUsage::class, NoDuesYet::class);
+
         $this->app->when(Reconciliation::class)
             ->needs('$sources')
             ->giveTagged('somiti.subledgers');
