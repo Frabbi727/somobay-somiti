@@ -88,6 +88,7 @@ return [
         'inactive_account' => 'হিসাব :code নিষ্ক্রিয়।',
         'member_required' => 'লাইন :line: হিসাব :code-এর জন্য সদস্য লাগবে।',
         'member_not_allowed' => 'লাইন :line: হিসাব :code-এ সদস্য দেওয়া যাবে না।',
+        'unknown_member' => 'লাইন :line-এ উল্লেখিত সদস্য নেই।',
         'no_fiscal_year' => ':date তারিখের কোনো অর্থবছর নেই। আগে সেটি চালু করুন।',
         'period_locked' => ':month মাসটি লক করা।',
         'reason_required' => 'অন্তত :min অক্ষরের একটি কারণ লিখুন।',

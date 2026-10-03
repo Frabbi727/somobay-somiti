@@ -12,6 +12,7 @@ use App\Domain\Accounting\Models\JournalEntry;
 use App\Domain\Accounting\Models\Period;
 use App\Domain\Accounting\Services\FiscalCalendar;
 use App\Domain\Accounting\Services\JournalHasher;
+use App\Domain\Members\Models\Member;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use App\Support\Money\Money;
@@ -147,8 +148,15 @@ final class PostJournal
             ->get()
             ->keyBy('id');
 
+        $memberIds = array_values(array_unique(array_filter(array_map(fn (JournalLineData $line): ?int => $line->memberId, $lines))));
+        $knownMembers = $memberIds === [] ? [] : Member::query()->whereIn('id', $memberIds)->pluck('id')->all();
+
         foreach ($lines as $index => $line) {
             $account = $accounts->get($line->accountId);
+
+            if ($line->memberId !== null && ! in_array($line->memberId, $knownMembers, true)) {
+                throw DomainRuleViolation::because('journal.errors.unknown_member', ['line' => $index + 1]);
+            }
 
             if ($account === null) {
                 throw DomainRuleViolation::because('journal.errors.unknown_account', ['line' => $index + 1]);

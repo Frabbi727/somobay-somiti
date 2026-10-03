@@ -7,6 +7,7 @@ namespace App\Domain\Settings\Actions;
 use App\Domain\Settings\Contracts\RatePlanUsage;
 use App\Domain\Settings\Enums\ApprovalDecision;
 use App\Domain\Settings\Enums\RatePlanStatus;
+use App\Domain\Settings\Events\RatePlanApproved;
 use App\Domain\Settings\Models\RatePlan;
 use App\Domain\Settings\Services\RatePlanRules;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
@@ -102,5 +103,7 @@ final class ApproveRatePlan
             'status' => RatePlanStatus::Approved,
             'approved_at' => CarbonImmutable::now(),
         ])->save();
+
+        event(new RatePlanApproved($plan));
     }
 }

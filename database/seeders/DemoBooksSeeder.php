@@ -12,11 +12,14 @@ use App\Domain\Accounting\Data\JournalLineData;
 use App\Domain\Accounting\Enums\VoucherType;
 use App\Domain\Accounting\Models\Account;
 use App\Domain\Accounting\Models\FiscalYear;
+use App\Domain\Members\Enums\MemberStatus;
+use App\Domain\Members\Models\Member;
 use App\Enums\Role;
 use App\Models\User;
 use App\Support\Money\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Three months of realistic postings for fiscal year 2026-27, for demos and report checks.
@@ -39,15 +42,27 @@ final class DemoBooksSeeder extends Seeder
         }
 
         $post = app(PostJournal::class);
-        $members = [1 => 2, 2 => 1, 3 => 3];
+        $shareCounts = [1 => 2, 2 => 1, 3 => 3];
+        $members = [];
+
+        foreach (array_keys($shareCounts) as $number) {
+            $members[$number] = Member::query()->firstOrCreate(['mobile' => sprintf('0170000000%d', $number)], [
+                'member_no' => sprintf('M-%04d', (int) DB::scalar("SELECT nextval('member_no_seq')")),
+                'name_bn' => "ডেমো সদস্য {$number}",
+                'name_en' => "Demo Member {$number}",
+                'status' => MemberStatus::Active,
+                'joined_on' => '2026-07-01',
+                'created_by' => $accountant->id,
+            ]);
+        }
 
         foreach (['2026-07', '2026-08', '2026-09'] as $index => $month) {
-            foreach ($members as $member => $shares) {
+            foreach ($shareCounts as $member => $shares) {
                 $deposit = Money::ofTaka('500')->multipliedByInt($shares);
                 $service = Money::ofTaka('10')->multipliedByInt($shares);
                 $lines = [
                     JournalLineData::debit($this->account($member === 2 ? '1121' : '1101'), $deposit->plus($service)),
-                    JournalLineData::credit($this->account('2101'), $deposit, $member, 'Monthly deposit'),
+                    JournalLineData::credit($this->account('2101'), $deposit, $members[$member]->id, 'Monthly deposit'),
                     JournalLineData::credit($this->account('4111'), $service),
                 ];
 

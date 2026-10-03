@@ -12,6 +12,7 @@ use App\Domain\Accounting\Data\JournalLineData;
 use App\Domain\Accounting\Enums\VoucherType;
 use App\Domain\Accounting\Models\JournalEntry;
 use App\Domain\Accounting\Services\JournalHasher;
+use App\Domain\Members\Models\Member;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Enums\Role;
 use App\Support\Money\Money;
@@ -105,18 +106,29 @@ it('rejects malformed lines', function (Closure $lines, string $key): void {
         JournalLineData::credit(account('2101'), Money::ofTaka('5')),
     ], 'journal.errors.member_required'],
     'member on non-member account' => [fn () => [
-        JournalLineData::debit(account('1101'), Money::ofTaka('5'), memberId: 7),
+        JournalLineData::debit(account('1101'), Money::ofTaka('5'), memberId: Member::factory()->create()->id),
         JournalLineData::credit(account('4111'), Money::ofTaka('5')),
     ], 'journal.errors.member_not_allowed'],
 ]);
 
 it('accepts member lines on member accounts', function (): void {
+    $member = Member::factory()->create();
+
     $entry = ($this->post)($this->accountant, new JournalEntryData(VoucherType::Receipt, CarbonImmutable::parse('2026-07-15'), 'Deposit', [
         JournalLineData::debit(account('1101'), Money::ofTaka('500')),
-        JournalLineData::credit(account('2101'), Money::ofTaka('500'), memberId: 7),
+        JournalLineData::credit(account('2101'), Money::ofTaka('500'), memberId: $member->id),
     ]));
 
-    expect($entry->lines->last()?->member_id)->toBe(7);
+    expect($entry->lines->last()?->member_id)->toBe($member->id);
+});
+
+it('rejects a member that does not exist', function (): void {
+    $data = new JournalEntryData(VoucherType::Receipt, CarbonImmutable::parse('2026-07-15'), 'Deposit', [
+        JournalLineData::debit(account('1101'), Money::ofTaka('500')),
+        JournalLineData::credit(account('2101'), Money::ofTaka('500'), memberId: 999999),
+    ]);
+
+    expect(violationKey(fn () => ($this->post)($this->accountant, $data)))->toBe('journal.errors.unknown_member');
 });
 
 it('rejects postings to inactive accounts', function (): void {

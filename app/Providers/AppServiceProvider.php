@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Domain\Accounting\Services\Reconciliation;
+use App\Domain\Contributions\Listeners\ChargeRegistrationTopUps;
+use App\Domain\Contributions\Services\DueLedger;
 use App\Domain\Settings\Contracts\GeneratedMonths;
 use App\Domain\Settings\Contracts\RatePlanUsage;
-use App\Domain\Settings\Services\NoDuesYet;
+use App\Domain\Settings\Events\RatePlanApproved;
 use App\Listeners\RememberUserLocale;
 use App\Models\User;
 use BezhanSalleh\LanguageSwitch\Events\LocaleChanged;
@@ -27,8 +29,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bindIf(GeneratedMonths::class, NoDuesYet::class);
-        $this->app->bindIf(RatePlanUsage::class, NoDuesYet::class);
+        $this->app->bind(GeneratedMonths::class, DueLedger::class);
+        $this->app->bind(RatePlanUsage::class, DueLedger::class);
 
         $this->app->when(Reconciliation::class)
             ->needs('$sources')
@@ -43,6 +45,7 @@ class AppServiceProvider extends ServiceProvider
         Date::use(CarbonImmutable::class);
 
         Event::listen(LocaleChanged::class, RememberUserLocale::class);
+        Event::listen(RatePlanApproved::class, ChargeRegistrationTopUps::class);
 
         Gate::define('viewReports', fn (User $user): bool => $user->isStaff());
 

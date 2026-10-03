@@ -7,6 +7,11 @@ use App\Domain\Accounting\Data\JournalEntryData;
 use App\Domain\Accounting\Data\JournalLineData;
 use App\Domain\Accounting\Enums\VoucherType;
 use App\Domain\Accounting\Models\Account;
+use App\Domain\Contributions\Enums\DueType;
+use App\Domain\Contributions\Models\Due;
+use App\Domain\Members\Actions\CreateMember;
+use App\Domain\Members\Data\MemberData;
+use App\Domain\Members\Models\Member;
 use App\Domain\Settings\Actions\ApproveRatePlan;
 use App\Domain\Settings\Actions\DraftRatePlan;
 use App\Domain\Settings\Actions\SubmitRatePlan;
@@ -15,6 +20,7 @@ use App\Domain\Settings\Models\RatePlan;
 use App\Enums\Role;
 use App\Models\User;
 use App\Support\Money\Money;
+use App\Support\Time\YearMonth;
 use Carbon\CarbonImmutable;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -142,4 +148,53 @@ function approvedPlan(string $month, string $shareUnit = '500', array $overrides
     app(ApproveRatePlan::class)(userWithRole(Role::Secretary), $plan);
 
     return $plan->fresh() ?? throw new RuntimeException('plan vanished');
+}
+
+/**
+ * Member form data with defaults; pass overrides in form shape (e.g. 'mobile', 'nominees').
+ *
+ * @param  array<string, mixed>  $overrides
+ */
+function memberData(array $overrides = []): MemberData
+{
+    static $counter = 0;
+    $counter++;
+
+    return MemberData::fromForm([
+        'name_bn' => 'রহিম উদ্দিন',
+        'name_en' => 'Rahim Uddin',
+        'mobile' => sprintf('0171%07d', $counter),
+        'joined_on' => '2026-07-01',
+        ...$overrides,
+    ]);
+}
+
+/**
+ * Onboards a member through CreateMember as the secretary.
+ */
+function onboard(int $shares = 1, string $from = '2026-07', array $overrides = []): Member
+{
+    return app(CreateMember::class)(
+        userWithRole(Role::Secretary),
+        memberData($overrides),
+        $shares,
+        YearMonth::parse($from),
+    );
+}
+
+/**
+ * Registration dues of a member as [month => amount in poisha], oldest first.
+ *
+ * @return array<string, int>
+ */
+function registrationDues(Member $member): array
+{
+    return Due::query()
+        ->where('member_id', $member->id)
+        ->where('type', DueType::Registration)
+        ->orderBy('month')->orderBy('id')
+        ->get()
+        ->mapWithKeys(fn ($due): array => [(string) $due->month.'#'.$due->id => $due->amount_poisha->poisha])
+        ->values()
+        ->all();
 }

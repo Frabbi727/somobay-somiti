@@ -88,6 +88,7 @@ return [
         'inactive_account' => 'Account :code is inactive.',
         'member_required' => 'Line :line: account :code needs a member.',
         'member_not_allowed' => 'Line :line: account :code does not take a member.',
+        'unknown_member' => 'Line :line names a member that does not exist.',
         'no_fiscal_year' => 'There is no fiscal year for :date. Open it first.',
         'period_locked' => 'The month :month is locked.',
         'reason_required' => 'Give a reason of at least :min characters.',

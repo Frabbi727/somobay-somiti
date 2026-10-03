@@ -11,6 +11,7 @@ use App\Domain\Accounting\Data\JournalEntryData;
 use App\Domain\Accounting\Data\JournalLineData;
 use App\Domain\Accounting\Enums\VoucherType;
 use App\Domain\Accounting\Models\JournalLine;
+use App\Domain\Members\Models\Member;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Enums\Role;
 use App\Support\Money\Money;
@@ -24,13 +25,14 @@ beforeEach(function (): void {
     $this->seed(ChartOfAccountsSeeder::class);
     $this->accountant = userWithRole(Role::Accountant);
     $this->fiscalYear = app(OpenFiscalYear::class)($this->accountant, 2026);
+    $this->member = Member::factory()->create();
     $this->original = app(PostJournal::class)($this->accountant, new JournalEntryData(
         VoucherType::Receipt,
         CarbonImmutable::parse('2026-07-10'),
         'Collection',
         [
             JournalLineData::debit(account('1101'), Money::ofTaka('1020')),
-            JournalLineData::credit(account('2101'), Money::ofTaka('1000'), memberId: 3, memo: 'deposit'),
+            JournalLineData::credit(account('2101'), Money::ofTaka('1000'), memberId: $this->member->id, memo: 'deposit'),
             JournalLineData::credit(account('4111'), Money::ofTaka('20')),
         ],
     ));
@@ -64,7 +66,7 @@ it('posts a mirror-image JV that nets every account to zero', function (): void 
         ->and($reversal->lines->map(fn ($line): array => [$line->account_id, $line->member_id, $line->debit_poisha->poisha, $line->credit_poisha->poisha, $line->memo])->all())
         ->toBe([
             [account('1101')->id, null, 0, 102000, null],
-            [account('2101')->id, 3, 100000, 0, 'deposit'],
+            [account('2101')->id, $this->member->id, 100000, 0, 'deposit'],
             [account('4111')->id, null, 2000, 0, null],
         ])
         ->and(array_filter(netByAccount()))->toBe([]);

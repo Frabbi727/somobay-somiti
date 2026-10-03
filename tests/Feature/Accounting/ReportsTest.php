@@ -7,6 +7,7 @@ use App\Domain\Accounting\Reports\TrialBalanceRow;
 use App\Domain\Accounting\Services\LedgerQuery;
 use App\Domain\Accounting\Services\Reconciliation;
 use App\Domain\Accounting\Services\TrialBalance;
+use App\Domain\Members\Models\Member;
 use App\Reports\LedgerDocument;
 use App\Reports\TrialBalanceDocument;
 use App\Support\Money\Money;
@@ -88,7 +89,8 @@ it('computes running balances in SQL that match a cumulative sum', function (): 
 });
 
 it('filters a ledger to one member', function (): void {
-    $report = app(LedgerQuery::class)->forAccount(account('2101'), CarbonImmutable::parse('2026-07-01'), $this->asOf, memberId: 3);
+    $member = Member::query()->where('name_en', 'Demo Member 3')->sole();
+    $report = app(LedgerQuery::class)->forAccount(account('2101'), CarbonImmutable::parse('2026-07-01'), $this->asOf, memberId: $member->id);
 
     expect($report->rows)->toHaveCount(3)
         ->and($report->totalCredit()->poisha)->toBe(450000)
