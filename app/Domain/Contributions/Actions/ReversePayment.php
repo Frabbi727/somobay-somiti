@@ -62,7 +62,7 @@ final class ReversePayment
                 $this->releaseDependentApplications($actor, $member, $surplus, $reason);
             }
 
-            $reversal = ($this->reverseJournal)($actor, JournalEntry::query()->findOrFail($locked->journal_entry_id), $reason);
+            $reversal = ($this->reverseJournal)($actor, JournalEntry::query()->findOrFail($locked->journal_entry_id), $reason, onBehalfOfOwner: true);
 
             foreach ($locked->allocations()->get() as $allocation) {
                 $this->posting->unsettle(Due::query()->lockForUpdate()->findOrFail($allocation->due_id), $allocation->amount_poisha);
@@ -108,7 +108,7 @@ final class ReversePayment
                 throw DomainRuleViolation::because('payments.errors.advance_negative');
             }
 
-            $reversal = ($this->reverseJournal)($actor, JournalEntry::query()->findOrFail($latest->journal_entry_id), $reason);
+            $reversal = ($this->reverseJournal)($actor, JournalEntry::query()->findOrFail($latest->journal_entry_id), $reason, onBehalfOfOwner: true);
 
             $group = AdvanceLedgerEntry::query()
                 ->where('journal_entry_id', $latest->journal_entry_id)

@@ -118,6 +118,16 @@ final class JournalEntry extends Model
         return $this->morphTo();
     }
 
+    /**
+     * Whether a business record (payment, refund, advance application, expense…) owns this voucher.
+     * Vouchers from journal drafts — and reversals, which point at their original — are not owned.
+     */
+    public function isOwnedByRecord(): bool
+    {
+        return $this->source_type !== null
+            && ! in_array($this->source_type, [(new JournalDraft)->getMorphClass(), $this->getMorphClass()], true);
+    }
+
     public function isReversal(): bool
     {
         return $this->reverses_id !== null;

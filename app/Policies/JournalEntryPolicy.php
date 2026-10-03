@@ -23,11 +23,16 @@ final class JournalEntryPolicy
         return $user->isStaff();
     }
 
+    /**
+     * Vouchers posted by a payment, refund, advance application or expense are reversed through
+     * that record (so its status and sub-ledgers follow), never directly.
+     */
     public function reverse(User $user, JournalEntry $entry): bool
     {
         return $user->hasAnyOf(Role::Accountant, Role::President)
             && ! $entry->isReversal()
-            && ! $entry->isReversed();
+            && ! $entry->isReversed()
+            && ! $entry->isOwnedByRecord();
     }
 
     public function create(User $user): bool

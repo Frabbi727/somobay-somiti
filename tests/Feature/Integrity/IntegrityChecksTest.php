@@ -60,13 +60,13 @@ function failingChecks(): array
     return $run->findings()->pluck('check')->unique()->values()->all();
 }
 
-it('passes all eight checks on healthy books and stores the run', function (): void {
+it('passes every check on healthy books and stores the run', function (): void {
     Notification::fake();
 
     $run = app(RunIntegrityChecks::class)();
 
     expect($run->status)->toBe(IntegrityRunStatus::Passed)
-        ->and($run->checks_run)->toBe(8)
+        ->and($run->checks_run)->toBe(9)
         ->and($run->findings_count)->toBe(0)
         ->and($run->finished_at)->not->toBeNull();
 

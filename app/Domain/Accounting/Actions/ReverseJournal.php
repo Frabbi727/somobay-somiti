@@ -26,9 +26,15 @@ final class ReverseJournal
 
     public function __construct(private readonly PostJournal $post) {}
 
-    public function __invoke(User $actor, JournalEntry $entry, string $reason, ?CarbonImmutable $date = null): JournalEntry
+    /**
+     * @param  bool  $onBehalfOfOwner  set by the action of the record that owns the voucher (ReversePayment,
+     *                                 ReverseExpense, …), which has already authorised the reversal of that record
+     */
+    public function __invoke(User $actor, JournalEntry $entry, string $reason, ?CarbonImmutable $date = null, bool $onBehalfOfOwner = false): JournalEntry
     {
-        Gate::forUser($actor)->authorize('reverse', $entry);
+        if (! $onBehalfOfOwner) {
+            Gate::forUser($actor)->authorize('reverse', $entry);
+        }
 
         $reason = trim($reason);
 

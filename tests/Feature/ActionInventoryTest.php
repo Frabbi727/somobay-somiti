@@ -32,6 +32,9 @@ function expectedTiers(): array
         'PaymentActions › cancel' => 'T1',
         'ListPayments table › cancel' => 'T1',
         'ViewPayment › cancel' => 'T1',
+        'ExpenseActions › cancel' => 'T1',
+        'ListExpenses table › cancel' => 'T1',
+        'ViewExpense › cancel' => 'T1',
         'CreateJournalDraft form › create' => 'T1',
         'EditJournalDraft form › save' => 'T1',
 

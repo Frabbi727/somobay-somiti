@@ -30,6 +30,7 @@ return [
         'voucher_sequences' => 'Voucher numbering',
         'due_snapshots' => 'Rate snapshots',
         'journal_hash_chain' => 'Tamper check (hash chain)',
+        'expense_postings' => 'Expense postings',
     ],
     'banner' => [
         'title' => 'Integrity check failed.',

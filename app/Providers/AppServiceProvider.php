@@ -19,6 +19,7 @@ use App\Domain\Integrity\Checks\BalancedEntries;
 use App\Domain\Integrity\Checks\ControlAccounts;
 use App\Domain\Integrity\Checks\DuePaidAmounts;
 use App\Domain\Integrity\Checks\DueSnapshots;
+use App\Domain\Integrity\Checks\ExpensePostings;
 use App\Domain\Integrity\Checks\JournalHashChain;
 use App\Domain\Integrity\Checks\PaymentAllocations;
 use App\Domain\Integrity\Checks\VoucherSequences;
@@ -80,6 +81,7 @@ class AppServiceProvider extends ServiceProvider
             VoucherSequences::class,
             DueSnapshots::class,
             JournalHashChain::class,
+            ExpensePostings::class,
         ], 'somiti.integrity_checks');
         $this->app->when(InvariantChecker::class)->needs('$checks')->giveTagged('somiti.integrity_checks');
 
