@@ -7,8 +7,14 @@ use App\Domain\Accounting\Data\JournalEntryData;
 use App\Domain\Accounting\Data\JournalLineData;
 use App\Domain\Accounting\Enums\VoucherType;
 use App\Domain\Accounting\Models\Account;
+use App\Domain\Contributions\Actions\ApprovePayment;
+use App\Domain\Contributions\Actions\GenerateMonthlyDues;
+use App\Domain\Contributions\Actions\RecordPayment;
+use App\Domain\Contributions\Data\PaymentData;
 use App\Domain\Contributions\Enums\DueType;
 use App\Domain\Contributions\Models\Due;
+use App\Domain\Contributions\Models\Payment;
+use App\Domain\Integrity\InvariantChecker;
 use App\Domain\Members\Actions\CreateMember;
 use App\Domain\Members\Data\MemberData;
 use App\Domain\Members\Models\Member;
@@ -197,4 +203,121 @@ function registrationDues(Member $member): array
         ->mapWithKeys(fn ($due): array => [(string) $due->month.'#'.$due->id => $due->amount_poisha->poisha])
         ->values()
         ->all();
+}
+
+/**
+ * Moves the clock to a Dhaka date (used by the collections scenarios).
+ */
+function travelTo(string $date): void
+{
+    CarbonImmutable::setTestNow(CarbonImmutable::parse($date.' 10:00:00', 'Asia/Dhaka'));
+}
+
+/**
+ * Cashier records, accountant approves; returns the approved payment.
+ */
+function receivePayment(Member $member, string $taka, string $method = 'cash', ?string $trx = null): Payment
+{
+    $payment = app(RecordPayment::class)(userWithRole(Role::Cashier), PaymentData::fromForm([
+        'member_id' => $member->id,
+        'method' => $method,
+        'amount' => Money::ofTaka($taka),
+        'received_on' => CarbonImmutable::now('Asia/Dhaka')->toDateString(),
+        'trx_id' => $trx,
+    ]));
+
+    return app(ApprovePayment::class)(userWithRole(Role::Accountant), $payment);
+}
+
+/**
+ * Generates the month on its 1st (advances are applied by the listener).
+ */
+function generateMonth(string $month): void
+{
+    travelTo($month.'-01');
+    app(GenerateMonthlyDues::class)(YearMonth::parse($month));
+}
+
+/**
+ * Deposit dues of a member as [month => [amount, paid]] in taka-less poisha.
+ *
+ * @return array<string, array{0: int, 1: int}>
+ */
+function depositDues(Member $member): array
+{
+    return Due::query()
+        ->where('member_id', $member->id)
+        ->where('type', DueType::Deposit)
+        ->orderBy('month')
+        ->get()
+        ->mapWithKeys(fn ($due): array => [(string) $due->month => [$due->amount_poisha->poisha, $due->paid_poisha->poisha]])
+        ->all();
+}
+
+function glBalance(string $code): int
+{
+    $account = Account::query()->where('code', $code)->sole();
+
+    return (int) DB::table('journal_lines')->where('account_id', $account->id)->sum(DB::raw('credit_poisha - debit_poisha'));
+}
+
+function assertBooksTieOut(): void
+{
+    expect(app(InvariantChecker::class)->findings())->toBe([]);
+}
+
+/**
+ * Runs $work($index) in $workers forked processes at the same time and returns what each
+ * returned (or "error: …"). Children report through files and kill themselves so the
+ * PHPUnit shutdown handlers never run twice.
+ *
+ * @param  Closure(int): string  $work
+ * @return array<int, string>
+ */
+function inParallel(int $workers, Closure $work): array
+{
+    $directory = sys_get_temp_dir().'/somiti-concurrency-'.bin2hex(random_bytes(4));
+    mkdir($directory);
+
+    DB::disconnect();
+    $children = [];
+
+    for ($index = 0; $index < $workers; $index++) {
+        $pid = pcntl_fork();
+
+        if ($pid === -1) {
+            throw new RuntimeException('Could not fork.');
+        }
+
+        if ($pid === 0) {
+            try {
+                DB::reconnect();
+                $result = $work($index);
+            } catch (Throwable $exception) {
+                $result = 'error: '.$exception::class.': '.$exception->getMessage();
+            }
+
+            file_put_contents("{$directory}/{$index}", $result);
+            posix_kill(posix_getpid(), SIGKILL);
+        }
+
+        $children[] = $pid;
+    }
+
+    foreach ($children as $pid) {
+        pcntl_waitpid($pid, $status);
+    }
+
+    DB::reconnect();
+
+    $results = [];
+
+    for ($index = 0; $index < $workers; $index++) {
+        $results[$index] = (string) @file_get_contents("{$directory}/{$index}");
+        @unlink("{$directory}/{$index}");
+    }
+
+    rmdir($directory);
+
+    return $results;
 }

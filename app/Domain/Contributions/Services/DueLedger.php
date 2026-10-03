@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\Contributions\Services;
 
-use App\Domain\Contributions\Enums\DueType;
 use App\Domain\Contributions\Models\Due;
 use App\Domain\Settings\Contracts\GeneratedMonths;
 use App\Domain\Settings\Contracts\RatePlanUsage;
 use App\Domain\Settings\Models\RatePlan;
 use App\Support\Time\YearMonth;
+use Illuminate\Support\Facades\DB;
 
 /**
  * What the dues table tells rate-plan rules: which months have monthly dues (BR-7) and
@@ -19,7 +19,7 @@ final class DueLedger implements GeneratedMonths, RatePlanUsage
 {
     public function latest(): ?YearMonth
     {
-        $month = Due::query()->where('type', DueType::Deposit)->max('month');
+        $month = DB::table('monthly_due_runs')->max('month');
 
         return $month === null ? null : YearMonth::parse(substr((string) $month, 0, 10));
     }

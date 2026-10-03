@@ -110,6 +110,7 @@ return [
         'fiscal_year_exists' => 'Fiscal year :code already exists.',
         'fiscal_year_gap' => 'Fiscal years must be consecutive. Open :next or :previous.',
         'fiscal_year_closed' => 'Fiscal year :code is closed.',
+        'missing_account' => 'System account :code is missing. Run the chart of accounts seeder.',
         'earlier_year_open' => 'Close fiscal year :code first.',
     ],
 ];

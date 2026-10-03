@@ -110,6 +110,7 @@ return [
         'fiscal_year_exists' => 'অর্থবছর :code আগেই আছে।',
         'fiscal_year_gap' => 'অর্থবছর পরপর হতে হবে। :next অথবা :previous চালু করুন।',
         'fiscal_year_closed' => 'অর্থবছর :code বন্ধ।',
+        'missing_account' => 'সিস্টেম হিসাব :code নেই। হিসাবের তালিকা সিডার চালান।',
         'earlier_year_open' => 'আগে অর্থবছর :code বন্ধ করুন।',
     ],
 ];

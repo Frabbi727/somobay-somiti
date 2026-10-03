@@ -32,62 +32,6 @@ afterEach(function (): void {
     $this->artisan('migrate:fresh');
 });
 
-/**
- * Runs $work($index) in $workers forked processes at the same time and returns what each
- * returned (or "error: …"). Children report through files and kill themselves so the
- * PHPUnit shutdown handlers never run twice.
- *
- * @param  Closure(int): string  $work
- * @return array<int, string>
- */
-function inParallel(int $workers, Closure $work): array
-{
-    $directory = sys_get_temp_dir().'/somiti-concurrency-'.bin2hex(random_bytes(4));
-    mkdir($directory);
-
-    DB::disconnect();
-    $children = [];
-
-    for ($index = 0; $index < $workers; $index++) {
-        $pid = pcntl_fork();
-
-        if ($pid === -1) {
-            throw new RuntimeException('Could not fork.');
-        }
-
-        if ($pid === 0) {
-            try {
-                DB::reconnect();
-                $result = $work($index);
-            } catch (Throwable $exception) {
-                $result = 'error: '.$exception::class.': '.$exception->getMessage();
-            }
-
-            file_put_contents("{$directory}/{$index}", $result);
-            posix_kill(posix_getpid(), SIGKILL);
-        }
-
-        $children[] = $pid;
-    }
-
-    foreach ($children as $pid) {
-        pcntl_waitpid($pid, $status);
-    }
-
-    DB::reconnect();
-
-    $results = [];
-
-    for ($index = 0; $index < $workers; $index++) {
-        $results[$index] = (string) @file_get_contents("{$directory}/{$index}");
-        @unlink("{$directory}/{$index}");
-    }
-
-    rmdir($directory);
-
-    return $results;
-}
-
 it('gives 50 concurrent postings gap-free unique numbers even when others roll back', function (): void {
     $accountantId = $this->accountant->id;
 

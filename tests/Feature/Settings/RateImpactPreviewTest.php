@@ -3,15 +3,10 @@
 declare(strict_types=1);
 
 use App\Domain\Accounting\Actions\OpenFiscalYear;
-use App\Domain\Accounting\Actions\PostJournal;
-use App\Domain\Accounting\Data\JournalEntryData;
-use App\Domain\Accounting\Data\JournalLineData;
-use App\Domain\Accounting\Enums\VoucherType;
 use App\Domain\Contributions\Enums\DueType;
 use App\Domain\Contributions\Models\Due;
 use App\Domain\Members\Actions\ChangeShares;
 use App\Domain\Members\Actions\DeactivateMember;
-use App\Domain\Members\Models\Member;
 use App\Domain\Settings\Actions\ApproveRatePlan;
 use App\Domain\Settings\Actions\DraftRatePlan;
 use App\Domain\Settings\Actions\SubmitRatePlan;
@@ -45,16 +40,6 @@ function draftPlan(string $month, string $unit, array $overrides = []): RatePlan
     return app(DraftRatePlan::class)(userWithRole(Role::Accountant), ratePlanData($month, $unit, $overrides));
 }
 
-function giveAdvance(Member $member, string $taka, User $actor): void
-{
-    $amount = Money::ofTaka($taka);
-
-    app(PostJournal::class)($actor, new JournalEntryData(VoucherType::Receipt, CarbonImmutable::parse('2026-10-05'), 'Advance', [
-        JournalLineData::debit(account('1101'), $amount),
-        JournalLineData::credit(account('2111'), $amount, $member->id),
-    ]));
-}
-
 it('compares monthly collection for active members', function (): void {
     $preview = app(RateImpactPreviewer::class)->preview(draftPlan('2027-01', '600'));
 
@@ -78,7 +63,10 @@ it('counts shares as they stand in the plan month', function (): void {
 it('shows how far each advance goes at the old and new rate', function (): void {
     $this->seed(ChartOfAccountsSeeder::class);
     app(OpenFiscalYear::class)($this->accountant, 2026);
-    giveAdvance($this->a, '2040', $this->accountant);
+    travelTo('2026-10-05');
+    // ৳200 settles the open registration fee; ৳2,040 is held as advance.
+    receivePayment($this->a, '2240');
+    CarbonImmutable::setTestNow();
 
     $preview = app(RateImpactPreviewer::class)->preview(draftPlan('2027-01', '600'));
     $alpha = $preview->membersWithAdvance()[0];

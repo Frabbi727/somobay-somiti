@@ -88,6 +88,16 @@ final class GenerateMonthlyDues
 
         $result = $this->summarise($month, $plan, $all, $created);
 
+        DB::statement(<<<'SQL'
+            INSERT INTO monthly_due_runs (month, rate_plan_id, runs, created_dues, created_amount_poisha, first_run_at, last_run_at)
+            VALUES (?, ?, 1, ?, ?, now(), now())
+            ON CONFLICT (month) DO UPDATE SET
+                runs = monthly_due_runs.runs + 1,
+                created_dues = monthly_due_runs.created_dues + EXCLUDED.created_dues,
+                created_amount_poisha = monthly_due_runs.created_amount_poisha + EXCLUDED.created_amount_poisha,
+                last_run_at = now()
+            SQL, [$month->toDateString(), $plan->id, $result->newCount(), $result->newTotal()->poisha]);
+
         activity('dues')
             ->causedBy($actor)
             ->event('dues_generated')

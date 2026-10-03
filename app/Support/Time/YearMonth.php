@@ -133,6 +133,16 @@ final readonly class YearMonth implements JsonSerializable, Stringable
         return $other->index() - $this->index();
     }
 
+    public function max(self $other): self
+    {
+        return $this->isSameOrAfter($other) ? $this : $other;
+    }
+
+    public function min(self $other): self
+    {
+        return $this->isSameOrBefore($other) ? $this : $other;
+    }
+
     /**
      * @return -1|0|1
      */

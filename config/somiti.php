@@ -25,4 +25,17 @@ return [
         'temp_dir' => storage_path('framework/cache/mpdf'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Collections
+    |--------------------------------------------------------------------------
+    |
+    | Advance refunds of this many poisha or more need the president (P5.S3).
+    |
+    */
+
+    'advance_refund_president_threshold_poisha' => (int) env('SOMITI_REFUND_PRESIDENT_THRESHOLD_POISHA', 500_000),
+
+    'max_proof_kb' => 2048,
+
 ];
