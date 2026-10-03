@@ -21,7 +21,9 @@ final class ListDues extends ListRecords
             DueActions::applyLateFees(),
             Action::make('generate')
                 ->label(__('dues.generate.title'))
+                ->tooltip(__('dues.generate.title'))
                 ->icon(Heroicon::OutlinedPlus)
+                ->color('primary')
                 ->url(GenerateDues::getUrl())
                 ->visible(fn (): bool => GenerateDues::canAccess())
                 ->button()

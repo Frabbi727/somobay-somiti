@@ -30,10 +30,6 @@ final class PaymentsTable
         return $table
             ->modifyQueryUsing(fn (Builder $query): Builder => $query->with(['member', 'recorder', 'journalEntry']))
             ->defaultSort(fn (Builder $query): Builder => $query->orderByDesc('received_on')->orderByDesc('id'))
-            ->paginated([10, 25, 50, 100])
-            ->defaultPaginationPageOption(25)
-            ->searchDebounce('400ms')
-            ->persistFiltersInSession()
             ->columns([
                 TextColumn::make('received_on')
                     ->label(__('payments.field.received_on'))
@@ -85,7 +81,9 @@ final class PaymentsTable
             ->emptyStateActions([
                 Action::make('collect')
                     ->label(__('payments.collect.title'))
-                    ->icon(Heroicon::OutlinedPlus)
+                    ->tooltip(__('payments.collect.title'))
+                    ->icon(Heroicon::OutlinedBanknotes)
+                    ->color('success')
                     ->url(fn (): string => CollectPayment::getUrl())
                     ->visible(fn (): bool => CollectPayment::canAccess()),
             ]);

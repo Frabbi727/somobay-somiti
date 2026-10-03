@@ -19,7 +19,9 @@ final class ListPayments extends ListRecords
         return [
             Action::make('collect')
                 ->label(__('payments.collect.title'))
-                ->icon(Heroicon::OutlinedPlus)
+                ->tooltip(__('payments.collect.title'))
+                ->icon(Heroicon::OutlinedBanknotes)
+                ->color('success')
                 ->url(fn (): string => CollectPayment::getUrl())
                 ->visible(fn (): bool => CollectPayment::canAccess())
                 ->button()

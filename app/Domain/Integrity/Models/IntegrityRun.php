@@ -6,7 +6,9 @@ namespace App\Domain\Integrity\Models;
 
 use App\Domain\Integrity\Enums\IntegrityRunStatus;
 use App\Models\User;
+use App\Policies\IntegrityRunPolicy;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -22,6 +24,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property CarbonImmutable $started_at
  * @property CarbonImmutable|null $finished_at
  */
+#[UsePolicy(IntegrityRunPolicy::class)]
 final class IntegrityRun extends Model
 {
     public $timestamps = false;

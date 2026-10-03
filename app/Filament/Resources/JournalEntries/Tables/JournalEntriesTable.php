@@ -30,13 +30,6 @@ final class JournalEntriesTable
                 ->withExists('reversal')
                 ->with('postedBy'))
             ->defaultSort(fn (Builder $query): Builder => $query->orderByDesc('entry_date')->orderByDesc('id'))
-            ->paginated([10, 25, 50, 100])
-            ->defaultPaginationPageOption(25)
-            ->extremePaginationLinks()
-            ->searchDebounce('400ms')
-            ->persistFiltersInSession()
-            ->persistSortInSession()
-            ->persistSearchInSession()
             ->columns([
                 TextColumn::make('voucher_no')
                     ->label(__('journal.voucher.voucher_no'))

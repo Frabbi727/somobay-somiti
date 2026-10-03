@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\Members\Models;
 
+use App\Policies\MemberShareSnapshotPolicy;
 use App\Support\Time\YearMonth;
 use App\Support\Time\YearMonthCast;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -17,6 +19,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property YearMonth $effective_from
  * @property int $shares
  */
+#[UsePolicy(MemberShareSnapshotPolicy::class)]
 final class MemberShareSnapshot extends Model
 {
     public $timestamps = false;

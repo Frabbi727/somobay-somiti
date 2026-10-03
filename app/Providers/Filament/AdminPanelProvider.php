@@ -40,7 +40,7 @@ class AdminPanelProvider extends PanelProvider
             ->multiFactorAuthentication([
                 AppAuthentication::make()
                     ->recoverable(),
-            ])
+            ], isRequired: fn (): bool => (bool) config('somiti.require_mfa'))
             ->colors([
                 'primary' => Color::Emerald,
             ])

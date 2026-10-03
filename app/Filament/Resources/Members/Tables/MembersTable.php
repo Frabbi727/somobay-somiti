@@ -35,11 +35,6 @@ final class MembersTable
                     ->limit(1),
             ]))
             ->defaultSort('member_no')
-            ->paginated([10, 25, 50, 100])
-            ->defaultPaginationPageOption(25)
-            ->searchDebounce('400ms')
-            ->persistFiltersInSession()
-            ->persistSearchInSession()
             ->columns([
                 ImageColumn::make('photo_path')
                     ->label('')

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Domain\Members\Models;
 
 use App\Domain\Shared\Exceptions\ImmutableRecord;
+use App\Policies\ShareLotPolicy;
 use App\Support\Time\YearMonth;
 use App\Support\Time\YearMonthCast;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -23,6 +25,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $created_by
  * @property-read Member $member
  */
+#[UsePolicy(ShareLotPolicy::class)]
 final class ShareLot extends Model
 {
     protected $guarded = [];

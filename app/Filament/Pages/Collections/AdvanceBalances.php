@@ -80,7 +80,6 @@ final class AdvanceBalances extends Page implements HasActions, HasSchemas, HasT
                     ->limit(1)])
                 ->whereRaw('(SELECT balance_after_poisha FROM advance_ledger_entries e WHERE e.member_id = members.id ORDER BY e.id DESC LIMIT 1) > 0'))
             ->defaultSort('member_no')
-            ->paginated([10, 25, 50, 100])
             ->columns([
                 TextColumn::make('member_no')
                     ->label(__('payments.field.member'))
@@ -111,6 +110,7 @@ final class AdvanceBalances extends Page implements HasActions, HasSchemas, HasT
     {
         $action = Action::make('applyAdvance')
             ->label(__('payments.actions.apply_advance'))
+            ->tooltip(__('payments.actions.apply_advance_heading'))
             ->icon(Heroicon::OutlinedArrowPath)
             ->color('primary')
             ->visible(fn (): bool => Gate::allows('generateDues'))
@@ -123,7 +123,12 @@ final class AdvanceBalances extends Page implements HasActions, HasSchemas, HasT
                     ->send();
             });
 
-        return [self::tier1($action, __('payments.actions.apply_advance_heading'))];
+        return [self::tier3(
+            $action,
+            heading: __('payments.actions.apply_advance_heading'),
+            expected: fn (): string => (string) __('confirm.word'),
+            submitLabel: __('payments.actions.apply_advance'),
+        )];
     }
 
     private function refundAction(): Action

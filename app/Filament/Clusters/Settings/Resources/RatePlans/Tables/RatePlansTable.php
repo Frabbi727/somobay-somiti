@@ -29,8 +29,6 @@ final class RatePlansTable
     {
         return $table
             ->defaultSort(fn (Builder $query): Builder => $query->orderByDesc('effective_from')->orderByDesc('id'))
-            ->paginated([10, 25, 50, 100])
-            ->defaultPaginationPageOption(25)
             ->columns([
                 TextColumn::make('effective_from')
                     ->label(__('rates.plan.effective_from'))

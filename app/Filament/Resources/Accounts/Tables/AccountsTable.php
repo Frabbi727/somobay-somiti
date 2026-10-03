@@ -26,12 +26,6 @@ final class AccountsTable
     {
         return $table
             ->defaultSort('code')
-            ->paginated([10, 25, 50, 100])
-            ->defaultPaginationPageOption(25)
-            ->searchDebounce('400ms')
-            ->persistFiltersInSession()
-            ->persistSortInSession()
-            ->persistSearchInSession()
             ->columns([
                 TextColumn::make('code')
                     ->label(__('accounting.account.code'))

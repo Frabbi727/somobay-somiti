@@ -165,6 +165,7 @@ final class CollectPayment extends Page
     {
         $action = Action::make('record')
             ->label(__('payments.collect.title'))
+            ->tooltip(__('payments.collect.title'))
             ->icon(Heroicon::OutlinedBanknotes)
             ->color('success')
             ->mountUsing(fn () => $this->form->validate())

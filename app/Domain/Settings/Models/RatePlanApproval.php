@@ -8,7 +8,9 @@ use App\Domain\Settings\Enums\ApprovalDecision;
 use App\Domain\Shared\Exceptions\ImmutableRecord;
 use App\Enums\Role;
 use App\Models\User;
+use App\Policies\RatePlanApprovalPolicy;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -25,6 +27,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonImmutable $created_at
  * @property-read User $user
  */
+#[UsePolicy(RatePlanApprovalPolicy::class)]
 final class RatePlanApproval extends Model
 {
     public const null UPDATED_AT = null;

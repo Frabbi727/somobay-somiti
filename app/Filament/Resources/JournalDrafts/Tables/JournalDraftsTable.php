@@ -25,8 +25,6 @@ final class JournalDraftsTable
         return $table
             ->modifyQueryUsing(fn (Builder $query): Builder => $query->with(['creator', 'journalEntry']))
             ->defaultSort('id', 'desc')
-            ->paginated([10, 25, 50, 100])
-            ->defaultPaginationPageOption(25)
             ->recordUrl(fn (JournalDraft $record): string => $record->journalEntry !== null
                 ? JournalEntryResource::getUrl('view', ['record' => $record->journalEntry])
                 : JournalDraftResource::getUrl('edit', ['record' => $record]))

@@ -27,3 +27,23 @@ Schedule::command('somiti:integrity:check')
     ->timezone('Asia/Dhaka')
     ->withoutOverlapping()
     ->onOneServer();
+
+/*
+| Backups (SOMITI_SPEC.md §2): database + files daily, 30 days retained; off-site disk via BACKUP_DISKS.
+*/
+
+Schedule::command('backup:clean')
+    ->dailyAt('03:00')
+    ->timezone('Asia/Dhaka')
+    ->onOneServer();
+
+Schedule::command('backup:run')
+    ->dailyAt('03:30')
+    ->timezone('Asia/Dhaka')
+    ->withoutOverlapping()
+    ->onOneServer();
+
+Schedule::command('backup:monitor')
+    ->dailyAt('09:00')
+    ->timezone('Asia/Dhaka')
+    ->onOneServer();

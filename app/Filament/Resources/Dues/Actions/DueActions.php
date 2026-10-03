@@ -25,6 +25,7 @@ final class DueActions
     {
         $action = Action::make('applyLateFees')
             ->label(__('dues.late_fees.apply'))
+            ->tooltip(__('dues.late_fees.apply_heading'))
             ->icon(Heroicon::OutlinedClock)
             ->color('warning')
             ->visible(fn (): bool => Gate::allows('generateDues'))
@@ -37,7 +38,13 @@ final class DueActions
                     ->send();
             });
 
-        return self::tier1($action, __('dues.late_fees.apply_heading'), __('dues.late_fees.apply_description'));
+        return self::tier3(
+            $action,
+            heading: __('dues.late_fees.apply_heading'),
+            expected: fn (): string => (string) __('confirm.word'),
+            submitLabel: __('dues.late_fees.apply'),
+            description: __('dues.late_fees.apply_description'),
+        );
     }
 
     public static function waive(): Action

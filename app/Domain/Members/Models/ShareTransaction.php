@@ -7,9 +7,11 @@ namespace App\Domain\Members\Models;
 use App\Domain\Members\Enums\ShareChangeType;
 use App\Domain\Shared\Exceptions\ImmutableRecord;
 use App\Models\User;
+use App\Policies\ShareTransactionPolicy;
 use App\Support\Time\YearMonth;
 use App\Support\Time\YearMonthCast;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -27,6 +29,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonImmutable $created_at
  * @property-read User $creator
  */
+#[UsePolicy(ShareTransactionPolicy::class)]
 final class ShareTransaction extends Model
 {
     public const null UPDATED_AT = null;

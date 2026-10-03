@@ -33,7 +33,7 @@ final class MemberActions
      */
     public static function changeShares(): Action
     {
-        return Action::make('changeShares')
+        return self::tier2InForm(Action::make('changeShares')
             ->label(__('members.actions.change_shares'))
             ->tooltip(__('members.actions.change_shares'))
             ->icon(Heroicon::OutlinedSquare3Stack3d)
@@ -82,7 +82,7 @@ final class MemberActions
                     ]))
                     ->success()
                     ->send();
-            });
+            }));
     }
 
     public static function deactivate(): Action

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\Role;
+use App\Policies\UserPolicy;
+use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Filament\Auth\MultiFactor\App\Concerns\InteractsWithAppAuthentication;
 use Filament\Auth\MultiFactor\App\Concerns\InteractsWithAppAuthenticationRecovery;
@@ -14,6 +16,7 @@ use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -26,8 +29,10 @@ use Spatie\Permission\Traits\HasRoles;
  * @property string|null $email
  * @property string|null $mobile
  * @property string $locale
+ * @property CarbonImmutable|null $deactivated_at
  */
 #[Hidden(['password', 'remember_token'])]
+#[UsePolicy(UserPolicy::class)]
 class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery
 {
     /** @use HasFactory<UserFactory> */
@@ -45,7 +50,15 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->isStaff();
+        return $this->isStaff() && $this->isActive();
+    }
+
+    /**
+     * Deactivated staff can no longer sign in; their name stays on everything they did.
+     */
+    public function isActive(): bool
+    {
+        return $this->deactivated_at === null;
     }
 
     /**
@@ -71,6 +84,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'deactivated_at' => 'immutable_datetime',
         ];
     }
 }

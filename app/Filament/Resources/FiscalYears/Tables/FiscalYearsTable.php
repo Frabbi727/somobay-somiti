@@ -25,8 +25,6 @@ final class FiscalYearsTable
                 'periods as locked_periods_count' => fn (Builder $periods): Builder => $periods->where('status', PeriodStatus::Locked),
             ]))
             ->defaultSort('start_year', 'desc')
-            ->paginated([10, 25, 50, 100])
-            ->defaultPaginationPageOption(25)
             ->columns([
                 TextColumn::make('code')
                     ->label(__('accounting.fiscal_year.code'))

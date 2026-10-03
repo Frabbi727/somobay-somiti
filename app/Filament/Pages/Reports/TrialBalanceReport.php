@@ -79,11 +79,13 @@ final class TrialBalanceReport extends Page
         return [
             Action::make('pdf')
                 ->label(__('reports.download_pdf'))
+                ->tooltip(__('reports.download_pdf'))
                 ->icon(Heroicon::OutlinedPrinter)
                 ->color('info')
                 ->action(fn (): StreamedResponse => $this->download('pdf')),
             Action::make('excel')
                 ->label(__('reports.download_excel'))
+                ->tooltip(__('reports.download_excel'))
                 ->icon(Heroicon::OutlinedArrowDownTray)
                 ->color('gray')
                 ->action(fn (): StreamedResponse => $this->download('xlsx')),

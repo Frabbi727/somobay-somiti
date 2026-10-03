@@ -99,6 +99,7 @@ final class GenerateDues extends Page
     {
         $action = Action::make('run')
             ->label(__('dues.generate.run'))
+            ->tooltip(__('dues.generate.run'))
             ->icon(Heroicon::OutlinedPlay)
             ->color('primary')
             ->disabled(fn (): bool => $this->preview()?->newCount() === 0 || $this->preview() === null)

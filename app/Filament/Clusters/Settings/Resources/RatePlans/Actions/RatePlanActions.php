@@ -127,21 +127,24 @@ final class RatePlanActions
 
     public static function reject(): Action
     {
-        return Action::make('reject')
+        $action = Action::make('reject')
             ->label(__('rates.actions.reject'))
             ->tooltip(__('rates.actions.reject'))
             ->icon(Heroicon::OutlinedNoSymbol)
             ->color('danger')
             ->authorize('approve')
-            ->requiresConfirmation()
-            ->modalHeading(fn (RatePlan $record): string => __('rates.actions.reject_heading', ['code' => $record->code]))
-            ->schema([
-                Textarea::make('comment')->label(__('rates.actions.reason'))->required()->minLength(5)->rows(2),
-            ])
             ->action(function (RatePlan $record, array $data): void {
                 DomainActionRunner::run(fn (User $actor): RatePlan => app(RejectRatePlan::class)($actor, $record, self::text($data, 'comment') ?? ''));
                 self::notify(__('rates.notifications.rejected', ['code' => $record->code]));
             });
+
+        return self::tier3(
+            $action,
+            heading: fn (RatePlan $record): string => __('rates.actions.reject_heading', ['code' => $record->code]),
+            expected: fn (RatePlan $record): string => $record->code,
+            submitLabel: __('rates.actions.reject'),
+            fields: [Textarea::make('comment')->label(__('rates.actions.reason'))->required()->minLength(5)->rows(2)],
+        );
     }
 
     public static function cancel(): Action

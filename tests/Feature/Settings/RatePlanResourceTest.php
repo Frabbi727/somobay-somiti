@@ -156,11 +156,11 @@ it('sends a plan back with a reason', function (): void {
     $this->actingAs($this->secretary);
 
     Livewire::test(ViewRatePlan::class, ['record' => $plan->getRouteKey()])
-        ->callAction('reject', data: ['comment' => ''])
+        ->callAction('reject', data: ['comment' => '', 'confirm_text' => $plan->code])
         ->assertHasActionErrors(['comment']);
 
     Livewire::test(ViewRatePlan::class, ['record' => $plan->getRouteKey()])
-        ->callAction('reject', data: ['comment' => 'Service charge should stay 10'])
+        ->callAction('reject', data: ['comment' => 'Service charge should stay 10', 'confirm_text' => $plan->code])
         ->assertHasNoActionErrors();
 
     expect($plan->fresh()?->status)->toBe(RatePlanStatus::Draft);

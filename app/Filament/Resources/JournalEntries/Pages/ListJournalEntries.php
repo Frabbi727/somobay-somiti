@@ -19,7 +19,9 @@ final class ListJournalEntries extends ListRecords
         return [
             Action::make('newVoucher')
                 ->label(__('journal.actions.create_draft'))
+                ->tooltip(__('journal.actions.create_draft'))
                 ->icon(Heroicon::OutlinedPlus)
+                ->color('primary')
                 ->url(JournalDraftResource::getUrl('create'))
                 ->visible(fn (): bool => JournalDraftResource::canCreate())
                 ->button()

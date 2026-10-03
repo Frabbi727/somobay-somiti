@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Domain\Contributions\Models;
 
 use App\Domain\Shared\Exceptions\ImmutableRecord;
+use App\Policies\PaymentAllocationPolicy;
 use App\Support\Money\Money;
 use App\Support\Money\MoneyCast;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -20,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read Due $due
  * @property-read Payment $payment
  */
+#[UsePolicy(PaymentAllocationPolicy::class)]
 final class PaymentAllocation extends Model
 {
     public const null UPDATED_AT = null;

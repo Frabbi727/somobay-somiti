@@ -20,7 +20,6 @@ use App\Support\Money\Money;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -61,19 +60,24 @@ final class PaymentActions
 
     public static function reject(): Action
     {
-        return Action::make('reject')
+        $action = Action::make('reject')
             ->label(__('payments.actions.reject'))
             ->tooltip(__('payments.actions.reject'))
             ->icon(Heroicon::OutlinedNoSymbol)
             ->color('danger')
             ->authorize('reject')
-            ->requiresConfirmation()
-            ->modalHeading(fn (Payment $record): string => __('payments.actions.reject_heading', ['amount' => Display::money($record->amount_poisha), 'member' => $record->member->displayName()]))
-            ->schema([Textarea::make('reason')->label(__('payments.field.reason'))->required()->minLength(5)->rows(2)])
             ->action(function (Payment $record, array $data): void {
                 DomainActionRunner::run(fn (User $actor): Payment => app(RejectPayment::class)($actor, $record, (string) ($data['reason'] ?? '')));
                 Notification::make()->title(__('payments.actions.rejected'))->success()->send();
             });
+
+        return self::tier3(
+            $action,
+            heading: fn (Payment $record): string => __('payments.actions.reject_heading', ['amount' => Display::money($record->amount_poisha), 'member' => $record->member->displayName()]),
+            expected: fn (Payment $record): string => $record->member->member_no,
+            submitLabel: __('payments.actions.reject'),
+            fields: [Textarea::make('reason')->label(__('payments.field.reason'))->required()->minLength(5)->rows(2)],
+        );
     }
 
     public static function cancel(): Action
@@ -131,22 +135,11 @@ final class PaymentActions
      */
     public static function bulkApprove(): BulkAction
     {
-        return BulkAction::make('bulkApprove')
+        $action = BulkAction::make('bulkApprove')
             ->label(__('payments.actions.bulk_approve'))
             ->icon(Heroicon::OutlinedCheckCircle)
+            ->tooltip(__('payments.actions.bulk_approve'))
             ->color('success')
-            ->requiresConfirmation()
-            ->modalHeading(fn (Collection $records): string => __('payments.actions.bulk_approve_heading', [
-                'count' => Display::digits($records->count()),
-                'amount' => Display::money(Money::sum($records->filter(fn ($record): bool => $record instanceof Payment)->map(fn (Payment $payment): Money => $payment->amount_poisha))),
-            ]))
-            ->schema([
-                TextInput::make('confirm_text')
-                    ->label(fn (): string => __('confirm.type_to_confirm', ['text' => __('confirm.word')]))
-                    ->required()
-                    ->in(fn (): array => [(string) __('confirm.word')])
-                    ->validationMessages(['in' => __('confirm.mismatch')]),
-            ])
             ->deselectRecordsAfterCompletion()
             ->action(function (Collection $records): void {
                 $actor = DomainActionRunner::actor();
@@ -171,5 +164,15 @@ final class PaymentActions
                     ->color($failed === 0 ? 'success' : 'warning')
                     ->send();
             });
+
+        return self::tier3(
+            $action,
+            heading: fn (Collection $records): string => __('payments.actions.bulk_approve_heading', [
+                'count' => Display::digits($records->count()),
+                'amount' => Display::money(Money::sum($records->filter(fn ($record): bool => $record instanceof Payment)->map(fn (Payment $payment): Money => $payment->amount_poisha))),
+            ]),
+            expected: fn (): string => (string) __('confirm.word'),
+            submitLabel: __('payments.actions.bulk_approve'),
+        );
     }
 }

@@ -21,21 +21,38 @@ use Illuminate\Contracts\View\View;
  */
 trait ConfirmsWithTier
 {
+    /**
+     * Marks the tier on the rendered button, so tests (and audits) can see which confirmation an action uses.
+     */
+    public const string TIER_ATTRIBUTE = 'data-confirm-tier';
+
+    /**
+     * @template TAction of Action
+     *
+     * @param  TAction  $action
+     * @return TAction
+     */
     protected static function tier1(Action $action, string|Closure $heading, string|Closure|null $description = null): Action
     {
         return $action
             ->requiresConfirmation()
+            ->extraAttributes([self::TIER_ATTRIBUTE => 'T1'], merge: true)
             ->modalHeading($heading)
             ->modalDescription($description);
     }
 
     /**
+     * @template TAction of Action
+     *
+     * @param  TAction  $action
      * @param  Closure  $rows  returns the rows built by ChangeSummary::rows(); may inject $record, $data, …
+     * @return TAction
      */
     protected static function tier2(Action $action, string|Closure $heading, Closure $rows, string|Closure|null $description = null, bool $showOld = true): Action
     {
         return $action
             ->requiresConfirmation()
+            ->extraAttributes([self::TIER_ATTRIBUTE => 'T2'], merge: true)
             ->modalHeading($heading)
             ->modalDescription($description)
             ->modalContent(function (Action $action) use ($rows, $showOld): View {
@@ -46,7 +63,25 @@ trait ConfirmsWithTier
     }
 
     /**
+     * T2 where the action's own form already shows the old → new summary live (e.g. share changes),
+     * so a second summary modal would only repeat it.
+     *
+     * @template TAction of Action
+     *
+     * @param  TAction  $action
+     * @return TAction
+     */
+    protected static function tier2InForm(Action $action): Action
+    {
+        return $action->extraAttributes([self::TIER_ATTRIBUTE => 'T2'], merge: true);
+    }
+
+    /**
+     * @template TAction of Action
+     *
+     * @param  TAction  $action
      * @param  array<Component>  $fields  extra inputs shown above the typed confirmation, e.g. a reason
+     * @return TAction
      */
     protected static function tier3(Action $action, string|Closure $heading, string|Closure $expected, string|Closure $submitLabel, string|Closure|null $description = null, array $fields = []): Action
     {
@@ -54,6 +89,7 @@ trait ConfirmsWithTier
 
         return $action
             ->requiresConfirmation()
+            ->extraAttributes([self::TIER_ATTRIBUTE => 'T3'], merge: true)
             ->modalHeading($heading)
             ->modalDescription($description)
             ->modalSubmitActionLabel($submitLabel)

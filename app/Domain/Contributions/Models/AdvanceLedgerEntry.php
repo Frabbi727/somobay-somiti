@@ -6,9 +6,11 @@ namespace App\Domain\Contributions\Models;
 
 use App\Domain\Contributions\Enums\AdvanceEntryKind;
 use App\Domain\Shared\Exceptions\ImmutableRecord;
+use App\Policies\AdvanceLedgerEntryPolicy;
 use App\Support\Money\Money;
 use App\Support\Money\MoneyCast;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -29,6 +31,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonImmutable $created_at
  * @property-read Due|null $due
  */
+#[UsePolicy(AdvanceLedgerEntryPolicy::class)]
 final class AdvanceLedgerEntry extends Model
 {
     public const null UPDATED_AT = null;

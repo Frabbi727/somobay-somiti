@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Domain\Accounting\Models;
 
 use App\Domain\Shared\Exceptions\ImmutableRecord;
+use App\Policies\JournalLinePolicy;
 use App\Support\Money\Money;
 use App\Support\Money\MoneyCast;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -24,6 +26,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read Account $account
  * @property-read JournalEntry $entry
  */
+#[UsePolicy(JournalLinePolicy::class)]
 final class JournalLine extends Model
 {
     public const null UPDATED_AT = null;

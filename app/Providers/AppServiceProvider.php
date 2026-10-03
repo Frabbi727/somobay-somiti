@@ -37,12 +37,21 @@ use App\Domain\Settings\Contracts\RatePlanUsage;
 use App\Domain\Settings\Events\RatePlanApproved;
 use App\Enums\Role;
 use App\Http\Middleware\EnsurePortalMember;
+use App\Listeners\CheckApplicationHealth;
 use App\Listeners\RememberUserLocale;
 use App\Models\User;
 use BezhanSalleh\LanguageSwitch\Events\LocaleChanged;
 use BezhanSalleh\LanguageSwitch\LanguageSwitch;
 use Carbon\CarbonImmutable;
+use Filament\Actions\CreateAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Events\DiagnosingHealth;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Event;
@@ -99,6 +108,7 @@ class AppServiceProvider extends ServiceProvider
 
         Event::listen(IntegrityCheckFailed::class, AlertIntegrityFailure::class);
         Event::listen(LocaleChanged::class, RememberUserLocale::class);
+        Event::listen(DiagnosingHealth::class, CheckApplicationHealth::class);
         Event::listen(RatePlanApproved::class, ChargeRegistrationTopUps::class);
         Event::listen([MonthlyDuesGenerated::class, LateFeesApplied::class], ApplyAdvanceAfterCharges::class);
         // Registered after the advance listener so notices show what is still owed.
@@ -112,6 +122,34 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('runIntegrityChecks', fn (User $user): bool => $user->hasAnyOf(Role::SuperAdmin, Role::Accountant, Role::Auditor));
 
         Model::preventLazyLoading(! $this->app->isProduction());
+
+        // SOMITI_SPEC.md §8.1: the built-in navigation actions look the same everywhere.
+        CreateAction::configureUsing(fn (CreateAction $action): CreateAction => $action
+            ->icon(Heroicon::OutlinedPlus)
+            ->color('primary')
+            ->tooltip(fn (CreateAction $action): string|Htmlable|null => $action->getLabel()));
+        EditAction::configureUsing(fn (EditAction $action): EditAction => $action
+            ->icon(Heroicon::OutlinedPencilSquare)
+            ->color('warning')
+            ->tooltip(__('common.edit')));
+        ViewAction::configureUsing(fn (ViewAction $action): ViewAction => $action
+            ->icon(Heroicon::OutlinedEye)
+            ->color('gray')
+            ->tooltip(__('common.view')));
+
+        // SOMITI_SPEC.md §8.4: every staff table pages, searches and remembers its state the same way.
+        Table::configureUsing(function (Table $table): void {
+            $table
+                ->paginated([10, 25, 50, 100])
+                ->defaultPaginationPageOption(25)
+                ->extremePaginationLinks()
+                ->searchDebounce('400ms')
+                ->filtersLayout(FiltersLayout::AboveContentCollapsible)
+                ->persistFiltersInSession()
+                ->persistSortInSession()
+                ->persistSearchInSession()
+                ->persistColumnSearchesInSession();
+        });
 
         LanguageSwitch::configureUsing(function (LanguageSwitch $switch): void {
             $switch

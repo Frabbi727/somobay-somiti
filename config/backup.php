@@ -165,9 +165,7 @@ return [
             /*
              * The disk names on which the backups will be stored.
              */
-            'disks' => [
-                'local',
-            ],
+            'disks' => array_filter(explode(',', (string) env('BACKUP_DISKS', 'local'))),
 
             /*
              * Determines whether to allow backups to continue when some targets fail instead of failing completely.
@@ -238,7 +236,7 @@ return [
         'notifiable' => Notifiable::class,
 
         'mail' => [
-            'to' => 'your@example.com',
+            'to' => env('BACKUP_MAIL_TO') ?: env('MAIL_FROM_ADDRESS', 'hello@example.com'),
 
             'from' => [
                 'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
@@ -341,7 +339,7 @@ return [
              * of that day will be kept. Older backups within the same day will be removed.
              * If you create backups only once a day, no backups will be removed yet.
              */
-            'keep_daily_backups_for_days' => 16,
+            'keep_daily_backups_for_days' => 30,
 
             /*
              * After the "keep_daily_backups_for_days" period is over, the most recent backup

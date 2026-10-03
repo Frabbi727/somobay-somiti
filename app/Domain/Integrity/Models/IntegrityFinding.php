@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Integrity\Models;
 
+use App\Policies\IntegrityFindingPolicy;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -14,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $message
  * @property array<string, int|string|null>|null $context
  */
+#[UsePolicy(IntegrityFindingPolicy::class)]
 final class IntegrityFinding extends Model
 {
     public $timestamps = false;

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domain\Members\Models;
 
+use App\Policies\NomineePolicy;
 use App\Support\Money\Bps;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -21,6 +23,7 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property int $share_bps
  * @property int $sort
  */
+#[UsePolicy(NomineePolicy::class)]
 final class Nominee extends Model
 {
     use LogsActivity, SoftDeletes;

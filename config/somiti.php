@@ -38,4 +38,16 @@ return [
 
     'max_proof_kb' => 2048,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Security
+    |--------------------------------------------------------------------------
+    |
+    | Staff must set up an authenticator app before using the panel (§2, P7.S2).
+    | Switch off only for local development or tests.
+    |
+    */
+
+    'require_mfa' => (bool) env('SOMITI_REQUIRE_MFA', true),
+
 ];

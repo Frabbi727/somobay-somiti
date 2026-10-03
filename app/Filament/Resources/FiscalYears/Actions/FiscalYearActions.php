@@ -125,6 +125,7 @@ final class FiscalYearActions
     {
         $action = Action::make($name)
             ->label(fn (): string => __('accounting.actions.open_fiscal_year_heading', ['code' => FiscalCalendar::code($startYear())]))
+            ->tooltip(fn (): string => __('accounting.actions.open_fiscal_year_heading', ['code' => FiscalCalendar::code($startYear())]))
             ->icon(Heroicon::OutlinedPlus)
             ->color('primary')
             ->authorize('create', FiscalYear::class)

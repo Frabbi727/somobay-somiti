@@ -71,7 +71,7 @@ it('lists open dues with totals and charges late fees on demand', function (): v
     Livewire::test(ListDues::class)
         ->assertCanSeeTableRecords(Due::query()->get())
         ->assertSee('৳ 1,220.00')
-        ->callAction('applyLateFees')
+        ->callAction('applyLateFees', data: ['confirm_text' => __('confirm.word')])
         ->assertNotified(__('dues.late_fees.applied', ['count' => '1', 'amount' => '৳ 20.00']));
 
     expect(Due::query()->where('type', DueType::LateFee)->count())->toBe(1);

@@ -33,10 +33,6 @@ final class DuesTable
         return $table
             ->modifyQueryUsing(fn (Builder $query): Builder => $query->with('member'))
             ->defaultSort(fn (Builder $query): Builder => $query->orderByDesc('month')->orderBy('member_id')->orderBy('id'))
-            ->paginated([10, 25, 50, 100])
-            ->defaultPaginationPageOption(25)
-            ->extremePaginationLinks()
-            ->persistFiltersInSession()
             ->columns([
                 TextColumn::make('member.member_no')
                     ->label(__('dues.member'))
