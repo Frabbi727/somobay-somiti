@@ -61,4 +61,16 @@ final class Display
     {
         return self::isBangla() ? BanglaNumber::digits($value) : (string) $value;
     }
+
+    /**
+     * A debit-positive balance shown as an amount with its side, e.g. "৳ ৫০০.০০ ডেবিট".
+     */
+    public static function balance(Money $net): string
+    {
+        if ($net->isZero()) {
+            return self::money($net);
+        }
+
+        return self::money($net->absolute()).' '.__($net->isPositive() ? 'reports.dr' : 'reports.cr');
+    }
 }
