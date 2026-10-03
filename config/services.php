@@ -37,4 +37,15 @@ return [
         ],
     ],
 
+    'sms' => [
+        // log | bulksmsbd
+        'driver' => env('SMS_DRIVER', 'log'),
+
+        'bulksmsbd' => [
+            'url' => env('BULKSMSBD_URL', 'https://bulksmsbd.net/api/smsapi'),
+            'api_key' => env('BULKSMSBD_API_KEY', ''),
+            'sender_id' => env('BULKSMSBD_SENDER_ID', ''),
+        ],
+    ],
+
 ];

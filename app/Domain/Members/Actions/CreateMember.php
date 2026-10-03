@@ -6,6 +6,7 @@ namespace App\Domain\Members\Actions;
 
 use App\Domain\Members\Data\MemberData;
 use App\Domain\Members\Enums\MemberStatus;
+use App\Domain\Members\Events\MemberJoined;
 use App\Domain\Members\Models\Member;
 use App\Domain\Members\Services\MemberRules;
 use App\Domain\Members\Services\NomineeWriter;
@@ -46,6 +47,8 @@ final class CreateMember
 
             $this->nominees->replace($member, $data->nominees);
             $this->shares->increase($actor, $member, $shares, $effectiveFrom, 'Joined');
+
+            event(new MemberJoined($member));
 
             return $member;
         }, attempts: 3));

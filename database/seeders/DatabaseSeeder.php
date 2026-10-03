@@ -18,7 +18,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call([RoleSeeder::class, ChartOfAccountsSeeder::class]);
+        $this->call([RoleSeeder::class, ChartOfAccountsSeeder::class, SmsTemplateSeeder::class]);
 
         $admin = User::query()->firstOrCreate(
             ['email' => 'admin@somiti.test'],
