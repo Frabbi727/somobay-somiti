@@ -35,6 +35,7 @@ return [
         'statement_matches' => 'স্টেটমেন্ট মিলকরণ',
         'investment_postings' => 'বিনিয়োগ রেজিস্টার',
         'year_end_totals' => 'বার্ষিক সমাপনীর যোগফল',
+        'exited_members_clear' => 'প্রত্যাহারকৃত সদস্যের হিসাব শূন্য',
     ],
     'banner' => [
         'title' => 'হিসাব যাচাইয়ে সমস্যা পাওয়া গেছে।',

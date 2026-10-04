@@ -35,6 +35,7 @@ return [
         'statement_matches' => 'Statement matches',
         'investment_postings' => 'Investment register',
         'year_end_totals' => 'Year-end totals',
+        'exited_members_clear' => 'Exited members cleared',
     ],
     'banner' => [
         'title' => 'Integrity check failed.',

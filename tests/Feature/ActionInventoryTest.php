@@ -40,6 +40,8 @@ function expectedTiers(): array
         'ViewFundTransfer › cancel' => 'T1',
         'CreateStatementImport form › create' => 'T1',
         'InvestmentActions › cancel' => 'T1',
+        'MemberExitActions › cancel' => 'T1',
+        'ViewMemberExit › cancel' => 'T1',
         'ListInvestments table › cancel' => 'T1',
         'ViewInvestment › cancel' => 'T1',
         // Governance records change no money (§7: meetings are T1).
@@ -66,7 +68,7 @@ function expectedTiers(): array
         // Statement reconciliation never changes the books.
         'match' => 'T1', 'unmatch' => 'T1', 'ignore' => 'T1', 'automatch' => 'T1',
         'attendance' => 'T1', 'propose' => 'T1', 'withdraw' => 'T1', 'decide' => 'T3',
-        'income' => 'T3', 'impair' => 'T3', 'settle' => 'T3', 'creditAll' => 'T3',
+        'income' => 'T3', 'impair' => 'T3', 'settle' => 'T3', 'creditAll' => 'T3', 'pay' => 'T3',
         'InvestmentActions › close' => 'T3', 'ViewInvestment › close' => 'T3', 'ListInvestments table › close' => 'T3',
 
         // No confirmation: navigation and downloads.

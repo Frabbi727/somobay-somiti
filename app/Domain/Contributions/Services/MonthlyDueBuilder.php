@@ -30,6 +30,11 @@ final class MonthlyDueBuilder
         return $this->activeLots($month)
             ->join('members as m', 'm.id', '=', 'l.member_id')
             ->where('m.status', MemberStatus::Active->value)
+            // W9: no dues after the exit month once an exit has been requested.
+            ->whereNotExists(fn ($query) => $query->from('member_exits as x')
+                ->whereColumn('x.member_id', 'l.member_id')
+                ->where('x.status', '!=', 'cancelled')
+                ->where('x.exit_month', '<', $month->toDateString()))
             ->whereNull('m.deleted_at')
             ->distinct()
             ->orderBy('l.member_id')

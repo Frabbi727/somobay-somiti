@@ -26,6 +26,8 @@ return [
         'refund' => 'ফেরত',
         'reversal' => 'বাতিল',
         'fee_waiver' => 'মওকুফ ফি ফেরত',
+        'exit_transfer' => 'প্রত্যাহারে সঞ্চয় স্থানান্তর',
+        'exit_settlement' => 'প্রত্যাহার নিষ্পত্তিতে স্থানান্তর',
     ],
     'field' => [
         'member' => 'সদস্য',

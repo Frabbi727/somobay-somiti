@@ -14,11 +14,13 @@ use App\Domain\Contributions\Listeners\ChargeRegistrationTopUps;
 use App\Domain\Contributions\Services\AdvanceLedger;
 use App\Domain\Contributions\Services\AdvanceSubledger;
 use App\Domain\Contributions\Services\DueLedger;
+use App\Domain\Exits\Services\ExitSubledger;
 use App\Domain\Integrity\Checks\AdvanceChain;
 use App\Domain\Integrity\Checks\BalancedEntries;
 use App\Domain\Integrity\Checks\ControlAccounts;
 use App\Domain\Integrity\Checks\DuePaidAmounts;
 use App\Domain\Integrity\Checks\DueSnapshots;
+use App\Domain\Integrity\Checks\ExitedMembersClear;
 use App\Domain\Integrity\Checks\ExpensePostings;
 use App\Domain\Integrity\Checks\InvestmentPostings;
 use App\Domain\Integrity\Checks\JournalHashChain;
@@ -84,7 +86,7 @@ class AppServiceProvider extends ServiceProvider
             $investmentRegisters[] = $abstract;
         }
 
-        $this->app->tag([AdvanceSubledger::class, DividendSubledger::class, ...$investmentRegisters], 'somiti.subledgers');
+        $this->app->tag([AdvanceSubledger::class, DividendSubledger::class, ExitSubledger::class, ...$investmentRegisters], 'somiti.subledgers');
 
         $this->app->tag([
             BalancedEntries::class,
@@ -100,6 +102,7 @@ class AppServiceProvider extends ServiceProvider
             StatementMatches::class,
             InvestmentPostings::class,
             YearEndTotals::class,
+            ExitedMembersClear::class,
         ], 'somiti.integrity_checks');
         $this->app->when(InvariantChecker::class)->needs('$checks')->giveTagged('somiti.integrity_checks');
 

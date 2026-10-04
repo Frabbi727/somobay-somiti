@@ -26,6 +26,8 @@ return [
         'refund' => 'Refunded',
         'reversal' => 'Reversed',
         'fee_waiver' => 'Waived fee returned',
+        'exit_transfer' => 'Savings moved in on exit',
+        'exit_settlement' => 'Paid into exit settlement',
     ],
     'field' => [
         'member' => 'Member',
