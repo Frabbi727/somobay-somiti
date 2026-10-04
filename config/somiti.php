@@ -40,6 +40,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Governance (Phase 9)
+    |--------------------------------------------------------------------------
+    |
+    | Quorum is a share of those eligible to attend, in basis points (5000 = half),
+    | rounded up to whole people. SET THESE FROM YOUR BYLAWS — the defaults are
+    | placeholders, not legal advice.
+    |
+    | `require_resolution_for` lists the subjects whose approval needs a passed
+    | resolution linked to it (e.g. "rate_plan"); comma-separated in the env.
+    |
+    */
+
+    'quorum_bps' => [
+        'committee' => (int) env('SOMITI_QUORUM_COMMITTEE_BPS', 5001),
+        'general' => (int) env('SOMITI_QUORUM_GENERAL_BPS', 3334),
+        'special_general' => (int) env('SOMITI_QUORUM_SPECIAL_GENERAL_BPS', 3334),
+    ],
+
+    'require_resolution_for' => array_values(array_filter(explode(',', (string) env('SOMITI_REQUIRE_RESOLUTION_FOR', '')))),
+
+    /*
+    |--------------------------------------------------------------------------
     | Expenses
     |--------------------------------------------------------------------------
     |

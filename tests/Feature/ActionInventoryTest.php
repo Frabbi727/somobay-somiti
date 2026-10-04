@@ -39,6 +39,13 @@ function expectedTiers(): array
         'ListFundTransfers table › cancel' => 'T1',
         'ViewFundTransfer › cancel' => 'T1',
         'CreateStatementImport form › create' => 'T1',
+        // Governance records change no money (§7: meetings are T1).
+        'CreateMeeting form › create' => 'T1',
+        'EditMeeting form › save' => 'T1',
+        'MeetingActions › cancel' => 'T1',
+        'ViewMeeting › cancel' => 'T1',
+        'MeetingActions › hold' => 'T2',
+        'ViewMeeting › hold' => 'T2',
         'CreateJournalDraft form › create' => 'T1',
         'EditJournalDraft form › save' => 'T1',
 
@@ -55,10 +62,12 @@ function expectedTiers(): array
         'restore' => 'T1', 'duplicate' => 'T1', 'reactivate' => 'T1', 'lock' => 'T1',
         // Statement reconciliation never changes the books.
         'match' => 'T1', 'unmatch' => 'T1', 'ignore' => 'T1', 'automatch' => 'T1',
+        'attendance' => 'T1', 'propose' => 'T1', 'withdraw' => 'T1', 'decide' => 'T3',
 
         // No confirmation: navigation and downloads.
         'view' => null, 'edit' => null, 'pdf' => null, 'excel' => null, 'receipt' => null,
         'downloadImpact' => null, 'generate' => null, 'newVoucher' => null, 'collect' => null,
+        'meeting' => null,
     ];
 }
 
