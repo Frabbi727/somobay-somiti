@@ -26,8 +26,8 @@ it('schedules the nightly jobs at their Dhaka times', function (string $command,
     'dues' => ['somiti:dues:generate', '30 0 1 * *'],
     'late fees' => ['somiti:late-fees:apply', '0 1 * * *'],
     'integrity' => ['somiti:integrity:check', '0 2 * * *'],
-    'backup clean' => ['backup:clean', '0 3 * * *'],
-    'backup' => ['backup:run', '30 3 * * *'],
+    'backup' => ['somiti:backup', '30 23 * * *'],
+    'backup clean' => ['backup:clean', '55 23 * * *'],
     'backup monitor' => ['backup:monitor', '0 9 * * *'],
 ]);
 

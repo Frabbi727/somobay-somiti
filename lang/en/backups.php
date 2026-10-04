@@ -1,0 +1,52 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'title' => 'Backups',
+    'subheading' => 'The database and uploaded files, encrypted (AES-256), every night at 11:30 pm — on this server and off-site.',
+    'schedule' => 'Automatic every night at 11:30 pm (Bangladesh time). Old backups are thinned out: all for 7 days, then one a day for 30 days, one a week for 12 weeks, one a month for 2 years, one a year for 7 years.',
+    'list' => 'All backups',
+    'none' => 'No backups yet.',
+    'never' => 'Never',
+    'when' => 'Taken',
+    'where' => 'Stored',
+    'size' => 'Size',
+    'newest' => 'Newest',
+    'count' => 'Backups',
+    'used' => 'Space used',
+    'healthy' => 'Healthy — last night\'s backup is there.',
+    'unhealthy' => 'Needs attention',
+    'disk' => [
+        'backups' => 'This server',
+        'offsite' => 'Off-site (cloud)',
+        'local' => 'This server (old location)',
+    ],
+    'backup_now' => 'Back up now',
+    'backup_now_help' => 'Takes a full backup straight away (e.g. before a year-end close). It runs in the background; you get a notification when it is done.',
+    'download' => 'Download (encrypted)',
+    'restore' => 'Restore',
+    'upload_restore' => 'Upload & restore',
+    'restore_heading' => 'Replace ALL current data with this backup?',
+    'restore_warning' => 'Everything entered after this backup was taken will be gone. A safety backup of the current data is taken first, and if anything goes wrong nothing is changed. Everyone may need to sign in again.',
+    'file' => 'Backup file (.zip)',
+    'file_help' => 'A backup made by this installation (it must open with this server\'s backup password). Up to :size here; larger files: php artisan somiti:backup:restore.',
+    'no_password_heading' => 'Backups are switched off: no archive password',
+    'no_password_text' => 'Set BACKUP_ARCHIVE_PASSWORD (at least 16 characters) in the server\'s .env and keep a copy somewhere safe — without it, backups cannot be opened.',
+    'notify' => [
+        'started' => 'The backup has started. You will get a notification when it is done.',
+        'done' => 'Backup finished successfully.',
+        'failed' => 'The backup FAILED on :disk. Open Backups to check.',
+        'unhealthy' => 'No recent backup on :disk. Open Backups to check.',
+        'restored' => 'The backup was restored.',
+        'restored_body' => 'Safety backup of the previous data: :safety. Files restored: :files.',
+    ],
+    'errors' => [
+        'no_password' => 'Set BACKUP_ARCHIVE_PASSWORD (at least :min characters) before backing up or restoring.',
+        'not_found' => 'That backup could not be found.',
+        'cannot_open' => 'The file could not be opened. Is it a backup from this installation, with the same backup password?',
+        'not_a_backup' => 'This file is not a Somiti backup (no database inside).',
+        'safety_backup_failed' => 'The safety backup of the current data failed, so nothing was restored.',
+        'restore_failed' => 'The restore failed and was rolled back — the current data is unchanged. Details are in the log.',
+    ],
+];

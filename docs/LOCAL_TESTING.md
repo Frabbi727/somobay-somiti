@@ -164,6 +164,26 @@ sign-out and failed sign-in — who, when, from which IP/browser, and the old �
 Filter by person, action, area, record type or dates. Nothing in it can be edited or deleted (a database
 trigger refuses). Passwords and SMS codes are never logged.
 
+### Backups — `admin@somiti.test`
+**Settings › Backups** (super admin only): health of each place backups are kept, every backup with
+**Download** (still encrypted) and **Restore**, **Back up now** (type `BACKUP`) and **Upload & restore**
+(type `RESTORE`). A restore first takes a safety backup of the current data, replaces the database in one
+transaction (if anything fails nothing changes) and copies the uploaded files back. Downloads and restores
+are written to the audit log.
+
+* Automatic: every night at **23:30** Asia/Dhaka (`php artisan schedule:work` locally; on a server the
+  usual cron line `* * * * * php artisan schedule:run`). Old backups are thinned out at 23:55; at 09:00
+  the health check emails and alerts the super admins if last night's backup is missing.
+* What is in it: the PostgreSQL database and `storage/app/private` (payment proofs, member photos) — not
+  the code and not `.env`. Every file in the zip is AES-256 encrypted with `BACKUP_ARCHIVE_PASSWORD`;
+  without a password of at least 16 characters no backup is taken (and the super admins are alerted).
+* **Keep `BACKUP_ARCHIVE_PASSWORD` and `APP_KEY` somewhere safe outside the server** (e.g. a password
+  manager). Without the password the backups cannot be opened.
+* Off-site: create a private bucket (Cloudflare R2, Backblaze B2, AWS S3, …) and keys that can only reach
+  that bucket, fill `BACKUP_S3_*` in `.env` and set `BACKUP_DISKS=backups,offsite`.
+* Large backups (over 12 MB) are restored on the server:
+  `php artisan somiti:backup:restore /path/to/somiti-….zip --by=admin@somiti.test`.
+
 ### Integrity, alerts and email — `admin@somiti.test`
 1. **Reports › Integrity report** → **Run checks now** → 14 checks, all clear.
 2. Failure alerts go to super admins and accountants (panel, email in Mailpit, SMS in the log).

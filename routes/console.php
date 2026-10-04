@@ -29,16 +29,19 @@ Schedule::command('somiti:integrity:check')
     ->onOneServer();
 
 /*
-| Backups (SOMITI_SPEC.md §2): database + files daily, 30 days retained; off-site disk via BACKUP_DISKS.
+| Backups (SOMITI_SPEC.md §2): every night at 23:30 the database and uploaded files, AES-256 encrypted,
+| to every disk in BACKUP_DISKS (this server + off-site). Old ones are thinned out afterwards
+| (config/backup.php cleanup); the health check in the morning emails and alerts super admins.
 */
 
-Schedule::command('backup:clean')
-    ->dailyAt('03:00')
+Schedule::command('somiti:backup')
+    ->dailyAt('23:30')
     ->timezone('Asia/Dhaka')
+    ->withoutOverlapping()
     ->onOneServer();
 
-Schedule::command('backup:run')
-    ->dailyAt('03:30')
+Schedule::command('backup:clean')
+    ->dailyAt('23:55')
     ->timezone('Asia/Dhaka')
     ->withoutOverlapping()
     ->onOneServer();

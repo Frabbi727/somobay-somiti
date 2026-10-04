@@ -34,6 +34,9 @@ return [
         'signed_in' => 'লগইন',
         'signed_out' => 'লগআউট',
         'sign_in_failed' => 'লগইন ব্যর্থ',
+        'backup_requested' => 'ব্যাকআপ চাওয়া হয়েছে',
+        'backup_downloaded' => 'ব্যাকআপ ডাউনলোড',
+        'backup_restored' => 'ব্যাকআপ পুনরুদ্ধার',
     ],
     'module' => [
         'default' => 'সাধারণ',
@@ -50,6 +53,7 @@ return [
         'messaging' => 'এসএমএস',
         'integrity' => 'সঠিকতা যাচাই',
         'year_end' => 'বছর-শেষ',
+        'backups' => 'ব্যাকআপ',
     ],
     'subject' => [
         'user' => 'ব্যবহারকারী',

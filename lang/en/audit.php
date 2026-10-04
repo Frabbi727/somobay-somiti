@@ -34,6 +34,9 @@ return [
         'signed_in' => 'Signed in',
         'signed_out' => 'Signed out',
         'sign_in_failed' => 'Sign-in failed',
+        'backup_requested' => 'Backup requested',
+        'backup_downloaded' => 'Backup downloaded',
+        'backup_restored' => 'Backup restored',
     ],
     'module' => [
         'default' => 'General',
@@ -50,6 +53,7 @@ return [
         'messaging' => 'SMS',
         'integrity' => 'Integrity',
         'year_end' => 'Year-end',
+        'backups' => 'Backups',
     ],
     'subject' => [
         'user' => 'User',

@@ -6,6 +6,7 @@ namespace App\Providers;
 
 use App\Domain\Accounting\Services\Reconciliation;
 use App\Domain\Audit\Listeners\RecordSignIns;
+use App\Domain\Backups\Listeners\AlertBackupProblem;
 use App\Domain\Contributions\Contracts\AdvanceBalances;
 use App\Domain\Contributions\Events\LateFeesApplied;
 use App\Domain\Contributions\Events\MonthlyDuesGenerated;
@@ -71,6 +72,8 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Spatie\Backup\Events\BackupHasFailed;
+use Spatie\Backup\Events\UnhealthyBackupWasFound;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -134,6 +137,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(LocaleChanged::class, RememberUserLocale::class);
         Event::listen(DiagnosingHealth::class, CheckApplicationHealth::class);
         Event::listen([Login::class, Logout::class, Failed::class], RecordSignIns::class);
+        Event::listen([BackupHasFailed::class, UnhealthyBackupWasFound::class], AlertBackupProblem::class);
         Event::listen(RatePlanApproved::class, ChargeRegistrationTopUps::class);
         Event::listen([MonthlyDuesGenerated::class, LateFeesApplied::class], ApplyAdvanceAfterCharges::class);
         // Registered after the advance listener so notices show what is still owed.
@@ -147,6 +151,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('runIntegrityChecks', fn (User $user): bool => $user->may(Permission::IntegrityRun));
         // Locked rule: only the president decides who holds which permission.
         Gate::define('manageRolePermissions', fn (User $user): bool => $user->hasAnyOf(Role::President));
+        // Locked rule: backups (download, back up now, restore) are for the super admin only.
+        Gate::define('manageBackups', fn (User $user): bool => $user->hasAnyOf(Role::SuperAdmin));
         Gate::define('viewAuditLog', fn (User $user): bool => $user->may(Permission::ViewAuditLog));
 
         Model::preventLazyLoading(! $this->app->isProduction());

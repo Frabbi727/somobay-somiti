@@ -28,6 +28,8 @@ function expectedTiers(): array
     return [
         // Overrides where one name means different things.
         'GenerateDues › run' => 'T3',
+        // Restoring a backup replaces all data (unlike restoring a soft-deleted record).
+        'BackupsPage › restore' => 'T3',
         'IntegrityReport › run' => 'T1',
         'PaymentActions › cancel' => 'T1',
         'ListPayments table › cancel' => 'T1',
@@ -57,7 +59,7 @@ function expectedTiers(): array
         // T3: financial, destructive or bulk.
         'approve' => 'T3', 'reject' => 'T3', 'reverse' => 'T3', 'post' => 'T3', 'close' => 'T3',
         'unlock' => 'T3', 'waive' => 'T3', 'delete' => 'T3', 'cancel' => 'T3', 'deactivate' => 'T3',
-        'refund' => 'T3', 'bulkApprove' => 'T3', 'savePermissions' => 'T3', 'applyLateFees' => 'T3', 'applyAdvance' => 'T3',
+        'refund' => 'T3', 'bulkApprove' => 'T3', 'savePermissions' => 'T3', 'backupNow' => 'T3', 'uploadRestore' => 'T3', 'applyLateFees' => 'T3', 'applyAdvance' => 'T3',
 
         // T2: member, settings, share and payment entry — show what changes.
         'create' => 'T2', 'save' => 'T2', 'toggleActive' => 'T2', 'submit' => 'T2', 'record' => 'T2',
@@ -74,7 +76,7 @@ function expectedTiers(): array
         // No confirmation: navigation and downloads.
         'view' => null, 'edit' => null, 'pdf' => null, 'excel' => null, 'receipt' => null,
         'downloadImpact' => null, 'generate' => null, 'newVoucher' => null, 'collect' => null,
-        'meeting' => null, 'reload' => null,
+        'meeting' => null, 'reload' => null, 'download' => null,
     ];
 }
 
