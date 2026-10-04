@@ -1,0 +1,31 @@
+# Local services for trying Somiti (not for production).
+#
+#   docker compose up -d                 → Mailpit: catches every email the app sends (http://localhost:8025)
+#   docker compose --profile db up -d    → also a PostgreSQL 17 on port 5433, if you have no local PostgreSQL
+#                                          (then set DB_PORT=5433 DB_USERNAME=somiti DB_PASSWORD=somiti in .env)
+services:
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: somiti-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: somiti-postgres
+    profiles: ["db"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: somiti
+      POSTGRES_USER: somiti
+      POSTGRES_PASSWORD: somiti
+      TZ: Asia/Dhaka
+    ports:
+      - "5433:5432"
+    volumes:
+      - somiti-postgres:/var/lib/postgresql/data
+
+volumes:
+  somiti-postgres:
