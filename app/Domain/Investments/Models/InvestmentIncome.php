@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\Investments\Models;
 
 use App\Domain\Accounting\Models\JournalEntry;
-use App\Domain\Investments\Enums\InvestmentEntryKind;
-use App\Policies\InvestmentLedgerEntryPolicy;
+use App\Domain\Contributions\Enums\PaymentMethod;
+use App\Policies\InvestmentIncomePolicy;
 use App\Support\Money\Money;
 use App\Support\Money\MoneyCast;
 use Carbon\CarbonImmutable;
@@ -15,21 +15,23 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Append-only movement of an investment's book value (debit-positive, like its 13xx account).
- *
  * @property int $id
  * @property int $investment_id
- * @property InvestmentEntryKind $kind
- * @property Money $delta_poisha
+ * @property CarbonImmutable $received_on
+ * @property PaymentMethod $received_into
+ * @property Money $gross_poisha
+ * @property Money $tax_deducted_poisha
+ * @property string|null $reference
  * @property int $journal_entry_id
  * @property int $created_by
- * @property CarbonImmutable $created_at
  * @property-read JournalEntry $journalEntry
  */
-#[UsePolicy(InvestmentLedgerEntryPolicy::class)]
-final class InvestmentLedgerEntry extends Model
+#[UsePolicy(InvestmentIncomePolicy::class)]
+final class InvestmentIncome extends Model
 {
     public const null UPDATED_AT = null;
+
+    protected $table = 'investment_income';
 
     protected $guarded = [];
 
@@ -56,12 +58,18 @@ final class InvestmentLedgerEntry extends Model
         return $this->belongsTo(JournalEntry::class);
     }
 
+    public function net(): Money
+    {
+        return $this->gross_poisha->minus($this->tax_deducted_poisha);
+    }
+
     protected function casts(): array
     {
         return [
-            'kind' => InvestmentEntryKind::class,
-            'delta_poisha' => MoneyCast::class,
-            'created_at' => 'immutable_datetime',
+            'received_on' => 'immutable_date',
+            'received_into' => PaymentMethod::class,
+            'gross_poisha' => MoneyCast::class,
+            'tax_deducted_poisha' => MoneyCast::class,
         ];
     }
 }

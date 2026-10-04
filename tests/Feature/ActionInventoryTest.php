@@ -66,6 +66,8 @@ function expectedTiers(): array
         // Statement reconciliation never changes the books.
         'match' => 'T1', 'unmatch' => 'T1', 'ignore' => 'T1', 'automatch' => 'T1',
         'attendance' => 'T1', 'propose' => 'T1', 'withdraw' => 'T1', 'decide' => 'T3',
+        'income' => 'T3', 'impair' => 'T3',
+        'InvestmentActions › close' => 'T3', 'ViewInvestment › close' => 'T3', 'ListInvestments table › close' => 'T3',
 
         // No confirmation: navigation and downloads.
         'view' => null, 'edit' => null, 'pdf' => null, 'excel' => null, 'receipt' => null,

@@ -72,6 +72,14 @@ final class Investment extends Model
     }
 
     /**
+     * @return HasMany<InvestmentIncome, $this>
+     */
+    public function income(): HasMany
+    {
+        return $this->hasMany(InvestmentIncome::class);
+    }
+
+    /**
      * @return BelongsTo<Account, $this>
      */
     public function account(): BelongsTo

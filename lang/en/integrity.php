@@ -33,6 +33,7 @@ return [
         'expense_postings' => 'Expense postings',
         'transfer_postings' => 'Fund transfer postings',
         'statement_matches' => 'Statement matches',
+        'investment_postings' => 'Investment register',
     ],
     'banner' => [
         'title' => 'Integrity check failed.',

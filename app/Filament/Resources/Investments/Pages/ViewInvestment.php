@@ -20,7 +20,7 @@ final class ViewInvestment extends ViewRecord
 
     protected function resolveRecord(int|string $key): Model
     {
-        return parent::resolveRecord($key)->load(['ledger.journalEntry', 'resolution', 'recorder', 'approver']);
+        return parent::resolveRecord($key)->load(['ledger.journalEntry', 'income.journalEntry', 'resolution', 'recorder', 'approver']);
     }
 
     public function getTitle(): string
@@ -34,6 +34,9 @@ final class ViewInvestment extends ViewRecord
             InvestmentActions::approve(),
             InvestmentActions::reject(),
             InvestmentActions::cancel(),
+            InvestmentActions::income(),
+            InvestmentActions::impair(),
+            InvestmentActions::close(),
         ];
     }
 }

@@ -15,6 +15,7 @@ use App\Domain\Accounting\Models\FiscalYear;
 use App\Domain\Contributions\Enums\PaymentMethod;
 use App\Domain\Investments\Actions\ApproveInvestment;
 use App\Domain\Investments\Actions\RecordInvestment;
+use App\Domain\Investments\Actions\RecordInvestmentIncome;
 use App\Domain\Investments\Data\InvestmentData;
 use App\Domain\Investments\Enums\InvestmentType;
 use App\Domain\Members\Enums\MemberStatus;
@@ -117,10 +118,7 @@ final class DemoBooksSeeder extends Seeder
         ]));
         app(ApproveInvestment::class)($president, $fixedDeposit);
 
-        $post($accountant, new JournalEntryData(VoucherType::Receipt, CarbonImmutable::parse('2026-09-30'), 'Fixed deposit profit', [
-            JournalLineData::debit($this->account('1111'), Money::ofTaka('62.40')),
-            JournalLineData::credit($this->account('4201'), Money::ofTaka('62.40')),
-        ]));
+        app(RecordInvestmentIncome::class)($accountant, $fixedDeposit, Money::ofTaka('62.40'), Money::zero(), CarbonImmutable::parse('2026-09-30'), PaymentMethod::Bank, 'FDR profit');
 
         $mistake = $post($accountant, new JournalEntryData(VoucherType::Payment, CarbonImmutable::parse('2026-09-26'), 'Rent paid twice by mistake', [
             JournalLineData::debit($this->account('5103'), Money::ofTaka('800')),

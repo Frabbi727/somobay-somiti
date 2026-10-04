@@ -63,6 +63,8 @@ final class InvestmentsTable
                 ActionGroup::make([
                     InvestmentActions::reject(),
                     InvestmentActions::cancel(),
+                    InvestmentActions::income(),
+                    InvestmentActions::close(),
                 ])->iconButton()->icon(Heroicon::OutlinedEllipsisVertical)->tooltip(__('common.more'))->color('gray'),
             ])
             ->emptyStateHeading(__('investments.plural'))
