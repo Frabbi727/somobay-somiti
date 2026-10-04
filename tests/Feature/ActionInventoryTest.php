@@ -38,6 +38,7 @@ function expectedTiers(): array
         'FundTransferActions › cancel' => 'T1',
         'ListFundTransfers table › cancel' => 'T1',
         'ViewFundTransfer › cancel' => 'T1',
+        'CreateStatementImport form › create' => 'T1',
         'CreateJournalDraft form › create' => 'T1',
         'EditJournalDraft form › save' => 'T1',
 
@@ -52,6 +53,8 @@ function expectedTiers(): array
 
         // T1: low-risk, reversible.
         'restore' => 'T1', 'duplicate' => 'T1', 'reactivate' => 'T1', 'lock' => 'T1',
+        // Statement reconciliation never changes the books.
+        'match' => 'T1', 'unmatch' => 'T1', 'ignore' => 'T1', 'automatch' => 'T1',
 
         // No confirmation: navigation and downloads.
         'view' => null, 'edit' => null, 'pdf' => null, 'excel' => null, 'receipt' => null,

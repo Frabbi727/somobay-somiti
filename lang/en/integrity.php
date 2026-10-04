@@ -32,6 +32,7 @@ return [
         'journal_hash_chain' => 'Tamper check (hash chain)',
         'expense_postings' => 'Expense postings',
         'transfer_postings' => 'Fund transfer postings',
+        'statement_matches' => 'Statement matches',
     ],
     'banner' => [
         'title' => 'Integrity check failed.',

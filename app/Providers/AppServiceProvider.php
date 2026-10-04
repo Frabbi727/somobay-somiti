@@ -22,6 +22,7 @@ use App\Domain\Integrity\Checks\DueSnapshots;
 use App\Domain\Integrity\Checks\ExpensePostings;
 use App\Domain\Integrity\Checks\JournalHashChain;
 use App\Domain\Integrity\Checks\PaymentAllocations;
+use App\Domain\Integrity\Checks\StatementMatches;
 use App\Domain\Integrity\Checks\TransferPostings;
 use App\Domain\Integrity\Checks\VoucherSequences;
 use App\Domain\Integrity\Events\IntegrityCheckFailed;
@@ -84,6 +85,7 @@ class AppServiceProvider extends ServiceProvider
             JournalHashChain::class,
             ExpensePostings::class,
             TransferPostings::class,
+            StatementMatches::class,
         ], 'somiti.integrity_checks');
         $this->app->when(InvariantChecker::class)->needs('$checks')->giveTagged('somiti.integrity_checks');
 

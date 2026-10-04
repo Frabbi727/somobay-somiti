@@ -66,7 +66,7 @@ it('passes every check on healthy books and stores the run', function (): void {
     $run = app(RunIntegrityChecks::class)();
 
     expect($run->status)->toBe(IntegrityRunStatus::Passed)
-        ->and($run->checks_run)->toBe(10)
+        ->and($run->checks_run)->toBe(11)
         ->and($run->findings_count)->toBe(0)
         ->and($run->finished_at)->not->toBeNull();
 
