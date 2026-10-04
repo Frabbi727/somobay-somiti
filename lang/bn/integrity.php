@@ -34,6 +34,7 @@ return [
         'transfer_postings' => 'তহবিল স্থানান্তরের পোস্টিং',
         'statement_matches' => 'স্টেটমেন্ট মিলকরণ',
         'investment_postings' => 'বিনিয়োগ রেজিস্টার',
+        'year_end_totals' => 'বার্ষিক সমাপনীর যোগফল',
     ],
     'banner' => [
         'title' => 'হিসাব যাচাইয়ে সমস্যা পাওয়া গেছে।',

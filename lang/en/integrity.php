@@ -34,6 +34,7 @@ return [
         'transfer_postings' => 'Fund transfer postings',
         'statement_matches' => 'Statement matches',
         'investment_postings' => 'Investment register',
+        'year_end_totals' => 'Year-end totals',
     ],
     'banner' => [
         'title' => 'Integrity check failed.',

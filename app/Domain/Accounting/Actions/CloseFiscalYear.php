@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Accounting\Actions;
 
+use App\Domain\Accounting\Enums\AccountType;
 use App\Domain\Accounting\Enums\FiscalYearStatus;
 use App\Domain\Accounting\Enums\PeriodStatus;
 use App\Domain\Accounting\Models\FiscalYear;
@@ -41,6 +42,21 @@ final class CloseFiscalYear
 
             if ($earlierOpen !== null) {
                 throw DomainRuleViolation::because('accounting.errors.earlier_year_open', ['code' => $earlierOpen->code]);
+            }
+
+            // W8: a year with income or expenses is closed through its year-end (appropriation and
+            // dividend), never directly.
+            $hasResults = DB::table('journal_lines as l')
+                ->join('journal_entries as e', 'e.id', '=', 'l.journal_entry_id')
+                ->join('accounts as a', 'a.id', '=', 'l.account_id')
+                ->where('e.fiscal_year_id', $locked->id)
+                ->whereIn('a.type', [AccountType::Income->value, AccountType::Expense->value])
+                ->exists();
+
+            $yearEndPosted = DB::table('year_ends')->where('fiscal_year_id', $locked->id)->where('status', 'posted')->exists();
+
+            if ($hasResults && ! $yearEndPosted) {
+                throw DomainRuleViolation::because('accounting.errors.year_end_required', ['code' => $locked->code]);
             }
 
             $now = CarbonImmutable::now();

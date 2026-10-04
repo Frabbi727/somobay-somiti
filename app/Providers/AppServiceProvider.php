@@ -26,6 +26,7 @@ use App\Domain\Integrity\Checks\PaymentAllocations;
 use App\Domain\Integrity\Checks\StatementMatches;
 use App\Domain\Integrity\Checks\TransferPostings;
 use App\Domain\Integrity\Checks\VoucherSequences;
+use App\Domain\Integrity\Checks\YearEndTotals;
 use App\Domain\Integrity\Events\IntegrityCheckFailed;
 use App\Domain\Integrity\InvariantChecker;
 use App\Domain\Integrity\Listeners\AlertIntegrityFailure;
@@ -41,6 +42,7 @@ use App\Domain\Notifications\Listeners\SendWelcomeSms;
 use App\Domain\Settings\Contracts\GeneratedMonths;
 use App\Domain\Settings\Contracts\RatePlanUsage;
 use App\Domain\Settings\Events\RatePlanApproved;
+use App\Domain\YearEnd\Services\DividendSubledger;
 use App\Enums\Role;
 use App\Http\Middleware\EnsurePortalMember;
 use App\Listeners\CheckApplicationHealth;
@@ -82,7 +84,7 @@ class AppServiceProvider extends ServiceProvider
             $investmentRegisters[] = $abstract;
         }
 
-        $this->app->tag([AdvanceSubledger::class, ...$investmentRegisters], 'somiti.subledgers');
+        $this->app->tag([AdvanceSubledger::class, DividendSubledger::class, ...$investmentRegisters], 'somiti.subledgers');
 
         $this->app->tag([
             BalancedEntries::class,
@@ -97,6 +99,7 @@ class AppServiceProvider extends ServiceProvider
             TransferPostings::class,
             StatementMatches::class,
             InvestmentPostings::class,
+            YearEndTotals::class,
         ], 'somiti.integrity_checks');
         $this->app->when(InvariantChecker::class)->needs('$checks')->giveTagged('somiti.integrity_checks');
 

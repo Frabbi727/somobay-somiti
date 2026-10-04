@@ -3,6 +3,48 @@
 declare(strict_types=1);
 
 return [
+    'singular' => 'Year-end',
+    'plural' => 'Year-ends',
+    'field' => [
+        'status' => 'Status',
+        'net_profit' => 'Net profit',
+        'prior_loss' => 'Deficit brought forward',
+        'loss_offset' => 'Set against the deficit (s.34(4))',
+        'dividend_pool' => 'Dividend pool',
+        'members' => 'Members receiving a dividend',
+        'share_months' => 'Share-months',
+        'dividend' => 'Dividend',
+        'approvals' => 'Approvals',
+        'prepared_by' => 'Prepared by',
+        'president_approval' => 'President',
+        'accountant_approval' => 'Accountant',
+        'awaiting' => 'Awaiting',
+        'posted_at' => 'Posted',
+    ],
+    'wizard' => [
+        'title' => 'Closing wizard',
+        'fiscal_year' => 'Fiscal year',
+        'resolution' => 'AGM resolution',
+        'checklist' => 'Before closing',
+        'ready' => 'Every month but the last is locked and nothing is awaiting approval.',
+        'adjustments_hint' => 'Post any adjustments as vouchers dated in the last month before preparing.',
+        'preview' => 'Preview',
+        'loss_year' => 'A loss year: it closes into the deficit and no dividend is declared.',
+        'prepare' => 'Prepare year-end',
+        'prepare_heading' => 'Prepare the year-end for :code?',
+        'prepare_description' => 'It is saved as a draft for the president and an accountant to approve. Nothing is posted yet.',
+        'prepared' => 'Year-end for :code prepared — now awaiting approval.',
+    ],
+    'actions' => [
+        'approve' => 'Approve',
+        'approve_heading' => 'Approve the :code year-end — net profit :profit, dividend :pool?',
+        'approve_description' => 'When both the president and an accountant have approved, the closing entries are posted and the year is closed. This cannot be undone.',
+        'approve_submit' => 'Approve year-end',
+    ],
+    'notifications' => [
+        'approved' => 'Approval recorded — waiting for the second approver.',
+        'posted' => 'Year-end posted, the year closed and dividends declared.',
+    ],
     'title' => 'Year-end closing',
     'status' => [
         'draft' => 'Draft — awaiting approval',
@@ -20,8 +62,18 @@ return [
         'other_funds' => 'Other funds (bylaws)',
     ],
     'errors' => [
+        'periods_open' => 'Lock every month except the last before closing the year. Still open: :months.',
+        'last_period_locked' => 'The last month must stay open for the closing entries.',
+        'pending_items' => ':count payments, expenses, transfers or investments dated in this year are still awaiting approval.',
+        'already_posted' => 'The year-end for :code is already posted.',
+        'stale' => 'The books changed since this year-end was prepared. Prepare it again, then approve.',
         'rate_bounds' => ':fund must be between :min and :max of net profit.',
         'over_appropriated' => 'The appropriations and loss offset add up to more than the net profit.',
         'no_shareholders' => 'There is a dividend to distribute but no member held shares during the year.',
+    ],
+    'dividend_register' => 'Dividend register',
+    'narration' => [
+        'closing' => 'Year-end closing :code: income and expenses to accumulated surplus',
+        'appropriation' => 'Year-end :code: statutory appropriation and dividend',
     ],
 ];

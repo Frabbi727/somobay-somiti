@@ -59,6 +59,13 @@ final class YearEnd extends Model
     protected $guarded = [];
 
     /**
+     * Always shown with its year (code in titles and confirmations).
+     *
+     * @var list<string>
+     */
+    protected $with = ['fiscalYear'];
+
+    /**
      * @return BelongsTo<FiscalYear, $this>
      */
     public function fiscalYear(): BelongsTo

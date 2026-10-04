@@ -59,7 +59,7 @@ function expectedTiers(): array
 
         // T2: member, settings, share and payment entry — show what changes.
         'create' => 'T2', 'save' => 'T2', 'toggleActive' => 'T2', 'submit' => 'T2', 'record' => 'T2',
-        'changeShares' => 'T2', 'linkResolution' => 'T2', 'openNextFiscalYear' => 'T2', 'openPreviousFiscalYear' => 'T2',
+        'changeShares' => 'T2', 'linkResolution' => 'T2', 'prepare' => 'T2', 'openNextFiscalYear' => 'T2', 'openPreviousFiscalYear' => 'T2',
 
         // T1: low-risk, reversible.
         'restore' => 'T1', 'duplicate' => 'T1', 'reactivate' => 'T1', 'lock' => 'T1',

@@ -100,6 +100,7 @@ return [
         'period_unlocked' => ':month unlocked',
     ],
     'errors' => [
+        'year_end_required' => ':code has income or expenses, so it is closed with the year-end wizard (appropriation and dividend), not directly.',
         'insufficient_funds' => ':account holds only :balance, so :amount cannot be paid from it.',
         'code_format' => 'Account code must be four digits and cannot start with 0.',
         'code_prefix' => ':type account codes must start with :prefix.',

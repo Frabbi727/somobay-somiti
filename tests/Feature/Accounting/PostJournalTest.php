@@ -142,7 +142,7 @@ it('rejects dates without an open fiscal year or in a locked month', function ()
 
     app(LockPeriod::class)($this->accountant, $this->fiscalYear->periods()->firstOrFail());
     expect(violationKey(fn () => ($this->post)($this->accountant, simpleEntry('1101', '4111', '10', '2026-07-31'))))->toBe('journal.errors.period_locked')
-        ->and(($this->post)($this->accountant, simpleEntry('1101', '4111', '10', '2026-08-01'))->voucher_no)->toBe('JV-2026-27-000001');
+        ->and(($this->post)($this->accountant, simpleEntry('1101', '3101', '10', '2026-08-01'))->voucher_no)->toBe('JV-2026-27-000001');
 
     app(CloseFiscalYear::class)(userWithRole(Role::President), $this->fiscalYear);
     expect(violationKey(fn () => ($this->post)($this->accountant, simpleEntry('1101', '4111', '10', '2026-09-01'))))->toBe('accounting.errors.fiscal_year_closed');
