@@ -6,6 +6,7 @@ return [
     'singular' => 'Year-end',
     'plural' => 'Year-ends',
     'field' => [
+        'settlement' => 'How',
         'status' => 'Status',
         'net_profit' => 'Net profit',
         'prior_loss' => 'Deficit brought forward',
@@ -36,12 +37,20 @@ return [
         'prepared' => 'Year-end for :code prepared — now awaiting approval.',
     ],
     'actions' => [
+        'settle' => 'Pay or credit',
+        'settle_heading' => 'Settle the dividend of :member (:amount)?',
+        'settle_submit' => 'Settle :amount',
+        'credit_all' => 'Credit all unpaid to savings',
+        'credit_all_heading' => 'Credit every unpaid :code dividend to the members’ savings?',
+        'credit_all_description' => 'Each member’s dividend is moved from Dividend Payable to their savings, one by one.',
         'approve' => 'Approve',
         'approve_heading' => 'Approve the :code year-end — net profit :profit, dividend :pool?',
         'approve_description' => 'When both the president and an accountant have approved, the closing entries are posted and the year is closed. This cannot be undone.',
         'approve_submit' => 'Approve year-end',
     ],
     'notifications' => [
+        'settled' => 'Dividend settled.',
+        'credited_all' => ':credited dividends credited to savings, :failed could not be.',
         'approved' => 'Approval recorded — waiting for the second approver.',
         'posted' => 'Year-end posted, the year closed and dividends declared.',
     ],
@@ -62,6 +71,8 @@ return [
         'other_funds' => 'Other funds (bylaws)',
     ],
     'errors' => [
+        'already_settled' => 'This dividend has already been paid or credited.',
+        'future_date' => 'The date cannot be in the future.',
         'periods_open' => 'Lock every month except the last before closing the year. Still open: :months.',
         'last_period_locked' => 'The last month must stay open for the closing entries.',
         'pending_items' => ':count payments, expenses, transfers or investments dated in this year are still awaiting approval.',
@@ -73,7 +84,16 @@ return [
     ],
     'dividend_register' => 'Dividend register',
     'narration' => [
+        'dividend_payout' => 'Dividend :code paid out',
+        'dividend_savings' => 'Dividend :code credited to savings',
         'closing' => 'Year-end closing :code: income and expenses to accumulated surplus',
         'appropriation' => 'Year-end :code: statutory appropriation and dividend',
+    ],
+    'settlement' => [
+        'payout' => 'Pay out',
+        'savings' => 'Credit to savings',
+    ],
+    'report' => [
+        'heading' => 'Dividend register :code',
     ],
 ];

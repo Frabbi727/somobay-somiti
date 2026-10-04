@@ -6,6 +6,8 @@ namespace App\Filament\Resources\YearEnds\RelationManagers;
 
 use App\Domain\YearEnd\Enums\DividendStatus;
 use App\Domain\YearEnd\Models\DividendLine;
+use App\Domain\YearEnd\Models\YearEnd;
+use App\Filament\Resources\YearEnds\Actions\YearEndActions;
 use App\Filament\Support\Display;
 use App\Support\Money\Money;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -55,6 +57,8 @@ final class DividendLinesRelationManager extends RelationManager
             ])
             ->filters([
                 SelectFilter::make('status')->label(__('year_end.field.status'))->options(DividendStatus::class),
-            ]);
+            ])
+            ->headerActions($this->getOwnerRecord() instanceof YearEnd ? [YearEndActions::creditAllToSavings()->record($this->getOwnerRecord())] : [])
+            ->recordActions([YearEndActions::settleDividend()->iconButton()]);
     }
 }

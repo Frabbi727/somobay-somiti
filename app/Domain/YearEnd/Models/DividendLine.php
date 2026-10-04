@@ -42,6 +42,11 @@ final class DividendLine extends Model
     protected $guarded = [];
 
     /**
+     * @var list<string>
+     */
+    protected $with = ['yearEnd'];
+
+    /**
      * @return BelongsTo<YearEnd, $this>
      */
     public function yearEnd(): BelongsTo
