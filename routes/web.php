@@ -8,9 +8,8 @@ use App\Http\Middleware\EnsurePortalMember;
 use App\Livewire\Portal;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Home: choose the member portal or the staff panel.
+Route::view('/', 'home')->name('home');
 
 Route::get('/receipts/{payment}', ReceiptController::class)
     ->middleware('signed')
