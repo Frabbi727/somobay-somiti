@@ -34,6 +34,7 @@ final class ViewMember extends ViewRecord
         return [
             EditAction::make()->icon(Heroicon::OutlinedPencilSquare)->color('warning'),
             MemberActions::changeShares(),
+            MemberActions::setPortalPassword(),
             MemberActions::deactivate(),
             MemberActions::reactivate(),
         ];

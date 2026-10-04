@@ -64,7 +64,7 @@ function expectedTiers(): array
         'changeShares' => 'T2', 'linkResolution' => 'T2', 'prepare' => 'T2', 'openNextFiscalYear' => 'T2', 'openPreviousFiscalYear' => 'T2',
 
         // T1: low-risk, reversible.
-        'restore' => 'T1', 'duplicate' => 'T1', 'reactivate' => 'T1', 'lock' => 'T1',
+        'restore' => 'T1', 'duplicate' => 'T1', 'reactivate' => 'T1', 'lock' => 'T1', 'setPortalPassword' => 'T1',
         // Statement reconciliation never changes the books.
         'match' => 'T1', 'unmatch' => 'T1', 'ignore' => 'T1', 'automatch' => 'T1',
         'attendance' => 'T1', 'propose' => 'T1', 'withdraw' => 'T1', 'decide' => 'T3',

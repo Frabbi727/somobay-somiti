@@ -126,4 +126,11 @@ return [
 
     'require_mfa' => (bool) env('SOMITI_REQUIRE_MFA', true),
 
+    /*
+    | Member portal: sign in with an SMS code as well as mobile + password. Switch off when no SMS
+    | gateway is used; members then sign in with the password the secretary sets for them.
+    */
+
+    'portal_otp' => (bool) env('SOMITI_PORTAL_OTP', true),
+
 ];

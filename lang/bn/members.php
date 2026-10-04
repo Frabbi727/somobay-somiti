@@ -64,6 +64,11 @@ return [
         'exited' => 'প্রত্যাহারকৃত',
     ],
     'actions' => [
+        'set_portal_password' => 'পোর্টাল পাসওয়ার্ড দিন',
+        'set_portal_password_heading' => ':member এর পোর্টাল পাসওয়ার্ড দেবেন?',
+        'set_portal_password_description' => 'সদস্য তাঁর মোবাইল নম্বর ও এই পাসওয়ার্ড দিয়ে সদস্য পোর্টালে লগইন করবেন, এবং প্রোফাইল থেকে তা বদলাতে পারবেন।',
+        'portal_password' => 'নতুন পোর্টাল পাসওয়ার্ড',
+        'portal_password_confirmation' => 'পাসওয়ার্ড আবার লিখুন',
         'create' => 'সদস্য যোগ করুন',
         'create_heading' => ':name-কে সদস্য হিসেবে যোগ করবেন?',
         'save_heading' => ':member-এর পরিবর্তন সংরক্ষণ করবেন?',
@@ -84,6 +89,7 @@ return [
         'reason' => 'কারণ',
     ],
     'notifications' => [
+        'portal_password_set' => ':member এর পোর্টাল পাসওয়ার্ড দেওয়া হয়েছে। মোবাইল :mobile দিয়ে লগইন করবেন।',
         'created' => ':member যোগ হয়েছেন',
         'saved' => ':member সংরক্ষিত হয়েছে',
         'shares_changed' => ':month থেকে :member-এর শেয়ার :shares',
@@ -91,6 +97,8 @@ return [
         'reactivated' => ':member আবার সক্রিয় হয়েছেন',
     ],
     'errors' => [
+        'portal_password_short' => 'পোর্টাল পাসওয়ার্ড অন্তত :min অক্ষরের হতে হবে।',
+        'exited' => 'এই সদস্য প্রত্যাহার করেছেন।',
         'names_required' => 'বাংলা ও ইংরেজি দুটি নামই আবশ্যক।',
         'mobile_format' => 'সঠিক বাংলাদেশি মোবাইল নম্বর লিখুন (০১XXXXXXXXX)।',
         'mobile_taken' => 'মোবাইল :mobile অন্য একজন সদস্যের।',

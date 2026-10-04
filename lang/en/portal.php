@@ -22,6 +22,7 @@ return [
         'code_sent' => 'If this number belongs to a member, a code has been sent. It is valid for 5 minutes.',
         'verify' => 'Sign in',
         'use_password' => 'Sign in with password instead',
+        'password_help' => 'No password yet, or forgotten it? Ask the somiti secretary to set one for you.',
         'use_code' => 'Sign in with an SMS code instead',
         'password' => 'Password',
         'resend' => 'Send a new code',

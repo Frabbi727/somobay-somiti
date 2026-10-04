@@ -16,7 +16,11 @@
                    class="mb-4 w-full rounded-lg border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800">
             <button class="w-full rounded-lg bg-emerald-600 py-2 font-medium text-white" wire:loading.attr="disabled">{{ __('portal.login.verify') }}</button>
         </form>
-        <button type="button" wire:click="$set('usePassword', false)" class="mt-3 text-sm text-emerald-700 underline dark:text-emerald-400">{{ __('portal.login.use_code') }}</button>
+        @if (\App\Livewire\Portal\Login::codesEnabled())
+            <button type="button" wire:click="$set('usePassword', false)" class="mt-3 text-sm text-emerald-700 underline dark:text-emerald-400">{{ __('portal.login.use_code') }}</button>
+        @else
+            <p class="mt-3 text-sm text-zinc-600 dark:text-zinc-400">{{ __('portal.login.password_help') }}</p>
+        @endif
     @elseif (! $codeSent)
         <button type="button" wire:click="sendCode" wire:loading.attr="disabled" class="w-full rounded-lg bg-emerald-600 py-2 font-medium text-white">{{ __('portal.login.send_code') }}</button>
         <button type="button" wire:click="$set('usePassword', true)" class="mt-3 text-sm text-emerald-700 underline dark:text-emerald-400">{{ __('portal.login.use_password') }}</button>

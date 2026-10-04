@@ -64,6 +64,11 @@ return [
         'exited' => 'Exited',
     ],
     'actions' => [
+        'set_portal_password' => 'Set portal password',
+        'set_portal_password_heading' => 'Set the portal password for :member?',
+        'set_portal_password_description' => 'The member signs in at the member portal with their mobile number and this password, and can change it from their profile.',
+        'portal_password' => 'New portal password',
+        'portal_password_confirmation' => 'Repeat the password',
         'create' => 'Add member',
         'create_heading' => 'Add :name as a member?',
         'save_heading' => 'Save changes to :member?',
@@ -84,6 +89,7 @@ return [
         'reason' => 'Reason',
     ],
     'notifications' => [
+        'portal_password_set' => 'Portal password set for :member. They sign in with mobile :mobile.',
         'created' => ':member added',
         'saved' => ':member saved',
         'shares_changed' => ':member now has :shares shares from :month',
@@ -91,6 +97,8 @@ return [
         'reactivated' => ':member reactivated',
     ],
     'errors' => [
+        'portal_password_short' => 'The portal password must be at least :min characters.',
+        'exited' => 'This member has exited.',
         'names_required' => 'Both the Bangla and English names are required.',
         'mobile_format' => 'Enter a valid Bangladeshi mobile number (01XXXXXXXXX).',
         'mobile_taken' => 'Mobile :mobile already belongs to another member.',

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Portal;
 
+use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Models\Member;
 use App\Domain\Members\Portal\LoginCodes;
 use App\Domain\Members\Portal\PortalAccounts;
@@ -43,9 +44,28 @@ final class Login extends Component
         app()->setLocale(in_array($locale, ['bn', 'en'], true) ? $locale : 'bn');
     }
 
+    public function mount(): void
+    {
+        $this->usePassword = ! self::codesEnabled();
+    }
+
+    /**
+     * SMS sign-in codes can be switched off (somiti.portal_otp) when no SMS gateway is used.
+     */
+    public static function codesEnabled(): bool
+    {
+        return (bool) config('somiti.portal_otp');
+    }
+
     public function sendCode(LoginCodes $codes): void
     {
         $this->error = null;
+
+        if (! self::codesEnabled()) {
+            $this->usePassword = true;
+
+            return;
+        }
 
         try {
             $codes->send($this->mobile, (string) request()->ip());
@@ -58,6 +78,10 @@ final class Login extends Component
     public function verifyCode(LoginCodes $codes, PortalAccounts $accounts): mixed
     {
         $this->error = null;
+
+        if (! self::codesEnabled()) {
+            return null;
+        }
 
         try {
             $member = $codes->verify($this->mobile, $this->code);
@@ -82,7 +106,7 @@ final class Login extends Component
         }
 
         $mobile = MobileNumber::normalize($this->mobile);
-        $member = $mobile === null ? null : Member::query()->where('mobile', $mobile)->first();
+        $member = $mobile === null ? null : Member::query()->where('mobile', $mobile)->where('status', '!=', MemberStatus::Exited)->first();
         $user = $member === null ? null : $accounts->forMember($member);
 
         if ($user === null || ! Hash::check($this->password, $user->password)) {

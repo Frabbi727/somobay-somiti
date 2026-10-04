@@ -82,6 +82,7 @@ final class MembersTable
                 EditAction::make()->iconButton()->tooltip(__('common.edit'))->icon(Heroicon::OutlinedPencilSquare)->color('warning'),
                 ActionGroup::make([
                     MemberActions::changeShares(),
+                    MemberActions::setPortalPassword(),
                     MemberActions::deactivate(),
                     MemberActions::reactivate(),
                 ])->iconButton()->tooltip(__('common.more')),

@@ -35,7 +35,9 @@ To start again at any time: `php artisan somiti:demo --fresh`.
 | accountant2@somiti.test | Accountant | A second checker (one accountant cannot approve their own entries) |
 | auditor@somiti.test | Auditor | Read-only everywhere, all reports |
 
-**Members — http://127.0.0.1:8002/portal** (mobile + `password`, or "send code": the code is in `storage/logs/laravel.log`)
+**Members — http://127.0.0.1:8002/portal** (mobile + `password`). SMS codes are off locally
+(`SOMITI_PORTAL_OTP=false`); for a new member, the secretary or president opens the member and uses
+**Set portal password**. With codes on, the code is written to `storage/logs/laravel.log`.
 
 | No. | Member | Mobile | Story |
 |---|---|---|---|

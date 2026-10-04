@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Members\Actions;
 use App\Domain\Members\Actions\ChangeShares;
 use App\Domain\Members\Actions\DeactivateMember;
 use App\Domain\Members\Actions\ReactivateMember;
+use App\Domain\Members\Actions\SetPortalPassword;
 use App\Domain\Members\Enums\ShareChangeType;
 use App\Domain\Members\Models\Member;
 use App\Domain\Members\Services\ShareChanger;
@@ -83,6 +84,44 @@ final class MemberActions
                     ->success()
                     ->send();
             }));
+    }
+
+    public static function setPortalPassword(): Action
+    {
+        $action = Action::make('setPortalPassword')
+            ->label(__('members.actions.set_portal_password'))
+            ->tooltip(__('members.actions.set_portal_password'))
+            ->icon(Heroicon::OutlinedKey)
+            ->color('info')
+            ->authorize('setPortalPassword')
+            ->schema([
+                TextInput::make('password')
+                    ->label(__('members.actions.portal_password'))
+                    ->password()
+                    ->revealable()
+                    ->required()
+                    ->minLength(SetPortalPassword::MIN_LENGTH)
+                    ->confirmed(),
+                TextInput::make('password_confirmation')
+                    ->label(__('members.actions.portal_password_confirmation'))
+                    ->password()
+                    ->revealable()
+                    ->required(),
+            ])
+            ->action(function (Member $record, array $data): void {
+                DomainActionRunner::run(fn (User $actor): User => app(SetPortalPassword::class)($actor, $record, (string) ($data['password'] ?? '')));
+
+                Notification::make()
+                    ->title(__('members.notifications.portal_password_set', ['member' => $record->displayName(), 'mobile' => Display::digits($record->mobile)]))
+                    ->success()
+                    ->send();
+            });
+
+        return self::tier1(
+            $action,
+            fn (Member $record): string => __('members.actions.set_portal_password_heading', ['member' => $record->displayName()]),
+            __('members.actions.set_portal_password_description'),
+        );
     }
 
     public static function deactivate(): Action
