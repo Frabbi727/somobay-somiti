@@ -39,6 +39,9 @@ function expectedTiers(): array
         'ListFundTransfers table › cancel' => 'T1',
         'ViewFundTransfer › cancel' => 'T1',
         'CreateStatementImport form › create' => 'T1',
+        'InvestmentActions › cancel' => 'T1',
+        'ListInvestments table › cancel' => 'T1',
+        'ViewInvestment › cancel' => 'T1',
         // Governance records change no money (§7: meetings are T1).
         'CreateMeeting form › create' => 'T1',
         'EditMeeting form › save' => 'T1',

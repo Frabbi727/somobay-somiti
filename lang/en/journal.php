@@ -80,6 +80,7 @@ return [
         'posted' => 'Posted as :voucher',
     ],
     'errors' => [
+        'register_account' => 'Account :code is kept by its register (advances, investments…). Use that screen instead of a manual voucher.',
         'narration_required' => 'A narration is required.',
         'too_few_lines' => 'A voucher needs at least two lines.',
         'one_sided' => 'Line :line must have either a debit or a credit greater than zero, not both.',

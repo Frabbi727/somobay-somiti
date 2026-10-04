@@ -12,6 +12,11 @@ use App\Domain\Accounting\Data\JournalLineData;
 use App\Domain\Accounting\Enums\VoucherType;
 use App\Domain\Accounting\Models\Account;
 use App\Domain\Accounting\Models\FiscalYear;
+use App\Domain\Contributions\Enums\PaymentMethod;
+use App\Domain\Investments\Actions\ApproveInvestment;
+use App\Domain\Investments\Actions\RecordInvestment;
+use App\Domain\Investments\Data\InvestmentData;
+use App\Domain\Investments\Enums\InvestmentType;
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Models\Member;
 use App\Enums\Role;
@@ -92,10 +97,25 @@ final class DemoBooksSeeder extends Seeder
             ]));
         }
 
-        $post($accountant, new JournalEntryData(VoucherType::Payment, CarbonImmutable::parse('2026-08-28'), 'Investment in fixed deposit', [
-            JournalLineData::debit($this->account('1301'), Money::ofTaka('3000')),
-            JournalLineData::credit($this->account('1111'), Money::ofTaka('3000')),
+        // Investments go through the register (Phase 10), which keeps 1301 tied to it.
+        $president = User::query()->firstOrCreate(
+            ['email' => 'president@somiti.test'],
+            ['name' => 'Demo President', 'password' => 'password'],
+        );
+        $president->assignRole(Role::President->value);
+
+        $fixedDeposit = app(RecordInvestment::class)($accountant, InvestmentData::fromForm([
+            'type' => InvestmentType::FixedDeposit,
+            'institution' => 'Sonali Bank, Local Office',
+            'instrument_no' => 'FDR-2026-0815',
+            'principal' => Money::ofTaka('3000'),
+            'funded_from' => PaymentMethod::Bank,
+            'invested_on' => '2026-08-28',
+            'matures_on' => '2027-08-28',
+            'expected_rate' => '8.25',
+            'idempotency_key' => '00000000-0000-4000-8000-000000000301',
         ]));
+        app(ApproveInvestment::class)($president, $fixedDeposit);
 
         $post($accountant, new JournalEntryData(VoucherType::Receipt, CarbonImmutable::parse('2026-09-30'), 'Fixed deposit profit', [
             JournalLineData::debit($this->account('1111'), Money::ofTaka('62.40')),

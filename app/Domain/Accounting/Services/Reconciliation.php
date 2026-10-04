@@ -26,6 +26,23 @@ final class Reconciliation
     public function __construct(private readonly iterable $sources = []) {}
 
     /**
+     * Accounts kept by a register (2111 advances, 13xx investments, …): only the register's own
+     * actions may post to them, never a manual voucher.
+     *
+     * @return list<string>
+     */
+    public function registerAccountCodes(): array
+    {
+        $codes = [];
+
+        foreach ($this->sources as $source) {
+            $codes[] = $source->accountCode();
+        }
+
+        return array_values(array_unique($codes));
+    }
+
+    /**
      * @return list<ControlCheck>
      */
     public function controlVsSubledger(CarbonImmutable $asOf): array

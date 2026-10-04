@@ -62,6 +62,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Investments (Phase 10)
+    |--------------------------------------------------------------------------
+    |
+    | s.33 limits are shown as warnings when an investment is approved, never as
+    | blocks. Each rule: the investment type, the maximum in basis points, and the
+    | account whose (credit) balance is the base. The default is the spec's example
+    | — company securities up to 10% of the accumulated surplus. Have your auditor
+    | confirm these against the Act, the Rules and your bylaws.
+    |
+    */
+
+    'investment_limits' => [
+        ['type' => 'company_securities', 'max_bps' => 1000, 'of_account' => '3901'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Expenses
     |--------------------------------------------------------------------------
     |

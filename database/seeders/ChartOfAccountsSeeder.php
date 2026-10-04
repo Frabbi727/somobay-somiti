@@ -24,7 +24,12 @@ final class ChartOfAccountsSeeder extends Seeder
         '1121' => ['bKash Wallet', 'বিকাশ ওয়ালেট', AccountType::Asset, false, false],
         '1122' => ['Nagad Wallet', 'নগদ ওয়ালেট', AccountType::Asset, false, false],
         '1201' => ['Member Dues Receivable', 'সদস্যদের বকেয়া পাওনা', AccountType::Asset, true, true],
-        '1301' => ['Investments', 'বিনিয়োগ', AccountType::Asset, false, false],
+        '1301' => ['Investments – Fixed Deposits', 'বিনিয়োগ – স্থায়ী আমানত (এফডিআর)', AccountType::Asset, true, false],
+        '1302' => ['Investments – Savings Certificates', 'বিনিয়োগ – সঞ্চয়পত্র', AccountType::Asset, true, false],
+        '1303' => ['Investments – Government Securities', 'বিনিয়োগ – সরকারি সিকিউরিটিজ', AccountType::Asset, true, false],
+        '1304' => ['Investments – Shares & Company Securities', 'বিনিয়োগ – শেয়ার ও কোম্পানি সিকিউরিটিজ', AccountType::Asset, true, false],
+        '1305' => ['Investments – Other Cooperatives', 'বিনিয়োগ – অন্যান্য সমবায়', AccountType::Asset, true, false],
+        '1399' => ['Investments – Other', 'বিনিয়োগ – অন্যান্য', AccountType::Asset, true, false],
         '2101' => ['Member Savings Deposits', 'সদস্য সঞ্চয় আমানত', AccountType::Liability, true, true],
         '2111' => ['Member Advance', 'সদস্য অগ্রিম জমা', AccountType::Liability, true, true],
         '2201' => ['Dividend Payable', 'প্রদেয় লভ্যাংশ', AccountType::Liability, true, true],
@@ -42,6 +47,8 @@ final class ChartOfAccountsSeeder extends Seeder
         '5103' => ['Rent & Utilities', 'ভাড়া ও ইউটিলিটি', AccountType::Expense, false, false],
         '5104' => ['Bank & Wallet Charges', 'ব্যাংক ও ওয়ালেট চার্জ', AccountType::Expense, false, false],
         '5105' => ['SMS & Communication', 'এসএমএস ও যোগাযোগ', AccountType::Expense, false, false],
+        '5106' => ['Tax & Duty Deducted at Source', 'উৎসে কর্তিত কর ও শুল্ক', AccountType::Expense, false, false],
+        '5201' => ['Impairment Loss on Investments', 'বিনিয়োগে অবচয় ক্ষতি', AccountType::Expense, false, false],
         '5199' => ['Other Expenses', 'অন্যান্য খরচ', AccountType::Expense, false, false],
     ];
 

@@ -27,7 +27,7 @@ beforeEach(function (): void {
 function accountData(array $overrides = []): AccountData
 {
     return AccountData::fromArray([
-        'code' => '5106',
+        'code' => '5107',
         'name_en' => 'Printing',
         'name_bn' => 'ছাপা খরচ',
         'type' => 'expense',
@@ -56,7 +56,7 @@ it('seeds the standard chart of accounts once', function (): void {
 it('creates an account with the normal balance implied by its type', function (): void {
     $account = app(CreateAccount::class)($this->accountant, accountData());
 
-    expect($account->code)->toBe('5106')
+    expect($account->code)->toBe('5107')
         ->and($account->normal_balance)->toBe(NormalBalance::Debit)
         ->and($account->is_active)->toBeTrue()
         ->and(Activity::query()->where('subject_id', $account->id)->where('subject_type', $account->getMorphClass())->sole()->causer_id)
@@ -79,7 +79,7 @@ it('does not reuse the code of a deleted account', function (): void {
     app(DeleteAccount::class)($this->accountant, $account);
 
     expect(fn () => app(CreateAccount::class)($this->accountant, accountData()))
-        ->toThrow(DomainRuleViolation::class, __('accounting.errors.code_taken', ['code' => '5106']));
+        ->toThrow(DomainRuleViolation::class, __('accounting.errors.code_taken', ['code' => '5107']));
 });
 
 it('lets only super admins and accountants manage accounts', function (Role $role): void {

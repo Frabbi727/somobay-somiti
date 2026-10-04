@@ -53,7 +53,7 @@ it('creates an account through the page after confirmation', function (): void {
 
     Livewire::test(CreateAccount::class)
         ->fillForm([
-            'code' => '5106',
+            'code' => '5107',
             'type' => 'expense',
             'name_en' => 'Printing',
             'name_bn' => 'ছাপা খরচ',
@@ -62,9 +62,9 @@ it('creates an account through the page after confirmation', function (): void {
         ->assertActionMounted(formAction('create'))
         ->callMountedAction()
         ->assertHasNoFormErrors()
-        ->assertNotified(__('accounting.notifications.account_created', ['code' => '5106']));
+        ->assertNotified(__('accounting.notifications.account_created', ['code' => '5107']));
 
-    expect(Account::query()->where('code', '5106')->sole()->name_bn)->toBe('ছাপা খরচ');
+    expect(Account::query()->where('code', '5107')->sole()->name_bn)->toBe('ছাপা খরচ');
 });
 
 it('shows form errors before opening the confirmation', function (): void {
@@ -157,11 +157,11 @@ it('summarises only the changed fields for the edit confirmation', function (): 
 
 it('summarises every field for the create confirmation', function (): void {
     $rows = ChangeSummary::rows(AccountForm::summaryLabels(), [], AccountForm::summaryValues([
-        'code' => '5106', 'type' => 'expense', 'name_en' => 'Printing', 'name_bn' => 'ছাপা খরচ',
+        'code' => '5107', 'type' => 'expense', 'name_en' => 'Printing', 'name_bn' => 'ছাপা খরচ',
     ]));
 
     expect(array_column($rows, 'new', 'label'))->toBe([
-        'Code' => '5106',
+        'Code' => '5107',
         'Type' => 'Expense',
         'Name (Bangla)' => 'ছাপা খরচ',
         'Name (English)' => 'Printing',

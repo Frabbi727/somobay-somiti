@@ -28,6 +28,8 @@ use App\Domain\Integrity\Checks\VoucherSequences;
 use App\Domain\Integrity\Events\IntegrityCheckFailed;
 use App\Domain\Integrity\InvariantChecker;
 use App\Domain\Integrity\Listeners\AlertIntegrityFailure;
+use App\Domain\Investments\Enums\InvestmentType;
+use App\Domain\Investments\Services\InvestmentSubledger;
 use App\Domain\Members\Events\MemberJoined;
 use App\Domain\Notifications\Contracts\SmsGateway;
 use App\Domain\Notifications\Gateways\BulkSmsBdGateway;
@@ -72,7 +74,14 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(GeneratedMonths::class, DueLedger::class);
         $this->app->bind(RatePlanUsage::class, DueLedger::class);
         $this->app->bind(AdvanceBalances::class, AdvanceLedger::class);
-        $this->app->tag([AdvanceSubledger::class], 'somiti.subledgers');
+        $investmentRegisters = [];
+
+        foreach (InvestmentType::cases() as $type) {
+            $this->app->bind($abstract = 'somiti.subledgers.investment.'.$type->value, fn (): InvestmentSubledger => new InvestmentSubledger($type));
+            $investmentRegisters[] = $abstract;
+        }
+
+        $this->app->tag([AdvanceSubledger::class, ...$investmentRegisters], 'somiti.subledgers');
 
         $this->app->tag([
             BalancedEntries::class,

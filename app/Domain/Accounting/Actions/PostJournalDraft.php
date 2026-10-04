@@ -6,8 +6,11 @@ namespace App\Domain\Accounting\Actions;
 
 use App\Domain\Accounting\Data\JournalDraftData;
 use App\Domain\Accounting\Data\JournalEntryData;
+use App\Domain\Accounting\Data\JournalLineData;
+use App\Domain\Accounting\Models\Account;
 use App\Domain\Accounting\Models\JournalDraft;
 use App\Domain\Accounting\Models\JournalEntry;
+use App\Domain\Accounting\Services\Reconciliation;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +21,10 @@ use Illuminate\Support\Facades\Gate;
  */
 final class PostJournalDraft
 {
-    public function __construct(private readonly PostJournal $post) {}
+    public function __construct(
+        private readonly PostJournal $post,
+        private readonly Reconciliation $reconciliation,
+    ) {}
 
     public function __invoke(User $actor, JournalDraft $draft): JournalEntry
     {
@@ -38,6 +44,8 @@ final class PostJournalDraft
                 lines: $locked->lines,
             );
 
+            $this->assertNoRegisterAccounts($data->journalLines());
+
             $entry = ($this->post)($actor, new JournalEntryData(
                 type: $data->type,
                 entryDate: $data->entryDate,
@@ -51,5 +59,21 @@ final class PostJournalDraft
 
             return $entry;
         }, attempts: 3);
+    }
+
+    /**
+     * @param  list<JournalLineData>  $lines
+     */
+    private function assertNoRegisterAccounts(array $lines): void
+    {
+        $registerIds = Account::query()->whereIn('code', $this->reconciliation->registerAccountCodes())->pluck('code', 'id');
+
+        foreach ($lines as $line) {
+            $code = $registerIds->get($line->accountId);
+
+            if ($code !== null) {
+                throw DomainRuleViolation::because('journal.errors.register_account', ['code' => $code]);
+            }
+        }
     }
 }
