@@ -9,7 +9,8 @@ use App\Domain\Integrity\Models\IntegrityRun;
 use App\Domain\YearEnd\Data\AppropriationRates;
 use App\Domain\YearEnd\Services\YearEndCalculator;
 use App\Enums\Role;
-use App\Livewire\Portal\Login;
+use App\Filament\Member\Pages\Auth\MemberLogin;
+use App\Filament\Member\Pages\Dashboard as MemberDashboard;
 use App\Models\User;
 use Database\Seeders\LocalDemoSeeder;
 use Database\Seeders\StaffUserSeeder;
@@ -49,11 +50,12 @@ it('lets every staff login into the panel', function (string $email): void {
 })->with(array_keys(StaffUserSeeder::USERS));
 
 it('lets a member sign in to the portal with mobile and password', function (): void {
-    Livewire::test(Login::class)
-        ->set('mobile', '01711000001')
-        ->set('password', LocalDemoSeeder::PASSWORD)
-        ->call('loginWithPassword')
-        ->assertRedirect(route('portal.dashboard'));
+    Filament::setCurrentPanel('member');
 
-    $this->get(route('portal.dashboard'))->assertOk()->assertSee('রহিম উদ্দিন');
+    Livewire::test(MemberLogin::class)
+        ->fillForm(['mobile' => '01711000001', 'password' => LocalDemoSeeder::PASSWORD])
+        ->call('authenticate')
+        ->assertRedirect(MemberDashboard::getUrl());
+
+    $this->get(MemberDashboard::getUrl())->assertOk()->assertSee('রহিম উদ্দিন');
 });

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Domain\Members\Portal\PortalAccounts;
 use App\Enums\Role;
 use App\Policies\UserPolicy;
 use Carbon\CarbonImmutable;
@@ -46,10 +47,15 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     ];
 
     /**
-     * Staff panel is restricted to users holding a staff role; members use the portal.
+     * The staff panel is for active staff; the member portal for members whose membership has not
+     * ended. Nobody gets into the other panel.
      */
     public function canAccessPanel(Panel $panel): bool
     {
+        if ($panel->getId() === 'member') {
+            return ! $this->isStaff() && app(PortalAccounts::class)->activeMemberOf($this) !== null;
+        }
+
         return $this->isStaff() && $this->isActive();
     }
 

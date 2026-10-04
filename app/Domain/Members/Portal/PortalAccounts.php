@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Members\Portal;
 
+use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Models\Member;
 use App\Enums\Role;
 use App\Models\User;
@@ -41,5 +42,13 @@ final class PortalAccounts
     public function memberOf(User $user): ?Member
     {
         return Member::query()->where('user_id', $user->id)->first();
+    }
+
+    /**
+     * The member behind a portal login, unless their membership has ended.
+     */
+    public function activeMemberOf(User $user): ?Member
+    {
+        return Member::query()->where('user_id', $user->id)->where('status', '!=', MemberStatus::Exited)->first();
     }
 }

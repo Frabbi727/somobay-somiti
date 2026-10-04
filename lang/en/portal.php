@@ -10,6 +10,8 @@ return [
         'receipts' => 'Receipts',
         'submit' => 'Pay by bKash/Nagad',
         'profile' => 'Profile',
+        'statement' => 'Statement',
+        'dividends' => 'Dividends',
         'logout' => 'Sign out',
         'language' => 'বাংলা',
         'theme' => 'Dark mode',
@@ -26,6 +28,7 @@ return [
         'use_code' => 'Sign in with an SMS code instead',
         'password' => 'Password',
         'resend' => 'Send a new code',
+        'method' => 'Sign in with',
     ],
     'dashboard' => [
         'welcome' => 'Assalamu Alaikum, :name',
@@ -39,6 +42,10 @@ return [
         'recent' => 'Recent payments',
         'none' => 'No payments yet.',
         'pay_now' => 'Pay by bKash/Nagad',
+        'all_payments' => 'All payments',
+    ],
+    'dividends' => [
+        'none' => 'No dividends yet.',
     ],
     'dues' => [
         'open_only' => 'Only unpaid',
@@ -65,11 +72,12 @@ return [
     'profile' => [
         'details' => 'Your details',
         'nominees' => 'Nominees',
-        'password' => 'Set a password',
-        'password_help' => 'Optional: lets you sign in without an SMS code.',
+        'password' => 'Change password',
+        'password_help' => 'Enter your current password, then the new one twice.',
         'confirm' => 'Confirm password',
         'save' => 'Save password',
         'password_saved' => 'Password saved.',
+        'current' => 'Current password',
     ],
     'errors' => [
         'mobile_format' => 'Enter a valid Bangladeshi mobile number.',
@@ -77,5 +85,6 @@ return [
         'code_expired' => 'The code has expired or was used up. Ask for a new one.',
         'code_wrong' => 'That code is not correct.',
         'wrong_password' => 'Mobile number or password is not correct.',
+        'current_password' => 'Your current password is not correct.',
     ],
 ];

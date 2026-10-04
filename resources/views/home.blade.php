@@ -10,7 +10,7 @@
     <main class="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-10">
         <div class="mb-8 flex items-center justify-between">
             <h1 class="text-2xl font-semibold">{{ config('app.name') }}</h1>
-            <form method="POST" action="{{ route('portal.locale', app()->getLocale() === 'bn' ? 'en' : 'bn') }}">
+            <form method="POST" action="{{ route('locale', app()->getLocale() === 'bn' ? 'en' : 'bn') }}">
                 @csrf
                 <button class="rounded-full border border-zinc-300 px-3 py-1 text-sm dark:border-zinc-700">{{ __('portal.nav.language') }}</button>
             </form>
@@ -19,7 +19,7 @@
         <p class="mb-6 text-zinc-600 dark:text-zinc-400">{{ __('home.intro') }}</p>
 
         <div class="space-y-4">
-            <a href="{{ route('portal.login') }}" class="block rounded-2xl bg-emerald-600 p-5 text-white shadow-sm transition hover:bg-emerald-700">
+            <a href="{{ route('filament.member.auth.login') }}" class="block rounded-2xl bg-emerald-600 p-5 text-white shadow-sm transition hover:bg-emerald-700">
                 <span class="block text-lg font-semibold">{{ __('home.member.title') }}</span>
                 <span class="mt-1 block text-sm text-emerald-50">{{ __('home.member.text') }}</span>
             </a>

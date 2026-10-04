@@ -141,8 +141,12 @@ financial ones (T3) make you type a number such as the member no. or voucher no.
 4. Try Nasrin (M-0006) as **Deceased** → the payout is split 60/40 between her nominees.
 
 ### Member portal — `01711000003` / `password` (Salma)
-Dashboard (savings, advance, paid-through), dues, receipts (PDF), **Submit bKash/Nagad payment**
-(TrxID + screenshot → appears as pending for the accountant), profile with nominees, language toggle.
+The portal looks and works like the staff panel: menu on the left (a drawer on phones), dark mode, language
+switch, tables with filters and paging. Pages:
+**Dashboard** (savings, advance, paid-through, outstanding, recent payments, *Pay now*), **Dues**,
+**Payments & receipts** (receipt PDF once approved), **Pay by bKash/Nagad** (TrxID + screenshot → pending
+for the accountant), **Statement** (date range + PDF), **Dividends**, **Profile** (nominees, change password).
+Staff logins cannot open `/portal`, and member logins cannot open `/admin`.
 
 ### Integrity, alerts and email — `admin@somiti.test`
 1. **Reports › Integrity report** → **Run checks now** → 14 checks, all clear.
