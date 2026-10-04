@@ -31,6 +31,7 @@ return [
         'due_snapshots' => 'Rate snapshots',
         'journal_hash_chain' => 'Tamper check (hash chain)',
         'expense_postings' => 'Expense postings',
+        'transfer_postings' => 'Fund transfer postings',
     ],
     'banner' => [
         'title' => 'Integrity check failed.',

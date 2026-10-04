@@ -100,6 +100,7 @@ return [
         'period_unlocked' => ':month unlocked',
     ],
     'errors' => [
+        'insufficient_funds' => ':account holds only :balance, so :amount cannot be paid from it.',
         'code_format' => 'Account code must be four digits and cannot start with 0.',
         'code_prefix' => ':type account codes must start with :prefix.',
         'code_taken' => 'Account code :code is already used (possibly by a deleted account).',

@@ -61,6 +61,5 @@ return [
         'idempotency_conflict' => 'এই ফর্মটি ভিন্ন তথ্যসহ আগেই জমা হয়েছে। পাতাটি রিলোড করে আবার চেষ্টা করুন।',
         'not_pending' => 'খরচ :number আর অনুমোদনের অপেক্ষায় নেই।',
         'not_approved' => 'শুধু অনুমোদিত খরচ রিভার্স করা যায় (:number)।',
-        'insufficient_funds' => ':account এ আছে মাত্র :balance, তাই সেখান থেকে :amount পরিশোধ করা যাবে না।',
     ],
 ];

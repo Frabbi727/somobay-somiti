@@ -31,6 +31,7 @@ return [
         'due_snapshots' => 'হারের স্ন্যাপশট',
         'journal_hash_chain' => 'পরিবর্তন যাচাই (হ্যাশ চেইন)',
         'expense_postings' => 'খরচের পোস্টিং',
+        'transfer_postings' => 'তহবিল স্থানান্তরের পোস্টিং',
     ],
     'banner' => [
         'title' => 'হিসাব যাচাইয়ে সমস্যা পাওয়া গেছে।',

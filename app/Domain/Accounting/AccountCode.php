@@ -32,4 +32,7 @@ final class AccountCode
     public const string SERVICE_CHARGE_INCOME = '4111';
 
     public const string LATE_FEE_INCOME = '4121';
+
+    /** Bank & wallet charges (transfer and cash-out fees). */
+    public const string BANK_CHARGES = '5104';
 }

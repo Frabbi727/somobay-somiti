@@ -25,7 +25,7 @@ final class FundsGuard
             ->sum(DB::raw('debit_poisha - credit_poisha')));
 
         if ($balance->isLessThan($outflow)) {
-            throw DomainRuleViolation::because('expenses.errors.insufficient_funds', [
+            throw DomainRuleViolation::because('accounting.errors.insufficient_funds', [
                 'account' => $account->displayName(),
                 'balance' => $balance->format(app()->getLocale()),
                 'amount' => $outflow->format(app()->getLocale()),

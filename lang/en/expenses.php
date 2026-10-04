@@ -61,6 +61,5 @@ return [
         'idempotency_conflict' => 'This form was already submitted with different details. Reload and try again.',
         'not_pending' => 'Expense :number is no longer awaiting approval.',
         'not_approved' => 'Only an approved expense can be reversed (:number).',
-        'insufficient_funds' => ':account holds only :balance, so :amount cannot be paid from it.',
     ],
 ];

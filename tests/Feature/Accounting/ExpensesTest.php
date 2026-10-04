@@ -136,7 +136,7 @@ it('needs the president at or above the threshold', function (): void {
 it('refuses to pay out more than the paying account holds', function (): void {
     $expense = app(RecordExpense::class)($this->cashier, expenseData(['paid_from' => 'bkash']));
 
-    expect(expenseRule(fn () => app(ApproveExpense::class)($this->accountant, $expense)))->toBe('expenses.errors.insufficient_funds')
+    expect(expenseRule(fn () => app(ApproveExpense::class)($this->accountant, $expense)))->toBe('accounting.errors.insufficient_funds')
         ->and($expense->fresh()?->status)->toBe(ExpenseStatus::Pending)
         ->and(JournalEntry::query()->where('voucher_type', 'PV')->count())->toBe(0);
 });

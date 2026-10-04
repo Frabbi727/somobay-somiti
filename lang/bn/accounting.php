@@ -100,6 +100,7 @@ return [
         'period_unlocked' => ':month আনলক হয়েছে',
     ],
     'errors' => [
+        'insufficient_funds' => ':account এ আছে মাত্র :balance, তাই সেখান থেকে :amount পরিশোধ করা যাবে না।',
         'code_format' => 'হিসাব কোড চার অঙ্কের হতে হবে এবং ০ দিয়ে শুরু হতে পারবে না।',
         'code_prefix' => ':type হিসাবের কোড :prefix দিয়ে শুরু হতে হবে।',
         'code_taken' => 'হিসাব কোড :code আগেই ব্যবহৃত হয়েছে (মুছে ফেলা হিসাবেও হতে পারে)।',
