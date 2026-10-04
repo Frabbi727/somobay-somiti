@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace App\Filament\Clusters\Settings\Resources\RatePlans\Actions;
 
+use App\Domain\Governance\Enums\ResolutionStatus;
+use App\Domain\Governance\Enums\ResolutionSubject;
+use App\Domain\Governance\Models\Resolution;
 use App\Domain\Settings\Actions\ApproveRatePlan;
 use App\Domain\Settings\Actions\CancelRatePlan;
 use App\Domain\Settings\Actions\DeleteRatePlan;
 use App\Domain\Settings\Actions\DuplicateRatePlan;
+use App\Domain\Settings\Actions\LinkRatePlanResolution;
 use App\Domain\Settings\Actions\RejectRatePlan;
 use App\Domain\Settings\Actions\SubmitRatePlan;
 use App\Domain\Settings\Data\RatePlanData;
@@ -23,6 +27,7 @@ use App\Filament\Support\DomainActionRunner;
 use App\Models\User;
 use App\Reports\RateImpactDocument;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Support\Enums\Width;
@@ -67,6 +72,50 @@ final class RatePlanActions
             ]))
             ->extraModalFooterActions([self::downloadImpact()])
             ->modalWidth(Width::FourExtraLarge);
+    }
+
+    public static function linkResolution(): Action
+    {
+        $action = Action::make('linkResolution')
+            ->label(__('governance.actions.link_resolution'))
+            ->tooltip(__('governance.actions.link_resolution'))
+            ->icon(Heroicon::OutlinedDocumentCheck)
+            ->color('info')
+            ->authorize('linkResolution')
+            ->schema([
+                Select::make('resolution_id')
+                    ->label(__('governance.field.resolution'))
+                    ->helperText(__('governance.field.resolution_help'))
+                    ->options(fn (RatePlan $record): array => Resolution::query()
+                        ->where('subject', ResolutionSubject::RatePlan)
+                        ->where('status', ResolutionStatus::Passed)
+                        ->whereNotIn('id', RatePlan::query()->whereNotNull('resolution_id')->whereKeyNot($record->id)->select('resolution_id'))
+                        ->orderByDesc('id')
+                        ->get()
+                        ->mapWithKeys(fn (Resolution $resolution): array => [$resolution->id => $resolution->displayName()])
+                        ->all())
+                    ->default(fn (RatePlan $record): ?int => $record->resolution_id)
+                    ->required()
+                    ->native(false),
+            ])
+            ->action(function (RatePlan $record, array $data): void {
+                DomainActionRunner::run(fn (User $actor): RatePlan => app(LinkRatePlanResolution::class)(
+                    $actor,
+                    $record,
+                    Resolution::query()->findOrFail((int) ($data['resolution_id'] ?? 0)),
+                ));
+                self::notify(__('governance.actions.link_resolution'));
+            });
+
+        return self::tier2(
+            $action,
+            heading: fn (RatePlan $record): string => __('governance.actions.link_resolution_heading', ['code' => $record->code]),
+            rows: fn (RatePlan $record, array $data): array => ChangeSummary::rows(
+                ['resolution' => __('governance.field.linked_resolution')],
+                ['resolution' => Resolution::query()->find((int) $record->resolution_id)?->displayName()],
+                ['resolution' => Resolution::query()->find((int) ($data['resolution_id'] ?? 0))?->displayName()],
+            ),
+        );
     }
 
     public static function approve(): Action

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Settings\Actions;
 
+use App\Domain\Governance\Enums\ResolutionSubject;
+use App\Domain\Governance\Services\RequiredResolutions;
 use App\Domain\Settings\Contracts\RatePlanUsage;
 use App\Domain\Settings\Enums\ApprovalDecision;
 use App\Domain\Settings\Enums\RatePlanStatus;
@@ -29,6 +31,7 @@ final class ApproveRatePlan
     public const array REQUIRED_ROLES = [Role::President, Role::Secretary];
 
     public function __construct(
+        private readonly RequiredResolutions $resolutions,
         private readonly RatePlanRules $rules,
         private readonly RatePlanUsage $usage,
         private readonly CauserResolver $causer,
@@ -43,6 +46,9 @@ final class ApproveRatePlan
             if ($locked->status !== RatePlanStatus::PendingApproval) {
                 throw DomainRuleViolation::because('rates.errors.not_pending', ['code' => $locked->code]);
             }
+
+            // Phase 9: where configured, a plan is approved only on the strength of a passed resolution.
+            $this->resolutions->assertSatisfied(ResolutionSubject::RatePlan, $locked->resolution_id);
 
             if ($locked->hasDecided($actor)) {
                 throw DomainRuleViolation::because('rates.errors.already_decided', ['code' => $locked->code]);

@@ -24,7 +24,7 @@ final class ViewRatePlan extends ViewRecord
 
     protected function resolveRecord(int|string $key): Model
     {
-        return parent::resolveRecord($key)->load(['approvals.user', 'creator']);
+        return parent::resolveRecord($key)->load(['approvals.user', 'creator', 'resolution']);
     }
 
     public function getTitle(): string
@@ -36,6 +36,7 @@ final class ViewRatePlan extends ViewRecord
     {
         return [
             EditAction::make()->icon(Heroicon::OutlinedPencilSquare)->color('warning'),
+            RatePlanActions::linkResolution(),
             RatePlanActions::submit(),
             RatePlanActions::approve(),
             RatePlanActions::reject(),

@@ -35,6 +35,16 @@ final class RatePlanPolicy
         return $plan->status === RatePlanStatus::Draft && ! $plan->trashed() && $this->create($user);
     }
 
+    /**
+     * The resolution can be linked while the plan is still a draft or awaiting approval.
+     */
+    public function linkResolution(User $user, RatePlan $plan): bool
+    {
+        return in_array($plan->status, [RatePlanStatus::Draft, RatePlanStatus::PendingApproval], true)
+            && ! $plan->trashed()
+            && $user->hasAnyOf(Role::SuperAdmin, Role::Secretary, Role::Accountant, Role::President);
+    }
+
     public function submit(User $user, RatePlan $plan): bool
     {
         return $this->update($user, $plan);

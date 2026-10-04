@@ -33,6 +33,7 @@ final class EditRatePlan extends EditRecord
     {
         return [
             ViewAction::make(),
+            RatePlanActions::linkResolution(),
             RatePlanActions::submit(),
             RatePlanActions::delete(),
         ];

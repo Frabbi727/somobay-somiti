@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Settings\Models;
 
+use App\Domain\Governance\Models\Resolution;
 use App\Domain\Settings\Enums\AdvancePolicy;
 use App\Domain\Settings\Enums\ApprovalDecision;
 use App\Domain\Settings\Enums\LateFeeBase;
@@ -33,6 +34,7 @@ use Spatie\Activitylog\Support\LogOptions;
  * One version of the somiti's rates, applying from effective_from until a later approved
  * plan starts (BR-5). Approved plans never change (BR-6); corrections are new versions.
  *
+ * @property int|null $resolution_id
  * @property int $id
  * @property string $code
  * @property YearMonth $effective_from
@@ -139,6 +141,16 @@ final class RatePlan extends Model
     public function lateFeeBps(): ?Bps
     {
         return $this->late_fee_bps === null ? null : Bps::of($this->late_fee_bps);
+    }
+
+    /**
+     * The resolution that adopted this plan (required when somiti.require_resolution_for lists rate_plan).
+     *
+     * @return BelongsTo<Resolution, $this>
+     */
+    public function resolution(): BelongsTo
+    {
+        return $this->belongsTo(Resolution::class);
     }
 
     /**

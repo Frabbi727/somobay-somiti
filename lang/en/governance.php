@@ -12,6 +12,8 @@ return [
         'plural' => 'Resolutions',
     ],
     'field' => [
+        'linked_resolution' => 'Adopted by resolution',
+        'resolution_help' => 'Only passed rate-plan resolutions not yet used by another plan are listed.',
         'number' => 'No.',
         'type' => 'Type',
         'title' => 'Title',
@@ -69,6 +71,8 @@ return [
         'two_thirds' => 'Two-thirds majority',
     ],
     'actions' => [
+        'link_resolution' => 'Link resolution',
+        'link_resolution_heading' => 'Link the resolution that adopted :code?',
         'create' => 'New meeting',
         'create_heading' => 'Save this meeting?',
         'save_heading' => 'Save the changes to :number?',
@@ -100,6 +104,9 @@ return [
         'withdrawn' => 'Resolution withdrawn.',
     ],
     'errors' => [
+        'resolution_required' => 'A passed :subject resolution must be linked before this can be approved.',
+        'resolution_unusable' => 'Resolution :number is not a passed :subject resolution.',
+        'resolution_used' => 'Resolution :number already backs another plan.',
         'title_required' => 'Give the meeting a title.',
         'type_frozen' => 'Attendance is already recorded; the meeting type can no longer change.',
         'not_eligible' => 'Only active members (general meetings) or active committee members (committee meetings) can be marked present.',

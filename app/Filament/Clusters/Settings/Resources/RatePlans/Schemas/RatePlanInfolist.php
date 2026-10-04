@@ -9,6 +9,7 @@ use App\Domain\Settings\Enums\ApprovalDecision;
 use App\Domain\Settings\Models\RatePlan;
 use App\Domain\Settings\Models\RatePlanApproval;
 use App\Filament\Clusters\Settings\Resources\RatePlans\Support\RatePlanPresenter;
+use App\Filament\Resources\Meetings\MeetingResource;
 use App\Filament\Support\Display;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
@@ -36,6 +37,12 @@ final class RatePlanInfolist
                             ->badge()
                             ->helperText(fn (RatePlan $record): string => RatePlanPresenter::pendingRoles($record)),
                         TextEntry::make('creator.name')->label(__('rates.plan.created_by')),
+                        TextEntry::make('resolution_id')
+                            ->label(__('governance.field.linked_resolution'))
+                            ->state(fn (RatePlan $record): ?string => $record->resolution?->displayName())
+                            ->url(fn (RatePlan $record): ?string => $record->resolution === null ? null : MeetingResource::getUrl('view', ['record' => $record->resolution->meeting_id]))
+                            ->placeholder('—')
+                            ->columnSpan(2),
                     ]),
                 Section::make(__('rates.plan.rates_section'))
                     ->columns(3)
