@@ -11,6 +11,8 @@ use App\Support\Money\MoneyCast;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * Part of an approved payment applied to one due. Counts only while the payment is approved.
@@ -25,6 +27,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[UsePolicy(PaymentAllocationPolicy::class)]
 final class PaymentAllocation extends Model
 {
+    use LogsActivity;
+
     public const null UPDATED_AT = null;
 
     protected $guarded = [];
@@ -64,5 +68,10 @@ final class PaymentAllocation extends Model
     protected function casts(): array
     {
         return ['amount_poisha' => MoneyCast::class];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logAll()->logExcept(['updated_at'])->logOnlyDirty()->dontLogEmptyChanges()->useLogName('collections');
     }
 }

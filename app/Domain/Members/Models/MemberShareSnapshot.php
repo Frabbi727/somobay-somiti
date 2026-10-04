@@ -9,6 +9,8 @@ use App\Support\Time\YearMonth;
 use App\Support\Time\YearMonthCast;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * The share timeline: a member holds `shares` from effective_from until the next row. Rebuilt
@@ -22,6 +24,8 @@ use Illuminate\Database\Eloquent\Model;
 #[UsePolicy(MemberShareSnapshotPolicy::class)]
 final class MemberShareSnapshot extends Model
 {
+    use LogsActivity;
+
     public $timestamps = false;
 
     protected $guarded = [];
@@ -32,5 +36,10 @@ final class MemberShareSnapshot extends Model
     protected function casts(): array
     {
         return ['effective_from' => YearMonthCast::class, 'shares' => 'integer'];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logAll()->logExcept(['updated_at'])->logOnlyDirty()->dontLogEmptyChanges()->useLogName('members');
     }
 }

@@ -11,6 +11,8 @@ use App\Support\Time\YearMonthCast;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * Shares acquired together from one month (BR-1). A lot never changes size; a decrease ends it
@@ -28,6 +30,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[UsePolicy(ShareLotPolicy::class)]
 final class ShareLot extends Model
 {
+    use LogsActivity;
+
     protected $guarded = [];
 
     protected static function booted(): void
@@ -68,5 +72,10 @@ final class ShareLot extends Model
             'effective_from' => YearMonthCast::class,
             'ended_from' => YearMonthCast::class,
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logAll()->logExcept(['updated_at'])->logOnlyDirty()->dontLogEmptyChanges()->useLogName('members');
     }
 }

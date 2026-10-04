@@ -11,6 +11,8 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * @property int $id
@@ -31,6 +33,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[UsePolicy(SmsMessagePolicy::class)]
 final class SmsMessage extends Model
 {
+    use LogsActivity;
+
     protected $guarded = [];
 
     /**
@@ -47,5 +51,13 @@ final class SmsMessage extends Model
     protected function casts(): array
     {
         return ['status' => SmsStatus::class, 'segments' => 'integer', 'attempts' => 'integer', 'sent_at' => 'immutable_datetime'];
+    }
+
+    /**
+     * SMS bodies can hold sign-in codes, so they stay out of the audit log.
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logAll()->logExcept(['updated_at', 'body'])->logOnlyDirty()->dontLogEmptyChanges()->useLogName('messaging');
     }
 }

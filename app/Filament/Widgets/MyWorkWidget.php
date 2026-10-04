@@ -18,10 +18,12 @@ use App\Domain\Governance\Enums\MeetingStatus;
 use App\Domain\Governance\Models\Meeting;
 use App\Domain\Investments\Enums\InvestmentStatus;
 use App\Domain\Investments\Models\Investment;
+use App\Domain\Settings\Actions\ApproveRatePlan;
 use App\Domain\Settings\Enums\RatePlanStatus;
 use App\Domain\Settings\Models\RatePlan;
 use App\Domain\YearEnd\Enums\YearEndStatus;
 use App\Domain\YearEnd\Models\YearEnd;
+use App\Enums\Permission;
 use App\Enums\Role;
 use App\Filament\Clusters\Settings\Resources\RatePlans\RatePlanResource;
 use App\Filament\Resources\Expenses\ExpenseResource;
@@ -162,16 +164,19 @@ final class MyWorkWidget extends StatsOverviewWidget
     }
 
     /**
-     * Whether the user's role works this queue, for showing an empty (zero) tile.
+     * Whether the user works this queue (their permissions), for showing an empty (zero) tile, for showing an empty (zero) tile.
      */
     private function roleActsOn(User $user, string $key): bool
     {
         return match ($key) {
-            'payments_to_approve', 'expenses_to_approve', 'transfers_to_approve' => $user->hasAnyOf(Role::Accountant, Role::President),
-            'investments_to_approve', 'exits_to_approve' => $user->hasAnyOf(Role::President),
-            'rate_plans_to_approve' => $user->hasAnyOf(Role::President, Role::Secretary),
+            'payments_to_approve' => $user->may(Permission::PaymentsApprove),
+            'expenses_to_approve' => $user->may(Permission::ExpensesApprove),
+            'transfers_to_approve' => $user->may(Permission::TransfersApprove),
+            'investments_to_approve' => $user->may(Permission::InvestmentsApprove),
+            'exits_to_approve' => $user->may(Permission::ExitsApprove),
+            'rate_plans_to_approve' => $user->hasAnyOf(...ApproveRatePlan::REQUIRED_ROLES),
             'year_ends_to_approve' => $user->hasAnyOf(Role::President, Role::Accountant),
-            'exits_to_pay' => $user->hasAnyOf(Role::Accountant, Role::President),
+            'exits_to_pay' => $user->may(Permission::ExitsPay),
             default => false,
         };
     }

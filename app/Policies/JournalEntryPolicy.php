@@ -6,7 +6,7 @@ namespace App\Policies;
 
 use App\Domain\Accounting\Models\JournalEntry;
 use App\Enums\Area;
-use App\Enums\Role;
+use App\Enums\Permission;
 use App\Models\User;
 
 /**
@@ -30,7 +30,7 @@ final class JournalEntryPolicy
      */
     public function reverse(User $user, JournalEntry $entry): bool
     {
-        return $user->hasAnyOf(Role::Accountant, Role::President)
+        return $user->may(Permission::JournalsReverse)
             && ! $entry->isReversal()
             && ! $entry->isReversed()
             && ! $entry->isOwnedByRecord();

@@ -7,7 +7,7 @@ namespace App\Policies;
 use App\Domain\YearEnd\Enums\DividendStatus;
 use App\Domain\YearEnd\Models\DividendLine;
 use App\Enums\Area;
-use App\Enums\Role;
+use App\Enums\Permission;
 use App\Models\User;
 
 final class DividendLinePolicy
@@ -24,7 +24,7 @@ final class DividendLinePolicy
 
     public function settle(User $user, DividendLine $line): bool
     {
-        return $line->status === DividendStatus::Unpaid && $user->hasAnyOf(Role::Accountant, Role::President);
+        return $line->status === DividendStatus::Unpaid && $user->may(Permission::DividendsSettle);
     }
 
     public function create(User $user): bool

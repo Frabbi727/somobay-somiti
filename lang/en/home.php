@@ -12,4 +12,5 @@ return [
         'title' => 'Staff login',
         'text' => 'For the committee: president, secretary, cashier, accountant and auditor.',
     ],
+    'help' => 'No password yet, or forgotten it? Members ask the secretary; staff ask the super admin.',
 ];

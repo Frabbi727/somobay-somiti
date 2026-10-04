@@ -13,6 +13,8 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * Append-only movement of an investment's book value (debit-positive, like its 13xx account).
@@ -29,6 +31,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[UsePolicy(InvestmentLedgerEntryPolicy::class)]
 final class InvestmentLedgerEntry extends Model
 {
+    use LogsActivity;
+
     public const null UPDATED_AT = null;
 
     protected $guarded = [];
@@ -63,5 +67,10 @@ final class InvestmentLedgerEntry extends Model
             'delta_poisha' => MoneyCast::class,
             'created_at' => 'immutable_datetime',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logAll()->logExcept(['updated_at'])->logOnlyDirty()->dontLogEmptyChanges()->useLogName('investments');
     }
 }

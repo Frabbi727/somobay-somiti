@@ -6,7 +6,7 @@ namespace App\Policies;
 
 use App\Domain\Accounting\Models\StatementImport;
 use App\Enums\Area;
-use App\Enums\Role;
+use App\Enums\Permission;
 use App\Models\User;
 
 /**
@@ -27,7 +27,7 @@ final class StatementImportPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasAnyOf(Role::Accountant, Role::President);
+        return $user->may(Permission::StatementsImport);
     }
 
     public function update(User $user, StatementImport $import): bool

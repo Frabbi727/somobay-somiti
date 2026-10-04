@@ -12,6 +12,8 @@ use App\Support\Money\MoneyCast;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * Who received what from an exit settlement (the member, or each nominee by share_bps).
@@ -27,6 +29,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[UsePolicy(MemberExitPayoutPolicy::class)]
 final class MemberExitPayout extends Model
 {
+    use LogsActivity;
+
     public const null UPDATED_AT = null;
 
     protected $guarded = [];
@@ -46,5 +50,10 @@ final class MemberExitPayout extends Model
             'paid_from' => PaymentMethod::class,
             'share_bps' => 'integer',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logAll()->logExcept(['updated_at'])->logOnlyDirty()->dontLogEmptyChanges()->useLogName('exits');
     }
 }

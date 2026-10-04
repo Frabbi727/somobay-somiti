@@ -11,6 +11,7 @@ use App\Domain\Members\Portal\PortalAccounts;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use App\Support\Contact\MobileNumber;
+use Closure;
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use Filament\Actions\Action;
 use Filament\Auth\Http\Responses\Contracts\LoginResponse;
@@ -21,7 +22,10 @@ use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Timebox;
 use Illuminate\Validation\ValidationException;
 
@@ -41,6 +45,11 @@ final class MemberLogin extends Login
         return __('portal.login.heading');
     }
 
+    public function getSubheading(): Htmlable
+    {
+        return new HtmlString(e(__('login.member.subheading')).'<br><a href="'.e(route('filament.admin.auth.login')).'" class="fi-link font-semibold text-primary-600 hover:underline dark:text-primary-400">'.e(__('login.member.staff_link')).'</a>');
+    }
+
     public static function codesEnabled(): bool
     {
         return (bool) config('somiti.portal_otp');
@@ -53,8 +62,16 @@ final class MemberLogin extends Login
                 ->label(__('portal.login.mobile'))
                 ->tel()
                 ->placeholder('01XXXXXXXXX')
+                ->prefixIcon(Heroicon::OutlinedDevicePhoneMobile)
+                ->helperText(__('login.member.mobile_help'))
+                ->extraInputAttributes(['inputmode' => 'tel'])
                 ->autocomplete('tel')
                 ->required()
+                ->rule(fn (): Closure => function (string $attribute, mixed $value, Closure $fail): void {
+                    if (MobileNumber::normalize((string) $value) === null) {
+                        $fail(__('portal.errors.mobile_format'));
+                    }
+                })
                 ->autofocus(),
             Radio::make('method')
                 ->label(__('portal.login.method'))
@@ -65,6 +82,7 @@ final class MemberLogin extends Login
                 ->visible(fn (): bool => self::codesEnabled()),
             TextInput::make('password')
                 ->label(__('portal.login.password'))
+                ->prefixIcon(Heroicon::OutlinedLockClosed)
                 ->password()
                 ->revealable()
                 ->autocomplete('current-password')
@@ -83,7 +101,7 @@ final class MemberLogin extends Login
                         ->label(__('portal.login.send_code'))
                         ->action(fn () => $this->sendCode()),
                 ),
-            $this->getRememberFormComponent(),
+            $this->getRememberFormComponent()->default(true),
         ]);
     }
 
@@ -184,6 +202,8 @@ final class MemberLogin extends Login
 
     protected function throwFailureValidationException(): never
     {
+        activity('auth')->event('sign_in_failed')->withProperties(['login' => $this->data['mobile'] ?? null, 'panel' => 'member'])->log('sign-in failed');
+
         throw ValidationException::withMessages([
             'data.mobile' => __('portal.errors.wrong_password'),
         ]);

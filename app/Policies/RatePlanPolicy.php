@@ -7,6 +7,7 @@ namespace App\Policies;
 use App\Domain\Settings\Enums\RatePlanStatus;
 use App\Domain\Settings\Models\RatePlan;
 use App\Enums\Area;
+use App\Enums\Permission;
 use App\Enums\Role;
 use App\Models\User;
 
@@ -28,7 +29,7 @@ final class RatePlanPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasAnyOf(Role::SuperAdmin, Role::Secretary, Role::Accountant);
+        return $user->may(Permission::RatePlansDraft);
     }
 
     public function update(User $user, RatePlan $plan): bool
@@ -43,7 +44,7 @@ final class RatePlanPolicy
     {
         return in_array($plan->status, [RatePlanStatus::Draft, RatePlanStatus::PendingApproval], true)
             && ! $plan->trashed()
-            && $user->hasAnyOf(Role::SuperAdmin, Role::Secretary, Role::Accountant, Role::President);
+            && $user->may(Permission::RatePlansLinkResolution);
     }
 
     public function submit(User $user, RatePlan $plan): bool
@@ -62,7 +63,7 @@ final class RatePlanPolicy
     public function cancel(User $user, RatePlan $plan): bool
     {
         return in_array($plan->status, [RatePlanStatus::Draft, RatePlanStatus::PendingApproval, RatePlanStatus::Approved], true)
-            && $user->hasAnyOf(Role::President);
+            && $user->may(Permission::RatePlansCancel);
     }
 
     public function duplicate(User $user, RatePlan $plan): bool

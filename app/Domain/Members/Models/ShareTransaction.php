@@ -14,6 +14,8 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * Append-only log of share changes.
@@ -32,6 +34,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[UsePolicy(ShareTransactionPolicy::class)]
 final class ShareTransaction extends Model
 {
+    use LogsActivity;
+
     public const null UPDATED_AT = null;
 
     protected $guarded = [];
@@ -62,5 +66,10 @@ final class ShareTransaction extends Model
             'effective_from' => YearMonthCast::class,
             'created_at' => 'immutable_datetime',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logAll()->logExcept(['updated_at'])->logOnlyDirty()->dontLogEmptyChanges()->useLogName('members');
     }
 }

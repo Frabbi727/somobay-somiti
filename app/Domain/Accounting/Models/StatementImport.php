@@ -15,6 +15,8 @@ use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * One uploaded bank or wallet statement (CSV). Read-only once imported.
@@ -36,6 +38,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[UsePolicy(StatementImportPolicy::class)]
 final class StatementImport extends Model
 {
+    use LogsActivity;
+
     protected $guarded = [];
 
     /**
@@ -70,5 +74,10 @@ final class StatementImport extends Model
             'duplicates_skipped' => 'integer',
             'created_at' => 'immutable_datetime',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logAll()->logExcept(['updated_at'])->logOnlyDirty()->dontLogEmptyChanges()->useLogName('accounting');
     }
 }

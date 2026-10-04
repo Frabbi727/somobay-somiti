@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Domain\Members\Portal\PortalAccounts;
+use App\Domain\Settings\Services\RolePermissions;
+use App\Enums\Permission;
 use App\Enums\Role;
 use App\Policies\UserPolicy;
 use Carbon\CarbonImmutable;
@@ -21,6 +23,8 @@ use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable(['name', 'email', 'mobile', 'password', 'locale'])]
@@ -38,6 +42,8 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasRoles, InteractsWithAppAuthentication, InteractsWithAppAuthenticationRecovery, Notifiable;
+
+    use LogsActivity;
 
     /**
      * @var array<string, mixed>
@@ -75,6 +81,14 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         return $this->hasAnyRole(array_map(fn (Role $role): string => $role->value, $roles));
     }
 
+    /**
+     * Whether one of the user's roles holds the permission (Settings › Role permissions).
+     */
+    public function may(Permission $permission): bool
+    {
+        return $this->checkPermissionTo($permission->value, RolePermissions::GUARD);
+    }
+
     public function isStaff(): bool
     {
         return $this->hasAnyRole(Role::staff());
@@ -92,5 +106,13 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
             'password' => 'hashed',
             'deactivated_at' => 'immutable_datetime',
         ];
+    }
+
+    /**
+     * Passwords, remember tokens and two-factor secrets are never written to the audit log.
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logOnly(['name', 'email', 'mobile', 'locale', 'deactivated_at'])->logOnlyDirty()->dontLogEmptyChanges()->useLogName('users');
     }
 }

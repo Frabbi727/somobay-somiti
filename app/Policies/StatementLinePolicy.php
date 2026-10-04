@@ -7,7 +7,7 @@ namespace App\Policies;
 use App\Domain\Accounting\Enums\StatementLineStatus;
 use App\Domain\Accounting\Models\StatementLine;
 use App\Enums\Area;
-use App\Enums\Role;
+use App\Enums\Permission;
 use App\Models\User;
 
 final class StatementLinePolicy
@@ -24,7 +24,7 @@ final class StatementLinePolicy
 
     public function match(User $user, StatementLine $line): bool
     {
-        return $line->status === StatementLineStatus::Unmatched && $user->hasAnyOf(Role::Accountant, Role::President);
+        return $line->status === StatementLineStatus::Unmatched && $user->may(Permission::StatementsMatch);
     }
 
     public function ignore(User $user, StatementLine $line): bool
@@ -37,7 +37,7 @@ final class StatementLinePolicy
      */
     public function unmatch(User $user, StatementLine $line): bool
     {
-        return $line->status !== StatementLineStatus::Unmatched && $user->hasAnyOf(Role::Accountant, Role::President);
+        return $line->status !== StatementLineStatus::Unmatched && $user->may(Permission::StatementsMatch);
     }
 
     public function create(User $user): bool

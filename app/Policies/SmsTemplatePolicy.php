@@ -6,7 +6,7 @@ namespace App\Policies;
 
 use App\Domain\Notifications\Models\SmsTemplate;
 use App\Enums\Area;
-use App\Enums\Role;
+use App\Enums\Permission;
 use App\Models\User;
 
 final class SmsTemplatePolicy
@@ -23,7 +23,7 @@ final class SmsTemplatePolicy
 
     public function update(User $user, SmsTemplate $template): bool
     {
-        return $user->hasAnyOf(Role::SuperAdmin, Role::Secretary);
+        return $user->may(Permission::SmsTemplatesEdit);
     }
 
     public function create(User $user): bool

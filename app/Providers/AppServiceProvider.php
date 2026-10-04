@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Domain\Accounting\Services\Reconciliation;
+use App\Domain\Audit\Listeners\RecordSignIns;
 use App\Domain\Contributions\Contracts\AdvanceBalances;
 use App\Domain\Contributions\Events\LateFeesApplied;
 use App\Domain\Contributions\Events\MonthlyDuesGenerated;
@@ -45,6 +46,7 @@ use App\Domain\Settings\Contracts\GeneratedMonths;
 use App\Domain\Settings\Contracts\RatePlanUsage;
 use App\Domain\Settings\Events\RatePlanApproved;
 use App\Domain\YearEnd\Services\DividendSubledger;
+use App\Enums\Permission;
 use App\Enums\Role;
 use App\Listeners\CheckApplicationHealth;
 use App\Listeners\RememberUserLocale;
@@ -58,6 +60,9 @@ use Filament\Actions\ViewAction;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
+use Illuminate\Auth\Events\Failed;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Events\DiagnosingHealth;
@@ -128,6 +133,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(IntegrityCheckFailed::class, AlertIntegrityFailure::class);
         Event::listen(LocaleChanged::class, RememberUserLocale::class);
         Event::listen(DiagnosingHealth::class, CheckApplicationHealth::class);
+        Event::listen([Login::class, Logout::class, Failed::class], RecordSignIns::class);
         Event::listen(RatePlanApproved::class, ChargeRegistrationTopUps::class);
         Event::listen([MonthlyDuesGenerated::class, LateFeesApplied::class], ApplyAdvanceAfterCharges::class);
         // Registered after the advance listener so notices show what is still owed.
@@ -136,9 +142,12 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(MemberJoined::class, SendWelcomeSms::class);
 
         Gate::define('viewReports', fn (User $user): bool => $user->isStaff());
-        Gate::define('generateDues', fn (User $user): bool => $user->hasAnyOf(Role::Accountant, Role::President));
-        Gate::define('refundAdvance', fn (User $user): bool => $user->hasAnyOf(Role::Accountant, Role::President));
-        Gate::define('runIntegrityChecks', fn (User $user): bool => $user->hasAnyOf(Role::SuperAdmin, Role::Accountant, Role::Auditor));
+        Gate::define('generateDues', fn (User $user): bool => $user->may(Permission::DuesGenerate));
+        Gate::define('refundAdvance', fn (User $user): bool => $user->may(Permission::AdvanceRefund));
+        Gate::define('runIntegrityChecks', fn (User $user): bool => $user->may(Permission::IntegrityRun));
+        // Locked rule: only the president decides who holds which permission.
+        Gate::define('manageRolePermissions', fn (User $user): bool => $user->hasAnyOf(Role::President));
+        Gate::define('viewAuditLog', fn (User $user): bool => $user->may(Permission::ViewAuditLog));
 
         Model::preventLazyLoading(! $this->app->isProduction());
 
@@ -173,6 +182,8 @@ class AppServiceProvider extends ServiceProvider
         LanguageSwitch::configureUsing(function (LanguageSwitch $switch): void {
             $switch
                 ->locales(['bn', 'en'])
+                ->visible(insidePanels: true, outsidePanels: true)
+                ->outsidePanelRoutes(['auth.login'])
                 ->labels([
                     'bn' => 'বাংলা',
                     'en' => 'English',

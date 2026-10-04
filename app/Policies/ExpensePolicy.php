@@ -7,6 +7,7 @@ namespace App\Policies;
 use App\Domain\Accounting\Enums\ExpenseStatus;
 use App\Domain\Accounting\Models\Expense;
 use App\Enums\Area;
+use App\Enums\Permission;
 use App\Enums\Role;
 use App\Models\User;
 
@@ -28,7 +29,7 @@ final class ExpensePolicy
 
     public function create(User $user): bool
     {
-        return $user->hasAnyOf(Role::Cashier, Role::Accountant, Role::President);
+        return $user->may(Permission::ExpensesRecord);
     }
 
     public function approve(User $user, Expense $expense): bool
@@ -37,16 +38,17 @@ final class ExpensePolicy
             return false;
         }
 
+        // Locked rule: at or above the large-expense threshold only the president approves.
         return $expense->needsPresident()
             ? $user->hasAnyOf(Role::President)
-            : $user->hasAnyOf(Role::Accountant, Role::President);
+            : $user->may(Permission::ExpensesApprove);
     }
 
     public function reject(User $user, Expense $expense): bool
     {
         return $expense->status === ExpenseStatus::Pending
             && $expense->recorded_by !== $user->id
-            && $user->hasAnyOf(Role::Accountant, Role::President);
+            && $user->may(Permission::ExpensesApprove);
     }
 
     public function cancel(User $user, Expense $expense): bool
@@ -56,7 +58,7 @@ final class ExpensePolicy
 
     public function reverse(User $user, Expense $expense): bool
     {
-        return $expense->status === ExpenseStatus::Approved && $user->hasAnyOf(Role::Accountant, Role::President);
+        return $expense->status === ExpenseStatus::Approved && $user->may(Permission::ExpensesReverse);
     }
 
     public function update(User $user, Expense $expense): bool

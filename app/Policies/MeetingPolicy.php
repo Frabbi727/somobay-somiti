@@ -6,7 +6,7 @@ namespace App\Policies;
 
 use App\Domain\Governance\Models\Meeting;
 use App\Enums\Area;
-use App\Enums\Role;
+use App\Enums\Permission;
 use App\Models\User;
 
 /**
@@ -26,7 +26,7 @@ final class MeetingPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasAnyOf(Role::Secretary, Role::President);
+        return $user->may(Permission::MeetingsManage);
     }
 
     public function update(User $user, Meeting $meeting): bool

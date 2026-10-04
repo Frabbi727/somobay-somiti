@@ -13,6 +13,8 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * One movement of a member's advance (2111): positive = held, negative = applied or refunded.
@@ -34,6 +36,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[UsePolicy(AdvanceLedgerEntryPolicy::class)]
 final class AdvanceLedgerEntry extends Model
 {
+    use LogsActivity;
+
     public const null UPDATED_AT = null;
 
     protected $guarded = [];
@@ -63,5 +67,10 @@ final class AdvanceLedgerEntry extends Model
             'balance_after_poisha' => MoneyCast::class,
             'created_at' => 'immutable_datetime',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logAll()->logExcept(['updated_at'])->logOnlyDirty()->dontLogEmptyChanges()->useLogName('collections');
     }
 }

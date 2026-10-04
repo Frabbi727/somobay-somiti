@@ -8,7 +8,7 @@ use App\Domain\Contributions\Enums\DueStatus;
 use App\Domain\Contributions\Enums\DueType;
 use App\Domain\Contributions\Models\Due;
 use App\Enums\Area;
-use App\Enums\Role;
+use App\Enums\Permission;
 use App\Models\User;
 
 /**
@@ -31,7 +31,7 @@ final class DuePolicy
         return $due->type === DueType::LateFee
             && $due->status === DueStatus::Open
             && $due->paid_poisha->isZero()
-            && $user->hasAnyOf(Role::Accountant, Role::President);
+            && $user->may(Permission::DuesWaive);
     }
 
     public function create(User $user): bool

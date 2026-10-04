@@ -9,7 +9,7 @@ use App\Domain\Governance\Enums\ResolutionStatus;
 use App\Domain\Governance\Models\Meeting;
 use App\Domain\Governance\Models\Resolution;
 use App\Enums\Area;
-use App\Enums\Role;
+use App\Enums\Permission;
 use App\Models\User;
 
 final class ResolutionPolicy
@@ -29,13 +29,13 @@ final class ResolutionPolicy
      */
     public function create(User $user, ?Meeting $meeting = null): bool
     {
-        return $user->hasAnyOf(Role::Secretary, Role::President)
+        return $user->may(Permission::ResolutionsManage)
             && ($meeting === null || $meeting->status !== MeetingStatus::Cancelled);
     }
 
     public function decide(User $user, Resolution $resolution): bool
     {
-        return $resolution->status === ResolutionStatus::Proposed && $user->hasAnyOf(Role::Secretary, Role::President);
+        return $resolution->status === ResolutionStatus::Proposed && $user->may(Permission::ResolutionsManage);
     }
 
     public function withdraw(User $user, Resolution $resolution): bool

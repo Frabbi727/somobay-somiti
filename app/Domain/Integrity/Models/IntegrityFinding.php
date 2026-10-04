@@ -8,6 +8,8 @@ use App\Policies\IntegrityFindingPolicy;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * @property int $id
@@ -19,6 +21,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[UsePolicy(IntegrityFindingPolicy::class)]
 final class IntegrityFinding extends Model
 {
+    use LogsActivity;
+
     public $timestamps = false;
 
     protected $guarded = [];
@@ -34,5 +38,10 @@ final class IntegrityFinding extends Model
     protected function casts(): array
     {
         return ['context' => 'array'];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logAll()->logExcept(['updated_at'])->logOnlyDirty()->dontLogEmptyChanges()->useLogName('integrity');
     }
 }

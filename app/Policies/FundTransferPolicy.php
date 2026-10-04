@@ -7,7 +7,7 @@ namespace App\Policies;
 use App\Domain\Accounting\Enums\TransferStatus;
 use App\Domain\Accounting\Models\FundTransfer;
 use App\Enums\Area;
-use App\Enums\Role;
+use App\Enums\Permission;
 use App\Models\User;
 
 /**
@@ -28,14 +28,14 @@ final class FundTransferPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasAnyOf(Role::Cashier, Role::Accountant, Role::President);
+        return $user->may(Permission::TransfersRecord);
     }
 
     public function approve(User $user, FundTransfer $transfer): bool
     {
         return $transfer->status === TransferStatus::Pending
             && $transfer->recorded_by !== $user->id
-            && $user->hasAnyOf(Role::Accountant, Role::President);
+            && $user->may(Permission::TransfersApprove);
     }
 
     public function reject(User $user, FundTransfer $transfer): bool
@@ -50,7 +50,7 @@ final class FundTransferPolicy
 
     public function reverse(User $user, FundTransfer $transfer): bool
     {
-        return $transfer->status === TransferStatus::Approved && $user->hasAnyOf(Role::Accountant, Role::President);
+        return $transfer->status === TransferStatus::Approved && $user->may(Permission::TransfersReverse);
     }
 
     public function update(User $user, FundTransfer $transfer): bool

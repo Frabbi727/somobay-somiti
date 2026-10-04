@@ -19,6 +19,8 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * Something a member owes for a month (BR-8/9). The amount and the rate snapshot it was built
@@ -46,6 +48,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[UsePolicy(DuePolicy::class)]
 final class Due extends Model
 {
+    use LogsActivity;
+
     /**
      * Columns that may change after creation (BR-9).
      */
@@ -106,5 +110,10 @@ final class Due extends Model
             'status' => DueStatus::class,
             'closed_at' => 'immutable_datetime',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logAll()->logExcept(['updated_at'])->logOnlyDirty()->dontLogEmptyChanges()->useLogName('collections');
     }
 }

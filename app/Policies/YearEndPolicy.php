@@ -7,6 +7,7 @@ namespace App\Policies;
 use App\Domain\YearEnd\Enums\YearEndStatus;
 use App\Domain\YearEnd\Models\YearEnd;
 use App\Enums\Area;
+use App\Enums\Permission;
 use App\Enums\Role;
 use App\Models\User;
 
@@ -27,7 +28,7 @@ final class YearEndPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasAnyOf(Role::Accountant, Role::President);
+        return $user->may(Permission::YearEndPrepare);
     }
 
     public function approve(User $user, YearEnd $yearEnd): bool

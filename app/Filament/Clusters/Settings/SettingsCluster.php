@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Clusters\Settings;
 
 use App\Enums\Area;
+use App\Filament\Clusters\Settings\Pages\RolePermissionsPage;
 use App\Filament\Navigation\NavGroup;
 use App\Models\User;
 use BackedEnum;
@@ -36,7 +37,7 @@ final class SettingsCluster extends Cluster
         $user = auth()->user();
 
         return $user instanceof User
-            && (Area::RatePlans->allows($user) || Area::Messaging->allows($user) || $user->can('viewAny', User::class));
+            && (Area::RatePlans->allows($user) || Area::Messaging->allows($user) || $user->can('viewAny', User::class) || RolePermissionsPage::canAccess());
     }
 
     public static function getClusterBreadcrumb(): string

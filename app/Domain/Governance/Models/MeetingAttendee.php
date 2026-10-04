@@ -10,6 +10,8 @@ use App\Policies\MeetingAttendeePolicy;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * A member (general meetings) or committee user (committee meetings) present at a meeting.
@@ -24,6 +26,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[UsePolicy(MeetingAttendeePolicy::class)]
 final class MeetingAttendee extends Model
 {
+    use LogsActivity;
+
     protected $guarded = [];
 
     /**
@@ -48,5 +52,10 @@ final class MeetingAttendee extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logAll()->logExcept(['updated_at'])->logOnlyDirty()->dontLogEmptyChanges()->useLogName('governance');
     }
 }

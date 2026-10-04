@@ -6,7 +6,7 @@ namespace App\Policies;
 
 use App\Domain\Accounting\Models\Period;
 use App\Enums\Area;
-use App\Enums\Role;
+use App\Enums\Permission;
 use App\Models\User;
 
 final class PeriodPolicy
@@ -23,14 +23,14 @@ final class PeriodPolicy
 
     public function lock(User $user, Period $period): bool
     {
-        return $period->isOpen() && $user->hasAnyOf(Role::President, Role::Accountant);
+        return $period->isOpen() && $user->may(Permission::PeriodsLock);
     }
 
     public function unlock(User $user, Period $period): bool
     {
         return ! $period->isOpen()
             && $period->fiscalYear->isOpen()
-            && $user->hasAnyOf(Role::President, Role::Accountant);
+            && $user->may(Permission::PeriodsLock);
     }
 
     public function create(User $user): bool

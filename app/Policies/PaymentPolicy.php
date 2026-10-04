@@ -7,6 +7,7 @@ namespace App\Policies;
 use App\Domain\Contributions\Enums\PaymentStatus;
 use App\Domain\Contributions\Models\Payment;
 use App\Enums\Area;
+use App\Enums\Permission;
 use App\Enums\Role;
 use App\Models\User;
 
@@ -32,14 +33,14 @@ final class PaymentPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasAnyOf(Role::Cashier, Role::Accountant, Role::President, Role::Member);
+        return $user->hasAnyOf(Role::Member) || $user->may(Permission::PaymentsRecord);
     }
 
     public function approve(User $user, Payment $payment): bool
     {
         return $payment->status === PaymentStatus::Pending
             && $payment->recorded_by !== $user->id
-            && $user->hasAnyOf(Role::Accountant, Role::President);
+            && $user->may(Permission::PaymentsApprove);
     }
 
     public function reject(User $user, Payment $payment): bool
@@ -54,7 +55,7 @@ final class PaymentPolicy
 
     public function reverse(User $user, Payment $payment): bool
     {
-        return $payment->status === PaymentStatus::Approved && $user->hasAnyOf(Role::Accountant, Role::President);
+        return $payment->status === PaymentStatus::Approved && $user->may(Permission::PaymentsReverse);
     }
 
     public function update(User $user, Payment $payment): bool

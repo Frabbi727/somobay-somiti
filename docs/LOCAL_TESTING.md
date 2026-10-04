@@ -65,7 +65,9 @@ headline figures (money figures only for roles that handle money).
 | Accountant | Everything financial: collections, dues, vouchers, chart of accounts, fiscal years, expenses, transfers, statement reconciliation, investments, year-end, exits, rate plans, all reports, integrity |
 | President | Same as the accountant (approves rate plans, investments, year-end, exits, large expenses) |
 | Auditor | Everything, read-only (no action buttons) |
-| Super admin | Everything read-only, plus Settings › Users and SMS templates |
+| Super admin | Everything read-only, plus Settings › Users and SMS templates, the audit log |
+
+These are the defaults; the president can change them in **Settings › Role permissions**.
 
 Pages outside a role's area answer "403 forbidden" even if the address is typed in directly.
 
@@ -147,6 +149,20 @@ switch, tables with filters and paging. Pages:
 **Payments & receipts** (receipt PDF once approved), **Pay by bKash/Nagad** (TrxID + screenshot → pending
 for the accountant), **Statement** (date range + PDF), **Dividends**, **Profile** (nominees, change password).
 Staff logins cannot open `/portal`, and member logins cannot open `/admin`.
+
+### Role permissions — `president@somiti.test`
+**Settings › Role permissions**: a grid of permissions (rows) × roles (columns). Tick or untick boxes, then
+**Save permissions** and type the number of changes. Example: give the cashier *Add members*, sign in as
+`cashier@somiti.test` → **New member** now works. The safety rules never change, whatever is ticked:
+nobody approves their own entry; rate plans need president + secretary; year-end needs president then
+accountant; large expenses/refunds need the president; the auditor stays read-only; only the super admin
+manages users. The super admin and auditor can see the grid but not change it.
+
+### Audit log — `president@`, `admin@` or `auditor@`
+**Audit Log**: every record created, changed or deleted, every approval and reversal, every sign-in,
+sign-out and failed sign-in — who, when, from which IP/browser, and the old → new value of each field.
+Filter by person, action, area, record type or dates. Nothing in it can be edited or deleted (a database
+trigger refuses). Passwords and SMS codes are never logged.
 
 ### Integrity, alerts and email — `admin@somiti.test`
 1. **Reports › Integrity report** → **Run checks now** → 14 checks, all clear.

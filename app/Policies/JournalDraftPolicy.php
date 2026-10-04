@@ -6,7 +6,7 @@ namespace App\Policies;
 
 use App\Domain\Accounting\Models\JournalDraft;
 use App\Enums\Area;
-use App\Enums\Role;
+use App\Enums\Permission;
 use App\Models\User;
 
 final class JournalDraftPolicy
@@ -23,22 +23,22 @@ final class JournalDraftPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasAnyOf(Role::Accountant, Role::President);
+        return $user->may(Permission::JournalsManage);
     }
 
     public function update(User $user, JournalDraft $draft): bool
     {
-        return ! $draft->isPosted() && ! $draft->trashed() && $user->hasAnyOf(Role::Accountant, Role::President);
+        return ! $draft->isPosted() && ! $draft->trashed() && $user->may(Permission::JournalsManage);
     }
 
     public function post(User $user, JournalDraft $draft): bool
     {
-        return ! $draft->isPosted() && ! $draft->trashed() && $user->hasAnyOf(Role::Accountant, Role::President);
+        return ! $draft->isPosted() && ! $draft->trashed() && $user->may(Permission::JournalsManage);
     }
 
     public function delete(User $user, JournalDraft $draft): bool
     {
-        return ! $draft->isPosted() && $user->hasAnyOf(Role::Accountant, Role::President);
+        return ! $draft->isPosted() && $user->may(Permission::JournalsManage);
     }
 
     public function deleteAny(User $user): bool

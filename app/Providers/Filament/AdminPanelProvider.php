@@ -7,6 +7,7 @@ namespace App\Providers\Filament;
 use App\Domain\Integrity\Models\IntegrityRun;
 use App\Enums\Area;
 use App\Filament\Navigation\NavGroup;
+use App\Filament\Pages\Auth\StaffLogin;
 use App\Models\User;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
@@ -36,7 +37,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->brandName('Somiti Manager')
-            ->login()
+            ->login(StaffLogin::class)
             ->profile()
             ->multiFactorAuthentication([
                 AppAuthentication::make()

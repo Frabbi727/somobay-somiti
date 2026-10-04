@@ -7,9 +7,9 @@ namespace App\Enums;
 use App\Models\User;
 
 /**
- * Who sees which part of the staff panel (menus, lists, records, reports). The one place to change
- * it. What each role may *do* inside an area is still decided by the policies (maker-checker etc.);
- * the auditor and the super admin see everything read-only.
+ * Which part of the staff panel (menus, lists, records, reports) a user sees, through the matching
+ * "view" Permission the president can give to or take from any role. What a user may *do* inside an
+ * area is decided by the policies, from the other permissions and the locked rules (maker-checker etc.).
  *
  * Follows the roles in SOMITI_SPEC.md §1.3.
  */
@@ -43,6 +43,8 @@ enum Area: string
     case CashReports = 'cash_reports';
 
     /**
+     * The roles that see this area until the president changes it (Permission::defaultRoles()).
+     *
      * @return list<Role>
      */
     public function roles(): array
@@ -64,6 +66,6 @@ enum Area: string
 
     public function allows(?User $user): bool
     {
-        return $user !== null && $user->hasAnyOf(...$this->roles());
+        return $user !== null && $user->may(Permission::forArea($this));
     }
 }

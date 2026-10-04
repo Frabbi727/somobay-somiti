@@ -7,7 +7,7 @@ namespace App\Policies;
 use App\Domain\Investments\Enums\InvestmentStatus;
 use App\Domain\Investments\Models\Investment;
 use App\Enums\Area;
-use App\Enums\Role;
+use App\Enums\Permission;
 use App\Models\User;
 
 /**
@@ -28,14 +28,14 @@ final class InvestmentPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasAnyOf(Role::Accountant, Role::Secretary, Role::President);
+        return $user->may(Permission::InvestmentsRecord);
     }
 
     public function approve(User $user, Investment $investment): bool
     {
         return $investment->status === InvestmentStatus::Pending
             && $investment->recorded_by !== $user->id
-            && $user->hasAnyOf(Role::President);
+            && $user->may(Permission::InvestmentsApprove);
     }
 
     public function reject(User $user, Investment $investment): bool
@@ -54,17 +54,17 @@ final class InvestmentPolicy
     public function recordIncome(User $user, Investment $investment): bool
     {
         return in_array($investment->status, [InvestmentStatus::Active, InvestmentStatus::Closed], true)
-            && $user->hasAnyOf(Role::Accountant, Role::President);
+            && $user->may(Permission::InvestmentsIncome);
     }
 
     public function impair(User $user, Investment $investment): bool
     {
-        return $investment->status === InvestmentStatus::Active && $user->hasAnyOf(Role::President);
+        return $investment->status === InvestmentStatus::Active && $user->may(Permission::InvestmentsWriteDown);
     }
 
     public function close(User $user, Investment $investment): bool
     {
-        return $investment->status === InvestmentStatus::Active && $user->hasAnyOf(Role::Accountant, Role::President);
+        return $investment->status === InvestmentStatus::Active && $user->may(Permission::InvestmentsClose);
     }
 
     public function update(User $user, Investment $investment): bool

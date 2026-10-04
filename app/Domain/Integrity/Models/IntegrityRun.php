@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * One execution of the §6.7 checks.
@@ -27,6 +29,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[UsePolicy(IntegrityRunPolicy::class)]
 final class IntegrityRun extends Model
 {
+    use LogsActivity;
+
     public $timestamps = false;
 
     protected $guarded = [];
@@ -69,5 +73,10 @@ final class IntegrityRun extends Model
             'started_at' => 'immutable_datetime',
             'finished_at' => 'immutable_datetime',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logAll()->logExcept(['updated_at'])->logOnlyDirty()->dontLogEmptyChanges()->useLogName('integrity');
     }
 }

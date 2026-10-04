@@ -6,7 +6,7 @@ namespace App\Policies;
 
 use App\Domain\Accounting\Models\Account;
 use App\Enums\Area;
-use App\Enums\Role;
+use App\Enums\Permission;
 use App\Models\User;
 
 final class AccountPolicy
@@ -23,12 +23,12 @@ final class AccountPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasAnyOf(Role::SuperAdmin, Role::Accountant);
+        return $user->may(Permission::AccountsManage);
     }
 
     public function update(User $user, Account $account): bool
     {
-        return $user->hasAnyOf(Role::SuperAdmin, Role::Accountant);
+        return $user->may(Permission::AccountsManage);
     }
 
     /**
@@ -36,7 +36,7 @@ final class AccountPolicy
      */
     public function delete(User $user, Account $account): bool
     {
-        return $user->hasAnyOf(Role::SuperAdmin, Role::Accountant) && ! $account->hasJournalLines();
+        return $user->may(Permission::AccountsManage) && ! $account->hasJournalLines();
     }
 
     public function deleteAny(User $user): bool
@@ -46,7 +46,7 @@ final class AccountPolicy
 
     public function restore(User $user, Account $account): bool
     {
-        return $user->hasAnyOf(Role::SuperAdmin, Role::Accountant);
+        return $user->may(Permission::AccountsManage);
     }
 
     public function forceDelete(User $user, Account $account): bool

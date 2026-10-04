@@ -7,7 +7,7 @@ namespace App\Policies;
 use App\Domain\Exits\Enums\ExitStatus;
 use App\Domain\Exits\Models\MemberExit;
 use App\Enums\Area;
-use App\Enums\Role;
+use App\Enums\Permission;
 use App\Models\User;
 
 /**
@@ -28,24 +28,24 @@ final class MemberExitPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasAnyOf(Role::Secretary, Role::President);
+        return $user->may(Permission::ExitsRequest);
     }
 
     public function approve(User $user, MemberExit $exit): bool
     {
         return $exit->status === ExitStatus::Requested
             && $exit->requested_by !== $user->id
-            && $user->hasAnyOf(Role::President);
+            && $user->may(Permission::ExitsApprove);
     }
 
     public function cancel(User $user, MemberExit $exit): bool
     {
-        return $exit->status === ExitStatus::Requested && $user->hasAnyOf(Role::Secretary, Role::President);
+        return $exit->status === ExitStatus::Requested && $user->may(Permission::ExitsRequest);
     }
 
     public function pay(User $user, MemberExit $exit): bool
     {
-        return $exit->status === ExitStatus::Approved && $user->hasAnyOf(Role::Accountant, Role::President);
+        return $exit->status === ExitStatus::Approved && $user->may(Permission::ExitsPay);
     }
 
     public function update(User $user, MemberExit $exit): bool

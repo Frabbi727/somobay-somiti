@@ -6,7 +6,7 @@ namespace App\Policies;
 
 use App\Domain\Accounting\Models\FiscalYear;
 use App\Enums\Area;
-use App\Enums\Role;
+use App\Enums\Permission;
 use App\Models\User;
 
 final class FiscalYearPolicy
@@ -23,7 +23,7 @@ final class FiscalYearPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasAnyOf(Role::SuperAdmin, Role::Accountant);
+        return $user->may(Permission::FiscalYearsOpen);
     }
 
     /**
@@ -36,7 +36,7 @@ final class FiscalYearPolicy
 
     public function close(User $user, FiscalYear $fiscalYear): bool
     {
-        return $fiscalYear->isOpen() && $user->hasAnyOf(Role::President, Role::Accountant);
+        return $fiscalYear->isOpen() && $user->may(Permission::PeriodsLock);
     }
 
     public function delete(User $user, FiscalYear $fiscalYear): bool

@@ -11,6 +11,8 @@ use App\Support\Money\MoneyCast;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * One side of a posted journal entry. Append-only, like its entry.
@@ -29,6 +31,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[UsePolicy(JournalLinePolicy::class)]
 final class JournalLine extends Model
 {
+    use LogsActivity;
+
     public const null UPDATED_AT = null;
 
     protected $guarded = [];
@@ -64,5 +68,10 @@ final class JournalLine extends Model
             'debit_poisha' => MoneyCast::class,
             'credit_poisha' => MoneyCast::class,
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logAll()->logExcept(['updated_at'])->logOnlyDirty()->dontLogEmptyChanges()->useLogName('accounting');
     }
 }
