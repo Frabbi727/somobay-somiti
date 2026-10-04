@@ -12,6 +12,7 @@ use App\Enums\Role;
 use App\Livewire\Portal\Login;
 use App\Models\User;
 use Database\Seeders\LocalDemoSeeder;
+use Database\Seeders\StaffUserSeeder;
 use Filament\Facades\Filament;
 use Filament\Pages\Dashboard;
 use Illuminate\Support\Facades\Queue;
@@ -45,7 +46,7 @@ it('lets every staff login into the panel', function (string $email): void {
     $this->actingAs(User::query()->where('email', $email)->sole())
         ->get(Dashboard::getUrl())
         ->assertOk();
-})->with(array_keys(LocalDemoSeeder::STAFF));
+})->with(array_keys(StaffUserSeeder::USERS));
 
 it('lets a member sign in to the portal with mobile and password', function (): void {
     Livewire::test(Login::class)

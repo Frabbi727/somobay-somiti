@@ -7,6 +7,7 @@ namespace App\Console\Commands;
 use App\Domain\Accounting\Models\Account;
 use Carbon\CarbonImmutable;
 use Database\Seeders\LocalDemoSeeder;
+use Database\Seeders\StaffUserSeeder;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -41,8 +42,8 @@ final class DemoCommand extends Command
         $this->info('Staff logins (password: '.LocalDemoSeeder::PASSWORD.') at /admin');
         $this->table(['Email', 'Name', 'Role'], array_map(
             fn (string $email, array $user): array => [$email, $user[0], $user[1]->getLabel()],
-            array_keys(LocalDemoSeeder::STAFF),
-            LocalDemoSeeder::STAFF,
+            array_keys(StaffUserSeeder::USERS),
+            StaffUserSeeder::USERS,
         ));
         $this->line('Members log in at /portal with their mobile (01711000001 … 01711000006) and the same password.');
         $this->line('Sample bank statement to import: '.$this->writeBankStatement());

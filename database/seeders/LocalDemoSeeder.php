@@ -69,22 +69,7 @@ use RuntimeException;
  */
 final class LocalDemoSeeder extends Seeder
 {
-    public const string PASSWORD = 'password';
-
-    /**
-     * email => [name, role]
-     *
-     * @var array<string, array{0: string, 1: Role}>
-     */
-    public const array STAFF = [
-        'admin@somiti.test' => ['Super Admin', Role::SuperAdmin],
-        'president@somiti.test' => ['Abdul Karim (President)', Role::President],
-        'secretary@somiti.test' => ['Shirin Akter (Secretary)', Role::Secretary],
-        'cashier@somiti.test' => ['Mizanur Rahman (Cashier)', Role::Cashier],
-        'accountant@somiti.test' => ['Tanvir Hasan (Accountant)', Role::Accountant],
-        'accountant2@somiti.test' => ['Rokeya Sultana (Accountant 2)', Role::Accountant],
-        'auditor@somiti.test' => ['Mahbub Alam (Auditor)', Role::Auditor],
-    ];
+    public const string PASSWORD = StaffUserSeeder::PASSWORD;
 
     /** @var array<string, User> */
     private array $users = [];
@@ -121,10 +106,10 @@ final class LocalDemoSeeder extends Seeder
 
     private function createStaff(): void
     {
-        foreach (self::STAFF as $email => [$name, $role]) {
-            $user = User::query()->firstOrCreate(['email' => $email], ['name' => $name, 'password' => self::PASSWORD, 'locale' => 'bn']);
-            $user->syncRoles([$role->value]);
-            $this->users[$email] = $user;
+        $this->call(StaffUserSeeder::class);
+
+        foreach (array_keys(StaffUserSeeder::USERS) as $email) {
+            $this->users[$email] = User::query()->where('email', $email)->firstOrFail();
         }
     }
 
