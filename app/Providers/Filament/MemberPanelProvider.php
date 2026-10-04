@@ -31,6 +31,7 @@ final class MemberPanelProvider extends PanelProvider
         return $panel
             ->id('member')
             ->path('portal')
+            ->viteTheme('resources/css/filament/admin/theme.css')
             ->login(MemberLogin::class)
             ->brandName(fn (): string => __('portal.title'))
             ->colors(['primary' => Color::Emerald])

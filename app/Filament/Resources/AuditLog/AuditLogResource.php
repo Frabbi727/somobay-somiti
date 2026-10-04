@@ -36,11 +36,11 @@ final class AuditLogResource extends Resource
 
     protected static ?string $slug = 'audit-log';
 
-    protected static string|UnitEnum|null $navigationGroup = NavGroup::Audit;
+    protected static string|UnitEnum|null $navigationGroup = NavGroup::Settings;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
 
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 20;
 
     public static function getModelLabel(): string
     {

@@ -11,6 +11,7 @@ use App\Filament\Navigation\NavGroup;
 use App\Models\User;
 use BackedEnum;
 use Filament\Clusters\Cluster;
+use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Support\Icons\Heroicon;
 use UnitEnum;
 
@@ -23,7 +24,12 @@ final class SettingsCluster extends Cluster
 
     protected static string|UnitEnum|null $navigationGroup = NavGroup::Settings;
 
+    protected static ?int $navigationSort = 10;
+
     protected static ?string $slug = 'settings';
+
+    /** Its pages as tabs across the top, so each page keeps the full width. */
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
     public static function getNavigationLabel(): string
     {

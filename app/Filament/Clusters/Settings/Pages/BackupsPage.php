@@ -13,7 +13,9 @@ use App\Filament\Concerns\ConfirmsWithTier;
 use App\Filament\Support\Display;
 use App\Filament\Support\DomainActionRunner;
 use App\Models\User;
+use App\Support\Time\YearMonth;
 use BackedEnum;
+use Carbon\CarbonImmutable;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Notifications\Notification;
@@ -90,7 +92,19 @@ final class BackupsPage extends Page
             $passwordSet = false;
         }
 
-        return ['backups' => $backups, 'health' => $health, 'passwordSet' => $passwordSet];
+        $now = CarbonImmutable::now(YearMonth::TIMEZONE);
+        $tonight = $now->setTime(23, 30);
+        $latest = $backups[0] ?? null;
+
+        return [
+            'backups' => $backups,
+            'health' => $health,
+            'passwordSet' => $passwordSet,
+            'allHealthy' => $health !== [] && collect($health)->every(fn (array $disk): bool => $disk['healthy']),
+            'latest' => $latest,
+            'next' => Display::dateTime($now->lessThan($tonight) ? $tonight : $tonight->addDay()),
+            'totalSize' => Number::fileSize(array_sum(array_column($backups, 'size')), precision: 1),
+        ];
     }
 
     protected function getHeaderActions(): array

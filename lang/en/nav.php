@@ -12,6 +12,6 @@ return [
     'exits' => 'Exits',
     'governance' => 'Governance',
     'reports' => 'Reports',
-    'settings' => 'Settings',
+    'settings' => 'Administration',
     'audit' => 'Audit Log',
 ];

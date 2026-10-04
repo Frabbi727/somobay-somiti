@@ -106,7 +106,7 @@ it('lists backups with their health and queues "back up now" with a typed confir
     $this->actingAs($this->admin);
 
     Livewire::test(BackupsPage::class)
-        ->assertSee(__('backups.healthy', [], 'bn'))
+        ->assertSee(__('backups.ok', [], 'bn'))
         ->assertSee('somiti-')
         ->callAction('backupNow', data: ['confirm_text' => 'BACKUP'])
         ->assertHasNoActionErrors()

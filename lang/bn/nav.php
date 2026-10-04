@@ -12,6 +12,6 @@ return [
     'exits' => 'প্রত্যাহার',
     'governance' => 'সভা',
     'reports' => 'রিপোর্ট',
-    'settings' => 'সেটিংস',
+    'settings' => 'প্রশাসন',
     'audit' => 'অডিট লগ',
 ];
