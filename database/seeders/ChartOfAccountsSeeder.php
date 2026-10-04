@@ -37,6 +37,8 @@ final class ChartOfAccountsSeeder extends Seeder
         '2301' => ['Exit Settlements Payable', 'সদস্য প্রত্যাহার নিষ্পত্তি (প্রদেয়)', AccountType::Liability, true, true],
         '3101' => ['Share Capital', 'শেয়ার মূলধন', AccountType::Equity, false, false],
         '3201' => ['Reserve Fund', 'সংরক্ষিত তহবিল', AccountType::Equity, false, false],
+        '3202' => ['Bad & Doubtful Debt Fund', 'অনাদায়ী ও সন্দেহজনক ঋণ তহবিল', AccountType::Equity, false, false],
+        '3203' => ['Other Funds (Bylaws)', 'অন্যান্য তহবিল (উপআইন)', AccountType::Equity, false, false],
         '3901' => ['Accumulated Surplus', 'সঞ্চিত উদ্বৃত্ত', AccountType::Equity, false, false],
         '4101' => ['Registration Fee Income', 'ভর্তি ফি আয়', AccountType::Income, false, false],
         '4111' => ['Service Charge Income', 'সার্ভিস চার্জ আয়', AccountType::Income, false, false],

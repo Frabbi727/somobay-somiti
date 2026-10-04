@@ -79,6 +79,32 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Year-end (Phase 11) — Cooperative Societies Act 2001, s.34
+    |--------------------------------------------------------------------------
+    |
+    | Percentages of net profit in basis points, with the legal bounds the wizard
+    | enforces. Defaults follow SOMITI_SPEC.md BR-20; HAVE YOUR AUDITOR CONFIRM THEM
+    | (and the two choices below) before the first real year-end.
+    |
+    | - financing_society: the 10% bad/doubtful-debt fund applies to financing
+    |   societies; for others it is optional (0–10%).
+    | - statutory_base: 'net_profit' takes the percentages of the whole net profit;
+    |   'after_loss_offset' takes them of what remains after the s.34(4) offset.
+    |
+    */
+
+    'year_end' => [
+        'financing_society' => (bool) env('SOMITI_FINANCING_SOCIETY', false),
+        'statutory_base' => env('SOMITI_STATUTORY_BASE', 'net_profit'),
+        'loss_offset_bps' => 5000,
+        'reserve' => ['default' => 1500, 'min' => 1500, 'max' => 10000],
+        'development_fund' => ['default' => 300, 'min' => 300, 'max' => 300],
+        'bad_debt_fund' => ['default' => 0, 'min' => 0, 'max' => 1000, 'financing_min' => 1000],
+        'other_funds' => ['default' => 0, 'min' => 0, 'max' => 1000],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Expenses
     |--------------------------------------------------------------------------
     |
