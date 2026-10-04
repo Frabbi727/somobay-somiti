@@ -7,6 +7,7 @@ namespace App\Policies;
 use App\Domain\Contributions\Enums\DueStatus;
 use App\Domain\Contributions\Enums\DueType;
 use App\Domain\Contributions\Models\Due;
+use App\Enums\Area;
 use App\Enums\Role;
 use App\Models\User;
 
@@ -17,12 +18,12 @@ final class DuePolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isStaff();
+        return Area::Collections->allows($user);
     }
 
     public function view(User $user, Due $due): bool
     {
-        return $user->isStaff();
+        return Area::Collections->allows($user);
     }
 
     public function waive(User $user, Due $due): bool

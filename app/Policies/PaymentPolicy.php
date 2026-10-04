@@ -6,6 +6,7 @@ namespace App\Policies;
 
 use App\Domain\Contributions\Enums\PaymentStatus;
 use App\Domain\Contributions\Models\Payment;
+use App\Enums\Area;
 use App\Enums\Role;
 use App\Models\User;
 
@@ -17,12 +18,12 @@ final class PaymentPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isStaff();
+        return Area::Collections->allows($user);
     }
 
     public function view(User $user, Payment $payment): bool
     {
-        return $user->isStaff();
+        return Area::Collections->allows($user);
     }
 
     /**

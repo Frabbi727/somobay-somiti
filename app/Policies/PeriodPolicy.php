@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Policies;
 
 use App\Domain\Accounting\Models\Period;
+use App\Enums\Area;
 use App\Enums\Role;
 use App\Models\User;
 
@@ -12,12 +13,12 @@ final class PeriodPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isStaff();
+        return Area::Accounting->allows($user);
     }
 
     public function view(User $user, Period $period): bool
     {
-        return $user->isStaff();
+        return Area::Accounting->allows($user);
     }
 
     public function lock(User $user, Period $period): bool

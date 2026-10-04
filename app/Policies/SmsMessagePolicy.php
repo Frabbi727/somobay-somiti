@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace App\Policies;
 
 use App\Domain\Notifications\Models\SmsMessage;
-use App\Enums\Role;
+use App\Enums\Area;
 use App\Models\User;
 
 final class SmsMessagePolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyOf(Role::SuperAdmin, Role::Secretary, Role::Accountant, Role::Auditor);
+        return Area::Messaging->allows($user);
     }
 
     public function view(User $user, SmsMessage $message): bool

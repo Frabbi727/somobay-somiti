@@ -9,6 +9,7 @@ use App\Domain\Integrity\Models\IntegrityFinding;
 use App\Domain\Integrity\Models\IntegrityRun;
 use App\Enums\Role;
 use App\Filament\Pages\Reports\IntegrityReport;
+use App\Models\User;
 use Database\Seeders\ChartOfAccountsSeeder;
 use Filament\Facades\Filament;
 use Filament\Pages\Dashboard;
@@ -32,14 +33,19 @@ function failedRun(): void
     app(RunIntegrityChecks::class)();
 }
 
-it('shows the red banner on every staff page while the latest run has findings', function (): void {
-    $this->actingAs(userWithRole(Role::Cashier));
+it('shows the red banner to those who can act on it while the latest run has findings', function (): void {
+    $cashier = userWithRole(Role::Cashier);
+    $this->actingAs(userWithRole(Role::Accountant));
 
     app(RunIntegrityChecks::class)();
     $this->get(Dashboard::getUrl())->assertOk()->assertDontSee(__('integrity.banner.title', [], 'bn'));
 
     failedRun();
     $this->get(Dashboard::getUrl())->assertOk()->assertSee(__('integrity.banner.title', [], 'bn'));
+
+    // The cash desk does not see it (nothing they can do about it).
+    $this->actingAs($cashier)->get(Dashboard::getUrl())->assertOk()->assertDontSee(__('integrity.banner.title', [], 'bn'));
+    $this->actingAs(User::query()->role('accountant')->firstOrFail());
 
     // Once the problem is fixed, the next passing run clears it.
     IntegrityRun::query()->create(['status' => IntegrityRunStatus::Passed, 'checks_run' => 8, 'started_at' => now(), 'finished_at' => now()]);
@@ -60,7 +66,7 @@ it('lists the findings of the latest run', function (): void {
         ->assertSee(__('integrity.checks.voucher_sequences'));
 });
 
-it('queues a run on demand for accountants but hides the button from cashiers', function (): void {
+it('queues a run on demand for accountants; cashiers cannot open the report', function (): void {
     Queue::fake();
 
     $this->actingAs(userWithRole(Role::Accountant));
@@ -68,5 +74,8 @@ it('queues a run on demand for accountants but hides the button from cashiers', 
     Queue::assertPushed(RunIntegrityChecksJob::class);
 
     $this->actingAs(userWithRole(Role::Cashier));
+    $this->get(IntegrityReport::getUrl())->assertForbidden();
+
+    $this->actingAs(userWithRole(Role::President));
     Livewire::test(IntegrityReport::class)->assertActionHidden('run');
 });

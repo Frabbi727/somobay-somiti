@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Policies;
 
 use App\Domain\Accounting\Models\JournalEntry;
+use App\Enums\Area;
 use App\Enums\Role;
 use App\Models\User;
 
@@ -15,12 +16,12 @@ final class JournalEntryPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isStaff();
+        return Area::Accounting->allows($user);
     }
 
     public function view(User $user, JournalEntry $entry): bool
     {
-        return $user->isStaff();
+        return Area::Accounting->allows($user);
     }
 
     /**

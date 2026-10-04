@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages\Reports;
 
+use App\Enums\Area;
 use App\Filament\Navigation\NavGroup;
+use App\Models\User;
 use App\Reports\Contracts\Report;
 use App\Reports\ReportExporter;
 use Filament\Actions\Action;
 use Filament\Pages\Page;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use UnitEnum;
 
@@ -51,7 +52,15 @@ abstract class ReportPage extends Page
 
     public static function canAccess(): bool
     {
-        return Gate::allows('viewReports');
+        return static::area()->allows(auth()->user() instanceof User ? auth()->user() : null);
+    }
+
+    /**
+     * Who may open this report (see Area); financial statements by default.
+     */
+    protected static function area(): Area
+    {
+        return Area::FinancialReports;
     }
 
     public function mount(): void

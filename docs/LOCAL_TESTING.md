@@ -50,6 +50,23 @@ To start again at any time: `php artisan somiti:demo --fresh`.
 fee, ৳20 late fee). A December committee resolution raised the share unit to ৳600 from January 2026.
 Fiscal year 2025-26 is complete; July–May are locked and June is open, so its year-end can be run now.
 
+## 2a. What each role sees
+
+Each login shows only its own part of the panel (the rules live in `app/Enums/Area.php`), and the
+dashboard opens with **Waiting for you** — the queues that person can act on — plus the somiti's
+headline figures (money figures only for roles that handle money).
+
+| Role | Menus |
+|---|---|
+| Cashier | Members (look-up), Collections (collect, payments, advance balances), Dues, Expenses, Fund transfers; reports: member statement, defaulters, collection summary, cash book |
+| Secretary | Members, Meetings, Resolutions, Exits, Settings › Rate plans & SMS; reports: member statement, share register, dividend register, defaulters, collection summary |
+| Accountant | Everything financial: collections, dues, vouchers, chart of accounts, fiscal years, expenses, transfers, statement reconciliation, investments, year-end, exits, rate plans, all reports, integrity |
+| President | Same as the accountant (approves rate plans, investments, year-end, exits, large expenses) |
+| Auditor | Everything, read-only (no action buttons) |
+| Super admin | Everything read-only, plus Settings › Users and SMS templates |
+
+Pages outside a role's area answer "403 forbidden" even if the address is typed in directly.
+
 ## 3. Try every feature, step by step
 
 Use the language switch (top right) for বাংলা / English. Every write asks for a confirmation;

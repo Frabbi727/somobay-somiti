@@ -149,7 +149,13 @@ it('hides approval from the author and non-committee staff', function (Role $rol
 
     Livewire::test(ListRatePlans::class)
         ->assertActionHidden(TestAction::make('approve')->table($plan));
-})->with([Role::Accountant, Role::Cashier, Role::Auditor, Role::SuperAdmin]);
+})->with([Role::Accountant, Role::Auditor, Role::SuperAdmin]);
+
+it('keeps rate plans away from the cashier', function (): void {
+    $this->actingAs(userWithRole(Role::Cashier));
+
+    $this->get(ListRatePlans::getUrl())->assertForbidden();
+});
 
 it('sends a plan back with a reason', function (): void {
     $plan = pendingPlan($this->accountant);

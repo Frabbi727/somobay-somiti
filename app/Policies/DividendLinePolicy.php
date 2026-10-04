@@ -6,6 +6,7 @@ namespace App\Policies;
 
 use App\Domain\YearEnd\Enums\DividendStatus;
 use App\Domain\YearEnd\Models\DividendLine;
+use App\Enums\Area;
 use App\Enums\Role;
 use App\Models\User;
 
@@ -13,12 +14,12 @@ final class DividendLinePolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isStaff();
+        return Area::Accounting->allows($user);
     }
 
     public function view(User $user, DividendLine $line): bool
     {
-        return $user->isStaff();
+        return Area::Accounting->allows($user);
     }
 
     public function settle(User $user, DividendLine $line): bool

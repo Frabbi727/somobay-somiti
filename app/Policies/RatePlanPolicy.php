@@ -6,6 +6,7 @@ namespace App\Policies;
 
 use App\Domain\Settings\Enums\RatePlanStatus;
 use App\Domain\Settings\Models\RatePlan;
+use App\Enums\Area;
 use App\Enums\Role;
 use App\Models\User;
 
@@ -17,12 +18,12 @@ final class RatePlanPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isStaff();
+        return Area::RatePlans->allows($user);
     }
 
     public function view(User $user, RatePlan $plan): bool
     {
-        return $user->isStaff();
+        return Area::RatePlans->allows($user);
     }
 
     public function create(User $user): bool

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Filament\Clusters\Settings;
 
+use App\Enums\Area;
 use App\Filament\Navigation\NavGroup;
+use App\Models\User;
 use BackedEnum;
 use Filament\Clusters\Cluster;
 use Filament\Support\Icons\Heroicon;
@@ -24,6 +26,17 @@ final class SettingsCluster extends Cluster
     public static function getNavigationLabel(): string
     {
         return __('rates.settings');
+    }
+
+    /**
+     * Only shown to someone who can open something inside it.
+     */
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+
+        return $user instanceof User
+            && (Area::RatePlans->allows($user) || Area::Messaging->allows($user) || $user->can('viewAny', User::class));
     }
 
     public static function getClusterBreadcrumb(): string

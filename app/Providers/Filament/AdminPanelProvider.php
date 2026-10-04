@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Providers\Filament;
 
 use App\Domain\Integrity\Models\IntegrityRun;
+use App\Enums\Area;
 use App\Filament\Navigation\NavGroup;
+use App\Models\User;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -23,7 +25,6 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
@@ -83,7 +84,9 @@ class AdminPanelProvider extends PanelProvider
      */
     private static function integrityBanner(): View|string
     {
-        if (! Gate::allows('viewReports')) {
+        $user = auth()->user();
+
+        if (! $user instanceof User || ! Area::Accounting->allows($user)) {
             return '';
         }
 

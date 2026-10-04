@@ -67,9 +67,13 @@ it('closes a year only after the code is typed', function (): void {
     expect($year->fresh()?->status)->toBe(FiscalYearStatus::Closed);
 });
 
-it('hides closing from a cashier', function (): void {
+it('keeps fiscal years away from the cashier and closing away from the auditor', function (): void {
     $year = app(OpenFiscalYear::class)(userWithRole(Role::Accountant), 2026);
+
     $this->actingAs(userWithRole(Role::Cashier));
+    $this->get(ListFiscalYears::getUrl())->assertForbidden();
+
+    $this->actingAs(userWithRole(Role::Auditor));
 
     Livewire::test(ListFiscalYears::class)
         ->assertActionHidden(TestAction::make('close')->table($year))

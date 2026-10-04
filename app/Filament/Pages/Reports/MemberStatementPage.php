@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages\Reports;
 
+use App\Enums\Area;
 use App\Reports\Definitions\MemberStatementReport;
 
 final class MemberStatementPage extends ReportPage
@@ -15,5 +16,10 @@ final class MemberStatementPage extends ReportPage
     protected static function reportClass(): string
     {
         return MemberStatementReport::class;
+    }
+
+    protected static function area(): Area
+    {
+        return Area::CashReports;
     }
 }

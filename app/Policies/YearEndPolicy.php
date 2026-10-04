@@ -6,6 +6,7 @@ namespace App\Policies;
 
 use App\Domain\YearEnd\Enums\YearEndStatus;
 use App\Domain\YearEnd\Models\YearEnd;
+use App\Enums\Area;
 use App\Enums\Role;
 use App\Models\User;
 
@@ -16,12 +17,12 @@ final class YearEndPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isStaff();
+        return Area::Accounting->allows($user);
     }
 
     public function view(User $user, YearEnd $yearEnd): bool
     {
-        return $user->isStaff();
+        return Area::Accounting->allows($user);
     }
 
     public function create(User $user): bool

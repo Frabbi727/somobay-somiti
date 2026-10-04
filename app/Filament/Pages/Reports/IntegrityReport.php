@@ -7,10 +7,12 @@ namespace App\Filament\Pages\Reports;
 use App\Domain\Integrity\Jobs\RunIntegrityChecksJob;
 use App\Domain\Integrity\Models\IntegrityFinding;
 use App\Domain\Integrity\Models\IntegrityRun;
+use App\Enums\Area;
 use App\Filament\Concerns\ConfirmsWithTier;
 use App\Filament\Navigation\NavGroup;
 use App\Filament\Support\Display;
 use App\Filament\Support\DomainActionRunner;
+use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -52,7 +54,7 @@ final class IntegrityReport extends Page implements HasTable
 
     public static function canAccess(): bool
     {
-        return Gate::allows('viewReports');
+        return Area::Accounting->allows(auth()->user() instanceof User ? auth()->user() : null);
     }
 
     public function table(Table $table): Table

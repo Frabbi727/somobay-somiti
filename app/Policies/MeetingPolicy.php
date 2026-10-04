@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Policies;
 
 use App\Domain\Governance\Models\Meeting;
+use App\Enums\Area;
 use App\Enums\Role;
 use App\Models\User;
 
@@ -15,12 +16,12 @@ final class MeetingPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isStaff();
+        return Area::Governance->allows($user);
     }
 
     public function view(User $user, Meeting $meeting): bool
     {
-        return $user->isStaff();
+        return Area::Governance->allows($user);
     }
 
     public function create(User $user): bool

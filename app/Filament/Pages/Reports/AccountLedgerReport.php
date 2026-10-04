@@ -6,7 +6,9 @@ namespace App\Filament\Pages\Reports;
 
 use App\Domain\Accounting\Models\Account;
 use App\Domain\Accounting\Services\FiscalCalendar;
+use App\Enums\Area;
 use App\Filament\Navigation\NavGroup;
+use App\Models\User;
 use App\Reports\LedgerDocument;
 use App\Support\Time\YearMonth;
 use Carbon\CarbonImmutable;
@@ -17,7 +19,6 @@ use Filament\Forms\Components\TextInput;
 use Filament\Pages\Page;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use UnitEnum;
 
@@ -49,7 +50,7 @@ final class AccountLedgerReport extends Page
 
     public static function canAccess(): bool
     {
-        return Gate::allows('viewReports');
+        return Area::FinancialReports->allows(auth()->user() instanceof User ? auth()->user() : null);
     }
 
     public function mount(): void

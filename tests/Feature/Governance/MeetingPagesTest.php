@@ -72,13 +72,15 @@ it('runs a committee meeting from the screens: schedule, attendance, held, propo
     $this->get(ListResolutions::getUrl())->assertOk()->assertSee($resolution->resolution_no);
 });
 
-it('shows meetings to all staff but lets only the secretary or president act', function (): void {
+it('shows meetings to the accountant read-only and hides them from the cashier', function (): void {
     $meeting = app(App\Domain\Governance\Actions\CreateMeeting::class)(userWithRole(Role::Secretary), MeetingData::fromForm([
         'type' => 'committee', 'title' => 'Committee meeting', 'scheduled_at' => '2026-09-10 10:00',
     ]));
 
     $this->actingAs(userWithRole(Role::Cashier));
+    $this->get(ViewMeeting::getUrl(['record' => $meeting]))->assertForbidden();
 
+    $this->actingAs(userWithRole(Role::Accountant));
     $this->get(ViewMeeting::getUrl(['record' => $meeting]))->assertOk();
 
     Livewire::test(ViewMeeting::class, ['record' => $meeting->getRouteKey()])

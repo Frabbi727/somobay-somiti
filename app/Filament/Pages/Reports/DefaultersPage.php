@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages\Reports;
 
+use App\Enums\Area;
 use App\Reports\Definitions\DefaultersReport;
 
 final class DefaultersPage extends ReportPage
@@ -15,5 +16,10 @@ final class DefaultersPage extends ReportPage
     protected static function reportClass(): string
     {
         return DefaultersReport::class;
+    }
+
+    protected static function area(): Area
+    {
+        return Area::CashReports;
     }
 }

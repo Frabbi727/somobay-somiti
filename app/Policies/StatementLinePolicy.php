@@ -6,6 +6,7 @@ namespace App\Policies;
 
 use App\Domain\Accounting\Enums\StatementLineStatus;
 use App\Domain\Accounting\Models\StatementLine;
+use App\Enums\Area;
 use App\Enums\Role;
 use App\Models\User;
 
@@ -13,12 +14,12 @@ final class StatementLinePolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isStaff();
+        return Area::Accounting->allows($user);
     }
 
     public function view(User $user, StatementLine $line): bool
     {
-        return $user->isStaff();
+        return Area::Accounting->allows($user);
     }
 
     public function match(User $user, StatementLine $line): bool

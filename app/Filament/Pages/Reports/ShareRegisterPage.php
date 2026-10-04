@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages\Reports;
 
+use App\Enums\Area;
 use App\Reports\Definitions\ShareRegisterReport;
 
 final class ShareRegisterPage extends ReportPage
@@ -15,5 +16,10 @@ final class ShareRegisterPage extends ReportPage
     protected static function reportClass(): string
     {
         return ShareRegisterReport::class;
+    }
+
+    protected static function area(): Area
+    {
+        return Area::MemberReports;
     }
 }

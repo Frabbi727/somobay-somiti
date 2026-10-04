@@ -6,6 +6,7 @@ namespace App\Policies;
 
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Models\Member;
+use App\Enums\Area;
 use App\Enums\Role;
 use App\Models\User;
 
@@ -16,12 +17,12 @@ final class MemberPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isStaff();
+        return Area::Members->allows($user);
     }
 
     public function view(User $user, Member $member): bool
     {
-        return $user->isStaff();
+        return Area::Members->allows($user);
     }
 
     public function create(User $user): bool

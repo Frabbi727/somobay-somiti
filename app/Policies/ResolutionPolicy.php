@@ -8,6 +8,7 @@ use App\Domain\Governance\Enums\MeetingStatus;
 use App\Domain\Governance\Enums\ResolutionStatus;
 use App\Domain\Governance\Models\Meeting;
 use App\Domain\Governance\Models\Resolution;
+use App\Enums\Area;
 use App\Enums\Role;
 use App\Models\User;
 
@@ -15,12 +16,12 @@ final class ResolutionPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isStaff();
+        return Area::Governance->allows($user);
     }
 
     public function view(User $user, Resolution $resolution): bool
     {
-        return $user->isStaff();
+        return Area::Governance->allows($user);
     }
 
     /**

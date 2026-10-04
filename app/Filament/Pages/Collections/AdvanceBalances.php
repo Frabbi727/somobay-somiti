@@ -10,6 +10,7 @@ use App\Domain\Contributions\Enums\PaymentMethod;
 use App\Domain\Contributions\Models\AdvanceLedgerEntry;
 use App\Domain\Contributions\Services\PaidThroughCalculator;
 use App\Domain\Members\Models\Member;
+use App\Enums\Area;
 use App\Filament\Concerns\ConfirmsWithTier;
 use App\Filament\Forms\Components\MoneyInput;
 use App\Filament\Navigation\NavGroup;
@@ -66,7 +67,7 @@ final class AdvanceBalances extends Page implements HasActions, HasSchemas, HasT
 
     public static function canAccess(): bool
     {
-        return Gate::allows('viewReports');
+        return Area::Collections->allows(auth()->user() instanceof User ? auth()->user() : null);
     }
 
     public function table(Table $table): Table

@@ -6,6 +6,7 @@ namespace App\Policies;
 
 use App\Domain\Accounting\Enums\ExpenseStatus;
 use App\Domain\Accounting\Models\Expense;
+use App\Enums\Area;
 use App\Enums\Role;
 use App\Models\User;
 
@@ -17,12 +18,12 @@ final class ExpensePolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isStaff();
+        return Area::Collections->allows($user);
     }
 
     public function view(User $user, Expense $expense): bool
     {
-        return $user->isStaff();
+        return Area::Collections->allows($user);
     }
 
     public function create(User $user): bool

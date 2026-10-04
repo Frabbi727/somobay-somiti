@@ -6,6 +6,7 @@ namespace App\Policies;
 
 use App\Domain\Investments\Enums\InvestmentStatus;
 use App\Domain\Investments\Models\Investment;
+use App\Enums\Area;
 use App\Enums\Role;
 use App\Models\User;
 
@@ -17,12 +18,12 @@ final class InvestmentPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isStaff();
+        return Area::Accounting->allows($user);
     }
 
     public function view(User $user, Investment $investment): bool
     {
-        return $user->isStaff();
+        return Area::Accounting->allows($user);
     }
 
     public function create(User $user): bool

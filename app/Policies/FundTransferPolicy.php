@@ -6,6 +6,7 @@ namespace App\Policies;
 
 use App\Domain\Accounting\Enums\TransferStatus;
 use App\Domain\Accounting\Models\FundTransfer;
+use App\Enums\Area;
 use App\Enums\Role;
 use App\Models\User;
 
@@ -17,12 +18,12 @@ final class FundTransferPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isStaff();
+        return Area::Collections->allows($user);
     }
 
     public function view(User $user, FundTransfer $transfer): bool
     {
-        return $user->isStaff();
+        return Area::Collections->allows($user);
     }
 
     public function create(User $user): bool

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages\Reports;
 
+use App\Enums\Area;
 use App\Reports\Definitions\CashBookReport;
 
 final class CashBookPage extends ReportPage
@@ -15,5 +16,10 @@ final class CashBookPage extends ReportPage
     protected static function reportClass(): string
     {
         return CashBookReport::class;
+    }
+
+    protected static function area(): Area
+    {
+        return Area::Collections;
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Policies;
 
 use App\Domain\Accounting\Models\StatementImport;
+use App\Enums\Area;
 use App\Enums\Role;
 use App\Models\User;
 
@@ -16,12 +17,12 @@ final class StatementImportPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isStaff();
+        return Area::Accounting->allows($user);
     }
 
     public function view(User $user, StatementImport $import): bool
     {
-        return $user->isStaff();
+        return Area::Accounting->allows($user);
     }
 
     public function create(User $user): bool
