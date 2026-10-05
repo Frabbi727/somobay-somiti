@@ -62,3 +62,15 @@ it('rejects a reversed or malformed date range', function (): void {
     $this->withToken($this->token)->getJson('/api/v1/statement?from=2026-07-31&until=2026-07-01')->assertStatus(422)->assertJsonStructure(['errors' => ['until']]);
     $this->withToken($this->token)->getJson('/api/v1/statement?from=31/07/2026')->assertStatus(422);
 });
+
+it('gives a short-lived signed link to the statement PDF that works without a token', function (): void {
+    $url = $this->withToken($this->token)->getJson('/api/v1/statement/pdf-link?from=2026-07-01&until=2026-07-31')->assertOk()->json('data.url');
+
+    app('auth')->forgetGuards();
+    $this->withToken('')->get($url)->assertOk()->assertHeader('content-type', 'application/pdf');
+    $this->withToken('')->get(str_replace('until=2026-07-31', 'until=2026-08-31', $url))->assertForbidden();
+    $this->withToken('')->get(preg_replace('/member=\d+/', 'member='.$this->other->id, $url))->assertForbidden();
+
+    $this->travel(16)->minutes();
+    $this->withToken('')->get($url)->assertForbidden();
+});

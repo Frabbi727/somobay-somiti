@@ -13,6 +13,7 @@ use App\Support\Money\Money;
 use DateTimeInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -57,6 +58,27 @@ final class StatementController
         return response($content, 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="'.$this->report->filename($filters).'.pdf"',
+        ]);
+    }
+
+    /**
+     * A 15-minute signed link to the PDF, for opening in the phone's browser (which cannot send
+     * the access token). The member id is part of the signature, so it cannot be changed.
+     */
+    public function pdfLink(Request $request): JsonResponse
+    {
+        return ApiResponse::ok(['url' => URL::temporarySignedRoute('api.statement.signed', now()->addMinutes(15), $this->filters($request))]);
+    }
+
+    public function pdfSigned(Request $request, ReportExporter $exporter): Response
+    {
+        $filters = ['member' => $request->integer('member'), 'from' => (string) $request->string('from'), 'until' => (string) $request->string('until')];
+        $content = $exporter->pdf($this->report, $filters);
+        abort_if($content === null, 404);
+
+        return response($content, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$this->report->filename($filters).'.pdf"',
         ]);
     }
 

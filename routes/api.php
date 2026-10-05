@@ -24,6 +24,9 @@ Route::prefix('v1')->middleware('api.locale')->group(function (): void {
     Route::get('config/somiti-info', [ConfigController::class, 'somitiInfo']);
     Route::get('config/logo', [ConfigController::class, 'logo'])->middleware('signed')->name('api.logo');
 
+    // Token-free by design: opened in the phone's browser, protected by the signature.
+    Route::get('statement/pdf-signed', [StatementController::class, 'pdfSigned'])->middleware('signed')->name('api.statement.signed');
+
     Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:member-login');
     Route::post('auth/send-code', [AuthController::class, 'sendCode'])->middleware('throttle:member-login');
     Route::post('auth/refresh-token', [AuthController::class, 'refresh'])->middleware('throttle:member-refresh');
@@ -44,6 +47,7 @@ Route::prefix('v1')->middleware('api.locale')->group(function (): void {
         Route::get('payments/{payment}/receipt', [PaymentsController::class, 'receipt'])->whereNumber('payment');
         Route::get('statement', [StatementController::class, 'show']);
         Route::get('statement/pdf', [StatementController::class, 'pdf']);
+        Route::get('statement/pdf-link', [StatementController::class, 'pdfLink']);
         Route::get('shares/overview', [SharesController::class, 'overview']);
     });
 });
