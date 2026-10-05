@@ -63,7 +63,7 @@ Paginated lists put Laravel's paginator figures in `meta`:
 `{"current_page": 1, "last_page": 3, "per_page": 20, "total": 47}` (`per_page` fixed at 20).
 Errors: `success: false`, localised `message`, and `errors` as `{"field": ["message"]}` for 422.
 Status codes: 401 unauthenticated / revoked, 403 not a member, 404 not found or not yours, 409
-idempotency conflict, 422 validation or `DomainRuleViolation`, 429 rate limited, 500 (generic message).
+idempotency conflict (`payments.errors.idempotency_conflict`), 422 validation or `DomainRuleViolation`, 429 rate limited, 500 (generic message).
 
 ### 4.2 Value formats
 
@@ -80,6 +80,7 @@ idempotency conflict, 422 validation or `DomainRuleViolation`, 429 rate limited,
 | POST | `auth/send-code` | — | `{mobile}`; 404 when codes are off; limits from `LoginCodes` |
 | POST | `auth/refresh-token` | refresh token in body | `{refresh_token}` → new pair; old pair revoked |
 | POST | `auth/logout` | access | revokes this access token and its refresh token |
+| GET | `auth/me` | access | member number, name, status — a cheap session check at app start |
 | GET | `config/somiti-info` | — | names bn/en, display name, address, phone, email, registration no., `logo_url` (signed, 1 h) or null, `otp_enabled` |
 | GET | `dashboard/summary` | access | `MemberSummary` fields + `pay_now_visible` + latest 5 payments + member name/number |
 | GET | `dues` | access | `status`, `type` filters; default `status=open`; ordered month desc, id |
@@ -102,14 +103,16 @@ Resources (generated from code, not from this table).
 
 - Sanctum installed; `personal_access_tokens` with abilities: access tokens carry `member`, refresh
   tokens carry only `refresh`. A refresh token cannot call data endpoints; an access token cannot refresh.
-- Middleware `auth:sanctum` + `ability:member` + a `EnsureActiveMember` middleware resolving the member
-  with `PortalAccounts::activeMemberOf($user)`; null → 403 and all tokens revoked.
+- Middleware `auth:sanctum` + `abilities:member` + an `EnsureMemberAccess` middleware resolving the member
+  with `PortalAccounts::activeMemberOf($user)` (not exited — the portal also admits inactive members);
+  null → 403 and all of that user's tokens revoked.
 - Every query is scoped to that member id; route-bound ids (`payments/{id}`) are looked up within the
   member's own rows (404 otherwise). No endpoint accepts a member id.
 - Staff users cannot obtain or use member tokens (login only resolves members by mobile, as the portal does).
 - Rate limits: `auth/login` 5/min per mobile+IP; `auth/refresh-token` 10/min per IP; data endpoints
   60/min per token.
-- Deactivating or exiting a member, or staff setting the member's portal password, revokes the member's tokens.
+- Staff setting the member's portal password revokes the member's tokens; an exited member is refused
+  (and revoked) by `EnsureMemberAccess` on the next request.
 
 ## 5. Flutter app
 
@@ -145,7 +148,7 @@ examples captured from the feature tests. Anything not supported is listed under
 
 Backend (Pest): per endpoint happy path, validation, envelope shape, money format in bn and en;
 cross-member access (member A with B's payment id → 404; lists never contain B's rows); staff and
-deactivated members refused; token lifecycle (expiry, rotation, reuse revokes all, logout, password
+exited members refused (inactive members allowed, as in the portal); token lifecycle (expiry, rotation, reuse revokes all, logout, password
 change revokes others); pay-online idempotency (same key → same payment; same key different amount →
 409); rate limits.
 
