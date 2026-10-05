@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\Member\DashboardController;
 use App\Http\Controllers\Api\Member\DividendsController;
 use App\Http\Controllers\Api\Member\DuesController;
 use App\Http\Controllers\Api\Member\NotificationsController;
+use App\Http\Controllers\Api\Member\PaymentsController;
 use App\Http\Controllers\Api\Member\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -35,6 +36,10 @@ Route::prefix('v1')->middleware('api.locale')->group(function (): void {
         Route::get('dues', [DuesController::class, 'index']);
         Route::get('dividends', [DividendsController::class, 'index']);
         Route::get('notifications', [NotificationsController::class, 'index']);
+        Route::get('payments', [PaymentsController::class, 'index']);
+        Route::post('payments', [PaymentsController::class, 'store']);
+        Route::get('payments/{payment}', [PaymentsController::class, 'show'])->whereNumber('payment');
+        Route::get('payments/{payment}/receipt', [PaymentsController::class, 'receipt'])->whereNumber('payment');
     });
 });
 

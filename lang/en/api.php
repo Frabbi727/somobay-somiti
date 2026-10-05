@@ -11,6 +11,7 @@ return [
         'signed_out' => 'Signed out.',
     ],
     'errors' => [
+        'amount' => 'Enter an amount greater than zero with up to 2 decimals.',
         'validation' => 'Please check the highlighted fields.',
         'unauthenticated' => 'Please sign in again.',
         'forbidden' => 'You do not have access to this.',
