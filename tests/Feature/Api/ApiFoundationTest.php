@@ -61,3 +61,12 @@ it('answers sign-in, rate-limit and routing errors in the requested language too
     }
     $last->assertStatus(429)->assertJsonPath('message', __('api.errors.throttled', [], 'en'));
 });
+
+it('gives field validation errors in Bangla to Bangla requests', function (): void {
+    $this->withHeaders(['Accept-Language' => 'bn'])->postJson('/api/v1/auth/login', [])
+        ->assertStatus(422)
+        ->assertJsonPath('errors.mobile.0', 'মোবাইল নম্বর ঘরটি পূরণ করা আবশ্যক।');
+    $this->withHeaders(['Accept-Language' => 'en'])->postJson('/api/v1/auth/login', [])
+        ->assertStatus(422)
+        ->assertJsonPath('errors.mobile.0', 'The mobile number field is required.');
+});
