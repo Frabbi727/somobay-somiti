@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\Member\DuesController;
 use App\Http\Controllers\Api\Member\NotificationsController;
 use App\Http\Controllers\Api\Member\PaymentsController;
 use App\Http\Controllers\Api\Member\ProfileController;
+use App\Http\Controllers\Api\Member\StatementController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -40,6 +41,8 @@ Route::prefix('v1')->middleware('api.locale')->group(function (): void {
         Route::post('payments', [PaymentsController::class, 'store']);
         Route::get('payments/{payment}', [PaymentsController::class, 'show'])->whereNumber('payment');
         Route::get('payments/{payment}/receipt', [PaymentsController::class, 'receipt'])->whereNumber('payment');
+        Route::get('statement', [StatementController::class, 'show']);
+        Route::get('statement/pdf', [StatementController::class, 'pdf']);
     });
 });
 
