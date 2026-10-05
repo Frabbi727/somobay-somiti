@@ -29,7 +29,7 @@ final class StaffLogin extends Login
 
     public function getSubheading(): Htmlable
     {
-        return new HtmlString(e(__('login.staff.subheading')).'<br><a href="'.e(route('filament.member.auth.login')).'" class="fi-link font-semibold text-primary-600 hover:underline dark:text-primary-400">'.e(__('login.staff.member_link')).'</a>');
+        return new HtmlString(e(__('login.staff.subheading')).'<br><a href="'.e(route('filament.member.auth.login')).'" class="fi-link font-semibold text-primary-600 hover:underline dark:text-primary-400">'.e(__('login.staff.member_link')).'</a>'.'<br><a href="'.e(route('privacy')).'" class="fi-link text-sm text-gray-500 hover:underline dark:text-gray-400">'.e(__('privacy.link')).'</a>');
     }
 
     protected function getEmailFormComponent(): Component

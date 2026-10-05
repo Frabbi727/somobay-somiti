@@ -44,7 +44,7 @@ final class MemberLogin extends Login
 
     public function getSubheading(): Htmlable
     {
-        return new HtmlString(e(__('login.member.subheading')).'<br><a href="'.e(route('filament.admin.auth.login')).'" class="fi-link font-semibold text-primary-600 hover:underline dark:text-primary-400">'.e(__('login.member.staff_link')).'</a>');
+        return new HtmlString(e(__('login.member.subheading')).'<br><a href="'.e(route('filament.admin.auth.login')).'" class="fi-link font-semibold text-primary-600 hover:underline dark:text-primary-400">'.e(__('login.member.staff_link')).'</a>'.'<br><a href="'.e(route('privacy')).'" class="fi-link text-sm text-gray-500 hover:underline dark:text-gray-400">'.e(__('privacy.link')).'</a>');
     }
 
     public static function codesEnabled(): bool
