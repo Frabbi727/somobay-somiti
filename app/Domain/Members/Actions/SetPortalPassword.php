@@ -42,6 +42,7 @@ final class SetPortalPassword
 
             $user = $this->accounts->forMember($locked);
             $user->forceFill(['password' => $password])->save();
+            $user->tokens()->delete(); // signed out of the app everywhere
 
             activity('members')->performedOn($locked)->log('portal password set');
 

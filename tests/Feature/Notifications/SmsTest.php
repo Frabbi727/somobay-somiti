@@ -5,7 +5,6 @@ declare(strict_types=1);
 use App\Domain\Accounting\Actions\OpenFiscalYear;
 use App\Domain\Notifications\Actions\UpdateSmsTemplate;
 use App\Domain\Notifications\Contracts\SmsGateway;
-use App\Domain\Notifications\Data\SmsResult;
 use App\Domain\Notifications\Enums\SmsStatus;
 use App\Domain\Notifications\Enums\SmsTemplateKey;
 use App\Domain\Notifications\Gateways\BulkSmsBdGateway;
@@ -36,36 +35,6 @@ beforeEach(function (): void {
 afterEach(function (): void {
     CarbonImmutable::setTestNow();
 });
-
-/**
- * Collects what would be sent instead of sending it.
- */
-function fakeSms(bool $ok = true): object
-{
-    $gateway = new class($ok) implements SmsGateway
-    {
-        /** @var list<array{0: string, 1: string}> */
-        public array $sent = [];
-
-        public function __construct(private readonly bool $ok) {}
-
-        public function name(): string
-        {
-            return 'fake';
-        }
-
-        public function send(string $to, string $body): SmsResult
-        {
-            $this->sent[] = [$to, $body];
-
-            return $this->ok ? SmsResult::sent('fake-'.count($this->sent)) : SmsResult::failed('provider down');
-        }
-    };
-
-    app()->instance(SmsGateway::class, $gateway);
-
-    return $gateway;
-}
 
 it('welcomes a new member by SMS in Bangla', function (): void {
     $gateway = fakeSms();

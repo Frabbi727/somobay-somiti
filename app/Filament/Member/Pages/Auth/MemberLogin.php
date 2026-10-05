@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Member\Pages\Auth;
 
-use App\Domain\Members\Enums\MemberStatus;
-use App\Domain\Members\Models\Member;
 use App\Domain\Members\Portal\LoginCodes;
-use App\Domain\Members\Portal\PortalAccounts;
+use App\Domain\Members\Portal\MemberCredentials;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use App\Support\Contact\MobileNumber;
@@ -24,7 +22,6 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Timebox;
 use Illuminate\Validation\ValidationException;
@@ -156,15 +153,7 @@ final class MemberLogin extends Login
      */
     private function userFromPassword(array $data): ?User
     {
-        $member = $this->member((string) ($data['mobile'] ?? ''));
-
-        if ($member === null) {
-            return null;
-        }
-
-        $user = app(PortalAccounts::class)->forMember($member);
-
-        return Hash::check((string) ($data['password'] ?? ''), $user->password) ? $user : null;
+        return app(MemberCredentials::class)->byPassword((string) ($data['mobile'] ?? ''), (string) ($data['password'] ?? ''));
     }
 
     /**
@@ -177,22 +166,10 @@ final class MemberLogin extends Login
         }
 
         try {
-            $member = app(LoginCodes::class)->verify((string) ($data['mobile'] ?? ''), (string) ($data['code'] ?? ''));
+            return app(MemberCredentials::class)->byCode((string) ($data['mobile'] ?? ''), (string) ($data['code'] ?? ''));
         } catch (DomainRuleViolation $violation) {
             throw ValidationException::withMessages(['data.code' => $violation->getMessage()]);
         }
-
-        return $member->status === MemberStatus::Exited ? null : app(PortalAccounts::class)->forMember($member);
-    }
-
-    private function member(string $mobile): ?Member
-    {
-        $normalized = MobileNumber::normalize($mobile);
-
-        return $normalized === null ? null : Member::query()
-            ->where('mobile', $normalized)
-            ->where('status', '!=', MemberStatus::Exited)
-            ->first();
     }
 
     private function usesCode(mixed $method): bool

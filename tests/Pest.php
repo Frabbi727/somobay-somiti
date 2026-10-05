@@ -18,6 +18,10 @@ use App\Domain\Integrity\InvariantChecker;
 use App\Domain\Members\Actions\CreateMember;
 use App\Domain\Members\Data\MemberData;
 use App\Domain\Members\Models\Member;
+use App\Domain\Members\Portal\MemberTokens;
+use App\Domain\Members\Portal\PortalAccounts;
+use App\Domain\Notifications\Contracts\SmsGateway;
+use App\Domain\Notifications\Data\SmsResult;
 use App\Domain\Settings\Actions\ApproveRatePlan;
 use App\Domain\Settings\Actions\DraftRatePlan;
 use App\Domain\Settings\Actions\SubmitRatePlan;
@@ -320,4 +324,44 @@ function inParallel(int $workers, Closure $work): array
     rmdir($directory);
 
     return $results;
+}
+
+/**
+ * Collects what would be sent instead of sending it.
+ */
+function fakeSms(bool $ok = true): object
+{
+    $gateway = new class($ok) implements SmsGateway
+    {
+        /** @var list<array{0: string, 1: string}> */
+        public array $sent = [];
+
+        public function __construct(private readonly bool $ok) {}
+
+        public function name(): string
+        {
+            return 'fake';
+        }
+
+        public function send(string $to, string $body): SmsResult
+        {
+            $this->sent[] = [$to, $body];
+
+            return $this->ok ? SmsResult::sent('fake-'.count($this->sent)) : SmsResult::failed('provider down');
+        }
+    };
+
+    app()->instance(SmsGateway::class, $gateway);
+
+    return $gateway;
+}
+
+/**
+ * A fresh access token for the member's portal account.
+ */
+function memberToken(Member $member): string
+{
+    $user = app(PortalAccounts::class)->forMember($member);
+
+    return app(MemberTokens::class)->issue($user)['access_token'];
 }

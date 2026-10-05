@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 return [
     'ok' => 'OK',
+    'auth' => [
+        'failed' => 'The mobile number or password is not correct.',
+        'codes_off' => 'Sign-in with an SMS code is not available.',
+        'signed_in' => 'Signed in.',
+        'signed_out' => 'Signed out.',
+    ],
     'errors' => [
         'validation' => 'Please check the highlighted fields.',
         'unauthenticated' => 'Please sign in again.',

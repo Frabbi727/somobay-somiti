@@ -52,6 +52,7 @@ use App\Enums\Role;
 use App\Listeners\CheckApplicationHealth;
 use App\Listeners\RememberUserLocale;
 use App\Models\User;
+use App\Support\Contact\MobileNumber;
 use BezhanSalleh\LanguageSwitch\Events\LocaleChanged;
 use BezhanSalleh\LanguageSwitch\LanguageSwitch;
 use Carbon\CarbonImmutable;
@@ -64,13 +65,16 @@ use Filament\Tables\Table;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Events\DiagnosingHealth;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Spatie\Backup\Events\BackupHasFailed;
 use Spatie\Backup\Events\UnhealthyBackupWasFound;
@@ -132,6 +136,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Date::use(CarbonImmutable::class);
+
+        // Member app API: sign-in per mobile + IP, refresh per IP, data per signed-in user.
+        RateLimiter::for('member-login', fn (Request $request): Limit => Limit::perMinute(5)->by(MobileNumber::normalize((string) $request->input('mobile')).'|'.$request->ip()));
+        RateLimiter::for('member-refresh', fn (Request $request): Limit => Limit::perMinute(10)->by((string) $request->ip()));
+        RateLimiter::for('member-api', fn (Request $request): Limit => Limit::perMinute(60)->by((string) ($request->user()?->getAuthIdentifier() ?? $request->ip())));
 
         Event::listen(IntegrityCheckFailed::class, AlertIntegrityFailure::class);
         Event::listen(LocaleChanged::class, RememberUserLocale::class);

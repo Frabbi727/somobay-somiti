@@ -33,7 +33,9 @@ final class ApiExceptionRenderer
         return match (true) {
             $e instanceof ValidationException => ApiResponse::error(__('api.errors.validation'), 422, $e->errors()),
             $e instanceof DomainRuleViolation => ApiResponse::error($e->getMessage(), in_array($e->translationKey, self::CONFLICTS, true) ? 409 : 422),
-            $e instanceof AuthenticationException, $e instanceof MissingAbilityException => ApiResponse::error(__('api.errors.unauthenticated'), 401),
+            // Laravel wraps Sanctum's MissingAbilityException in an AccessDeniedHttpException: a refresh
+            // token used as an access token is "sign in again", not "forbidden".
+            $e instanceof AuthenticationException, $e instanceof MissingAbilityException, $e->getPrevious() instanceof MissingAbilityException => ApiResponse::error(__('api.errors.unauthenticated'), 401),
             $e instanceof AuthorizationException => ApiResponse::error(__('api.errors.forbidden'), 403),
             $e instanceof ModelNotFoundException => ApiResponse::error(__('api.errors.not_found'), 404),
             $e instanceof ThrottleRequestsException => ApiResponse::error(__('api.errors.throttled'), 429),

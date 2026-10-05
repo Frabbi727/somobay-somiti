@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Api\ApiResponse;
+use App\Http\Controllers\Api\Member\AuthController;
 use App\Http\Controllers\Api\Member\ConfigController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,6 +15,15 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->middleware('api.locale')->group(function (): void {
     Route::get('config/somiti-info', [ConfigController::class, 'somitiInfo']);
     Route::get('config/logo', [ConfigController::class, 'logo'])->middleware('signed')->name('api.logo');
+
+    Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:member-login');
+    Route::post('auth/send-code', [AuthController::class, 'sendCode'])->middleware('throttle:member-login');
+    Route::post('auth/refresh-token', [AuthController::class, 'refresh'])->middleware('throttle:member-refresh');
+
+    Route::middleware(['auth:sanctum', 'abilities:member', 'member', 'throttle:member-api'])->group(function (): void {
+        Route::post('auth/logout', [AuthController::class, 'logout']);
+        Route::get('auth/me', [AuthController::class, 'me']);
+    });
 });
 
 Route::fallback(fn () => ApiResponse::error(__('api.errors.not_found'), 404));

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Api\ApiExceptionRenderer;
+use App\Http\Middleware\EnsureMemberAccess;
 use App\Http\Middleware\SetApiLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'api.locale' => SetApiLocale::class,
             'abilities' => CheckAbilities::class,
+            'member' => EnsureMemberAccess::class,
         ]);
 
         $middleware->redirectGuestsTo(fn (Request $request): string => $request->is('portal', 'portal/*')
