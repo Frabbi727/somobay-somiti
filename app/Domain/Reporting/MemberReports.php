@@ -10,6 +10,7 @@ use App\Domain\Contributions\Models\Due;
 use App\Domain\Contributions\Models\Payment;
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Models\Member;
+use App\Filament\Support\Display;
 use App\Support\Money\Money;
 use App\Support\Time\YearMonth;
 use Carbon\CarbonImmutable;
@@ -46,7 +47,7 @@ final class MemberReports
         $events = [];
 
         foreach ($charges($from->toDateString(), $until->toDateString())->orderBy('due_date')->orderBy('id')->get() as $due) {
-            $events[] = [$due->due_date, 0, $due->id, $due->type->getLabel().' · '.(string) $due->month, $due->amount_poisha, Money::zero()];
+            $events[] = [$due->due_date, 0, $due->id, $due->type->getLabel().' · '.Display::yearMonth($due->month), $due->amount_poisha, Money::zero()];
         }
 
         foreach ($payments($from->toDateString(), $until->toDateString())->with('journalEntry')->orderBy('received_on')->orderBy('id')->get() as $payment) {

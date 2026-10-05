@@ -74,3 +74,21 @@ it('gives a short-lived signed link to the statement PDF that works without a to
     $this->travel(16)->minutes();
     $this->withToken('')->get($url)->assertForbidden();
 });
+
+it('names the month of each charge in the request language', function (): void {
+    $bangla = $this->withToken($this->token)->withHeader('Accept-Language', 'bn')->getJson('/api/v1/statement?from=2026-07-01&until=2026-07-31')->json('data.rows.*.description');
+    $english = $this->withToken($this->token)->withHeader('Accept-Language', 'en')->getJson('/api/v1/statement?from=2026-07-01&until=2026-07-31')->json('data.rows.*.description');
+
+    expect(implode("\n", $bangla))->toContain('জুলাই ২০২৬')->not->toContain('2026-07')
+        ->and(implode("\n", $english))->toContain('July 2026')->not->toContain('2026-07');
+});
+
+it('renders the signed PDF in the language the link was requested in, not the browser language', function (): void {
+    $url = $this->withToken($this->token)->withHeader('Accept-Language', 'bn')->getJson('/api/v1/statement/pdf-link?from=2026-07-01&until=2026-07-31')->json('data.url');
+
+    app('auth')->forgetGuards();
+    $this->withToken('')->withHeader('Accept-Language', 'en-US')->get($url)->assertOk();
+    expect(app()->getLocale())->toBe('bn');
+
+    $this->withToken('')->get(str_replace('locale=bn', 'locale=en', $url))->assertForbidden();
+});

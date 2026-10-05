@@ -63,15 +63,17 @@ final class StatementController
 
     /**
      * A 15-minute signed link to the PDF, for opening in the phone's browser (which cannot send
-     * the access token). The member id is part of the signature, so it cannot be changed.
+     * the access token, and sends its own language). The member id and the app's language are
+     * part of the signature, so neither can be changed.
      */
     public function pdfLink(Request $request): JsonResponse
     {
-        return ApiResponse::ok(['url' => URL::temporarySignedRoute('api.statement.signed', now()->addMinutes(15), $this->filters($request))]);
+        return ApiResponse::ok(['url' => URL::temporarySignedRoute('api.statement.signed', now()->addMinutes(15), [...$this->filters($request), 'locale' => app()->getLocale()])]);
     }
 
     public function pdfSigned(Request $request, ReportExporter $exporter): Response
     {
+        app()->setLocale($request->string('locale')->toString() === 'en' ? 'en' : 'bn');
         $filters = ['member' => $request->integer('member'), 'from' => (string) $request->string('from'), 'until' => (string) $request->string('until')];
         $content = $exporter->pdf($this->report, $filters);
         abort_if($content === null, 404);
