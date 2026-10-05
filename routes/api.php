@@ -6,6 +6,9 @@ use App\Http\Api\ApiResponse;
 use App\Http\Controllers\Api\Member\AuthController;
 use App\Http\Controllers\Api\Member\ConfigController;
 use App\Http\Controllers\Api\Member\DashboardController;
+use App\Http\Controllers\Api\Member\DividendsController;
+use App\Http\Controllers\Api\Member\DuesController;
+use App\Http\Controllers\Api\Member\NotificationsController;
 use App\Http\Controllers\Api\Member\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,6 +32,9 @@ Route::prefix('v1')->middleware('api.locale')->group(function (): void {
         Route::get('dashboard/summary', [DashboardController::class, 'summary']);
         Route::get('profile', [ProfileController::class, 'show']);
         Route::post('profile/change-password', [ProfileController::class, 'changePassword']);
+        Route::get('dues', [DuesController::class, 'index']);
+        Route::get('dividends', [DividendsController::class, 'index']);
+        Route::get('notifications', [NotificationsController::class, 'index']);
     });
 });
 
