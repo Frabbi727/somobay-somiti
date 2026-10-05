@@ -29,7 +29,7 @@ final class SubmitPaymentRequest extends FormRequest
             }],
             'trx_id' => ['required', 'regex:/^[A-Za-z0-9]{6,40}$/'],
             'received_on' => ['required', 'date_format:Y-m-d'],
-            'proof' => ['required', 'file', 'mimetypes:image/jpeg,image/png,image/webp,application/pdf', 'max:'.(int) config('somiti.max_proof_kb')],
+            'proof' => ['nullable', 'file', 'mimetypes:image/jpeg,image/png,image/webp,application/pdf', 'max:'.(int) config('somiti.max_proof_kb')],
             'idempotency_key' => ['required', 'uuid'],
         ];
     }

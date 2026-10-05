@@ -99,6 +99,16 @@ it('submits a bKash payment with proof as pending, exactly once per key', functi
     expect(Storage::disk('local')->files('payment-proofs'))->toHaveCount(1);
 });
 
+it('accepts a bKash payment without proof (proof is optional in the app)', function (): void {
+    $body = array_diff_key(payOnlineBody((string) Str::uuid(), '500'), ['proof' => true]);
+
+    $data = $this->withToken($this->token)->post('/api/v1/payments', $body, ['Accept' => 'application/json'])->assertCreated()->json('data');
+
+    expect($data['status']['value'])->toBe('pending')
+        ->and(Payment::query()->findOrFail($data['id'])->proof_path)->toBeNull()
+        ->and(Storage::disk('local')->files('payment-proofs'))->toBe([]);
+});
+
 it('validates the payment form like the portal', function (array $override, string $field): void {
     $this->withToken($this->token)->post('/api/v1/payments', payOnlineBody((string) Str::uuid(), '500', $override), ['Accept' => 'application/json'])
         ->assertStatus(422)->assertJsonStructure(['errors' => [$field]]);
@@ -109,7 +119,6 @@ it('validates the payment form like the portal', function (array $override, stri
     'three decimals' => [['amount' => '10.555'], 'amount'],
     'zero' => [['amount' => '0'], 'amount'],
     'trx format' => [['trx_id' => 'ab'], 'trx_id'],
-    'missing proof' => [['proof' => null], 'proof'],
     'wrong file type' => [['proof' => UploadedFile::fake()->create('p.exe', 10, 'application/x-msdownload')], 'proof'],
     'not a uuid' => [['idempotency_key' => 'x'], 'idempotency_key'],
 ]);

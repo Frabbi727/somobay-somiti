@@ -65,7 +65,8 @@ final class RecordPayment
     }
 
     /**
-     * A member using the portal may only report their own bKash/Nagad payment, with proof.
+     * A member may only report their own bKash/Nagad payment. Proof is optional: staff approve every
+     * member submission and can check the TrxID against the bKash/Nagad statement.
      */
     private function assertMemberSubmission(User $actor, PaymentData $data): void
     {
@@ -79,7 +80,7 @@ final class RecordPayment
             throw new AuthorizationException;
         }
 
-        if (! in_array($data->method, [PaymentMethod::Bkash, PaymentMethod::Nagad], true) || $data->proofPath === null) {
+        if (! in_array($data->method, [PaymentMethod::Bkash, PaymentMethod::Nagad], true)) {
             throw DomainRuleViolation::because('payments.errors.member_submission');
         }
     }
