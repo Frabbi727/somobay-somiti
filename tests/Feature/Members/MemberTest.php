@@ -100,6 +100,7 @@ it('validates member details', function (array $overrides, string $key): void {
     'missing english name' => [['name_en' => ' '], 'members.errors.names_required'],
     'nominees under 100%' => [['nominees' => [['name' => 'A', 'relation' => 'Son', 'share_percent' => '60']]], 'members.errors.nominee_total'],
     'nominee without relation' => [['nominees' => [['name' => 'A', 'relation' => '', 'share_percent' => '100']]], 'members.errors.nominee_incomplete'],
+    'nominee mobile with 12 digits' => [['nominees' => [['name' => 'A', 'relation' => 'Wife', 'share_percent' => '100', 'mobile' => '019877765644']]], 'members.errors.nominee_mobile_format'],
 ]);
 
 it('needs an approved rate plan for the first month', function (): void {

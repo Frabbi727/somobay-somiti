@@ -40,7 +40,8 @@ final class MemberRules
     }
 
     /**
-     * Nominees are optional, but when given their shares must add up to exactly 100%.
+     * Nominees are optional, but when given their shares must add up to exactly 100% and a mobile,
+     * if entered, must be a valid Bangladeshi number.
      *
      * @param  list<NomineeData>  $nominees
      */
@@ -55,6 +56,10 @@ final class MemberRules
         foreach ($nominees as $nominee) {
             if ($nominee->name === '' || $nominee->relation === '' || $nominee->share->isZero()) {
                 throw DomainRuleViolation::because('members.errors.nominee_incomplete');
+            }
+
+            if ($nominee->mobile !== null && preg_match('/^01[3-9]\d{8}$/', $nominee->mobile) !== 1) {
+                throw DomainRuleViolation::because('members.errors.nominee_mobile_format', ['name' => $nominee->name]);
             }
 
             $total += $nominee->share->value;

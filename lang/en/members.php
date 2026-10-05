@@ -106,6 +106,7 @@ return [
         'nid_taken' => 'This NID already belongs to another member.',
         'nominee_incomplete' => 'Every nominee needs a name, a relation and a share.',
         'nominee_total' => 'Nominee shares must add up to 100% (now :total).',
+        'nominee_mobile_format' => 'Nominee :name\'s mobile is not a valid Bangladeshi number (01XXXXXXXXX).',
         'shares_positive' => 'The number of shares must be at least 1.',
         'too_few_shares_left' => 'The member has :current shares; at least one must remain. Use an exit to close the membership.',
         'same_month_change' => 'Shares acquired in :month cannot also be reduced in :month.',

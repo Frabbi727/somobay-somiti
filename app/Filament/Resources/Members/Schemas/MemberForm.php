@@ -102,7 +102,14 @@ final class MemberForm
                             ->schema([
                                 TextInput::make('name')->label(__('members.nominee.name'))->required()->columnSpan(2),
                                 TextInput::make('relation')->label(__('members.nominee.relation'))->required(),
-                                TextInput::make('mobile')->label(__('members.nominee.mobile'))->tel(),
+                                TextInput::make('mobile')
+                                    ->label(__('members.nominee.mobile'))
+                                    ->tel()
+                                    ->rule(fn (): Closure => function (string $attribute, mixed $value, Closure $fail): void {
+                                        if (is_string($value) && trim($value) !== '' && MobileNumber::normalize($value) === null) {
+                                            $fail(__('members.errors.mobile_format'));
+                                        }
+                                    }),
                                 TextInput::make('share_percent')
                                     ->label(__('members.nominee.share'))
                                     ->suffix('%')
