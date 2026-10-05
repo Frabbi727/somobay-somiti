@@ -30,3 +30,9 @@ it('links the privacy policy from both sign-in pages', function (): void {
     $this->get(route('filament.admin.auth.login'))->assertOk()->assertSee(route('privacy'), false);
     $this->get(route('filament.member.auth.login'))->assertOk()->assertSee(route('privacy'), false);
 });
+
+it('falls back to the configured contact email when the society profile has none', function (): void {
+    config(['somiti.privacy_contact_email' => 'privacy@example.com']);
+
+    $this->get('/privacy-policy')->assertOk()->assertSee('mailto:privacy@example.com', false);
+});

@@ -39,6 +39,13 @@ return [
     'max_proof_kb' => 2048,
 
     /*
+    | Contact email on the public privacy policy (/privacy-policy) when the society profile has
+    | no email; the Play Store requires a contact on the policy.
+    */
+
+    'privacy_contact_email' => env('SOMITI_PRIVACY_EMAIL', 'frabbi727@gmail.com'),
+
+    /*
     |--------------------------------------------------------------------------
     | Governance (Phase 9)
     |--------------------------------------------------------------------------

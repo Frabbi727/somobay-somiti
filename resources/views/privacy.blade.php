@@ -2,6 +2,7 @@
     /** @var \App\Domain\Settings\Models\SomitiProfile $profile */
     $name = $profile->displayName($locale);
     $address = $profile->displayAddress($locale);
+    $email = $profile->email ?: config('somiti.privacy_contact_email');
 @endphp
 <!DOCTYPE html>
 <html lang="{{ $locale }}">
@@ -64,8 +65,8 @@
             @if ($profile->phone)
                 <dt>{{ __('privacy.contact.phone') }}</dt><dd><a href="tel:{{ $profile->phone }}">{{ $profile->phone }}</a></dd>
             @endif
-            @if ($profile->email)
-                <dt>{{ __('privacy.contact.email') }}</dt><dd><a href="mailto:{{ $profile->email }}">{{ $profile->email }}</a></dd>
+            @if ($email)
+                <dt>{{ __('privacy.contact.email') }}</dt><dd><a href="mailto:{{ $email }}">{{ $email }}</a></dd>
             @endif
         </dl>
     </article>
