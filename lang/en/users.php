@@ -12,7 +12,6 @@ return [
         'mobile_help' => 'Integrity alerts are sent here by SMS.',
         'locale' => 'Language',
         'roles' => 'Roles',
-        'mfa' => 'Authenticator app',
         'status' => 'Status',
         'password' => 'Password',
         'new_password' => 'New password',

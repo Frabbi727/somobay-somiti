@@ -10,7 +10,6 @@ use App\Enums\Area;
 use App\Filament\Navigation\NavGroup;
 use App\Filament\Pages\Auth\StaffLogin;
 use App\Models\User;
-use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -43,10 +42,6 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogoHeight('2.25rem')
             ->login(StaffLogin::class)
             ->profile()
-            ->multiFactorAuthentication([
-                AppAuthentication::make()
-                    ->recoverable(),
-            ], isRequired: fn (): bool => (bool) config('somiti.require_mfa'))
             ->colors([
                 'primary' => Color::Emerald,
             ])

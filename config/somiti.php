@@ -115,18 +115,6 @@ return [
     'expense_president_threshold_poisha' => (int) env('SOMITI_EXPENSE_PRESIDENT_THRESHOLD_POISHA', 1_000_000),
 
     /*
-    |--------------------------------------------------------------------------
-    | Security
-    |--------------------------------------------------------------------------
-    |
-    | Staff sign in with email + password only. Switch on to make every staff member set up an
-    | authenticator app before using the panel (§2, P7.S2).
-    |
-    */
-
-    'require_mfa' => (bool) env('SOMITI_REQUIRE_MFA', false),
-
-    /*
     | Member portal and app: members sign in with mobile + the password the secretary sets for them.
     | Switch on to also offer sign-in by SMS code (needs an SMS gateway).
     */

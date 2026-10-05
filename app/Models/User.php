@@ -11,10 +11,6 @@ use App\Enums\Role;
 use App\Policies\UserPolicy;
 use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
-use Filament\Auth\MultiFactor\App\Concerns\InteractsWithAppAuthentication;
-use Filament\Auth\MultiFactor\App\Concerns\InteractsWithAppAuthenticationRecovery;
-use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthentication;
-use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthenticationRecovery;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -39,10 +35,10 @@ use Spatie\Permission\Traits\HasRoles;
  */
 #[Hidden(['password', 'remember_token'])]
 #[UsePolicy(UserPolicy::class)]
-class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery
+class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, HasRoles, InteractsWithAppAuthentication, InteractsWithAppAuthenticationRecovery, Notifiable;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     use LogsActivity;
 
@@ -110,7 +106,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     }
 
     /**
-     * Passwords, remember tokens and two-factor secrets are never written to the audit log.
+     * Passwords and remember tokens are never written to the audit log.
      */
     public function getActivitylogOptions(): LogOptions
     {

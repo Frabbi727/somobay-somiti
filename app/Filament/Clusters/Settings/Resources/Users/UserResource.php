@@ -17,7 +17,6 @@ use Filament\Actions\EditAction;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
@@ -75,11 +74,6 @@ final class UserResource extends Resource
                     ->label(__('users.field.roles'))
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => Role::from($state)->getLabel()),
-                IconColumn::make('app_authentication_secret')
-                    ->label(__('users.field.mfa'))
-                    ->state(fn (User $record): bool => $record->app_authentication_secret !== null)
-                    ->boolean()
-                    ->visibleFrom('md'),
                 TextColumn::make('deactivated_at')
                     ->label(__('users.field.status'))
                     ->state(fn (User $record): string => __($record->isActive() ? 'users.status.active' : 'users.status.inactive'))

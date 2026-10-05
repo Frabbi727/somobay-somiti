@@ -5,32 +5,26 @@ declare(strict_types=1);
 use App\Enums\Role;
 use Filament\Auth\Pages\Login;
 use Filament\Facades\Filament;
-use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 
 /*
-| SOMITI_SPEC.md §2 security / P7.S2: staff can be made to use an authenticator app, and logins are throttled.
+| SOMITI_SPEC.md §2 security / P7.S2: staff sign in with email + password only, and logins are throttled.
 */
 
-it('requires two-factor authentication for staff unless switched off', function (): void {
-    $panel = Filament::getPanel('admin');
+it('signs staff in with email + password alone, even with an old authenticator secret saved', function (): void {
+    Filament::setCurrentPanel('admin');
+    $user = userWithRole(Role::Cashier);
+    DB::table('users')->where('id', $user->id)->update(['app_authentication_secret' => 'old-secret']);
 
-    config(['somiti.require_mfa' => true]);
-    expect($panel->isMultiFactorAuthenticationRequired())->toBeTrue();
+    Livewire::test(Login::class)
+        ->fillForm(['email' => $user->email, 'password' => 'password'])
+        ->call('authenticate')
+        ->assertHasNoFormErrors();
 
-    config(['somiti.require_mfa' => false]);
-    expect($panel->isMultiFactorAuthenticationRequired())->toBeFalse();
+    expect(auth()->id())->toBe($user->id)
+        ->and(Filament::getPanel('admin')->hasMultiFactorAuthentication())->toBeFalse();
 });
-
-it('forces staff without an authenticator app to set one up only when switched on, and is off by default', function (bool $required): void {
-    $routes = Process::env(['SOMITI_REQUIRE_MFA' => $required ? 'true' : 'false'])
-        ->path(base_path())
-        ->run(['php', 'artisan', 'route:list', '--name=filament.admin.auth', '--json']);
-
-    expect($routes->successful())->toBeTrue()
-        ->and(str_contains($routes->output(), 'multi-factor-authentication\\/set-up'))->toBe($required)
-        ->and(file_get_contents(config_path('somiti.php')))->toContain("env('SOMITI_REQUIRE_MFA', false)");
-})->with([true, false]);
 
 it('throttles staff logins after five failed attempts', function (): void {
     Filament::setCurrentPanel('admin');

@@ -17,7 +17,7 @@ php artisan schedule:work                  # in a 3rd terminal: dues on the 1st,
 ```
 
 `APP_URL` in `.env` must match the port you use. SMS are written to `storage/logs/laravel.log` (driver `log`).
-Two-factor login is off by default (`SOMITI_REQUIRE_MFA=false`); staff sign in with email + password.
+Staff sign in with email + password.
 
 To start again at any time: `php artisan somiti:demo --fresh`.
 
