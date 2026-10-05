@@ -45,12 +45,14 @@ Blank money cells mean 0.
 | `advance` | ≥ 0 → Cr 2111 (member) + advance ledger Opening entry |
 | `arrears_deposit` | ≥ 0 → opening Deposit due (paid later → 2101) |
 | `arrears_fees` | ≥ 0 → opening Late-fee due (paid later → 4121) |
+| (rule) | `advance` and any arrears may not both be > 0 on one row (net them first) |
+| (mobile) | a 10-digit number starting with 1 (Excel dropped the leading 0) is read as 0 + number |
 | `nominee1_name`, `nominee1_relation`, `nominee1_percent`, `nominee2_*` | optional; when given, percentages total 100 (stored as `share_bps`) |
 
 ### 3.2 Society balances (one row per account)
 
-`account_code`, `amount`. Allowed: 1101, 1111, 1121, 1122 (debit); 2201, 2211, 3101, 3201–3203
-(credit). Each code at most once, amount ≥ 0. Member control accounts (2101, 2111, 2301, 1201),
+`account_code`, `amount`. Allowed: 1101, 1111, 1121, 1122 (debit); 2211, 3101, 3201–3203 (credit).
+Each code at most once, amount ≥ 0. Member-level accounts (2101, 2111, 2201, 2301, 1201),
 investment accounts (13xx) and 3901 are refused — they come from the member rows, the Investments
 sheet or the balancing line.
 
@@ -114,11 +116,11 @@ draft has no financial effect). Only one import may ever reach **Posted**.
 
 ### 4.4 After posting
 
-- The import page is read-only (summary, link to the journal, download of the original file).
+- The import page is read-only (summary and a link to the opening voucher).
 - `GenerateMonthlyDues` refuses months before the go-live month (`DomainRuleViolation`).
 - `ApplyLateFees` skips dues with `opening = true`.
-- `PaidThroughCalculator`: a member with an open opening Deposit due is shown as "in arrears" rather
-  than a month.
+- `PaidThroughCalculator` needs no change: with an open opening due and no earlier deposit due it
+  already returns null (no paid-through month), which the UI shows as "—".
 
 ## 5. Components
 
