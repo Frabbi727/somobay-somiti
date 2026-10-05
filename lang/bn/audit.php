@@ -37,6 +37,8 @@ return [
         'backup_requested' => 'ব্যাকআপ চাওয়া হয়েছে',
         'backup_downloaded' => 'ব্যাকআপ ডাউনলোড',
         'backup_restored' => 'ব্যাকআপ পুনরুদ্ধার',
+        'restore_check_passed' => 'পুনরুদ্ধার পরীক্ষা সফল',
+        'restore_check_failed' => 'পুনরুদ্ধার পরীক্ষা ব্যর্থ',
     ],
     'module' => [
         'default' => 'সাধারণ',

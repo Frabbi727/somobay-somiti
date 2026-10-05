@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers\Filament;
 
 use App\Domain\Integrity\Models\IntegrityRun;
+use App\Domain\Settings\Models\SomitiProfile;
 use App\Enums\Area;
 use App\Filament\Navigation\NavGroup;
 use App\Filament\Pages\Auth\StaffLogin;
@@ -37,7 +38,9 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->viteTheme('resources/css/filament/admin/theme.css')
-            ->brandName('Somiti Manager')
+            ->brandName(fn (): string => SomitiProfile::current()->displayName())
+            ->brandLogo(fn (): ?string => SomitiProfile::current()->logoDataUri())
+            ->brandLogoHeight('2.25rem')
             ->login(StaffLogin::class)
             ->profile()
             ->multiFactorAuthentication([

@@ -37,6 +37,8 @@ return [
         'backup_requested' => 'Backup requested',
         'backup_downloaded' => 'Backup downloaded',
         'backup_restored' => 'Backup restored',
+        'restore_check_passed' => 'Restore test passed',
+        'restore_check_failed' => 'Restore test failed',
     ],
     'module' => [
         'default' => 'General',

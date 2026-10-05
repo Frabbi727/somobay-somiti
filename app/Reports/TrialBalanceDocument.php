@@ -8,6 +8,7 @@ use App\Domain\Accounting\Reports\ControlCheck;
 use App\Domain\Accounting\Reports\TrialBalanceReport;
 use App\Domain\Accounting\Services\Reconciliation;
 use App\Domain\Accounting\Services\TrialBalance;
+use App\Domain\Settings\Models\SomitiProfile;
 use App\Filament\Support\Display;
 use App\Support\Pdf\PdfRenderer;
 use App\Support\Spreadsheet\Workbook;
@@ -54,7 +55,7 @@ final class TrialBalanceDocument
         $bangla = Display::isBangla();
 
         $book = (new Workbook(__('reports.trial_balance.title')))
-            ->title([(string) config('app.name')])
+            ->title([SomitiProfile::current()->displayName()])
             ->title([$heading])
             ->blank()
             ->row([

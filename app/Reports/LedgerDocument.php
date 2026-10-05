@@ -7,6 +7,7 @@ namespace App\Reports;
 use App\Domain\Accounting\Models\Account;
 use App\Domain\Accounting\Reports\LedgerReport;
 use App\Domain\Accounting\Services\LedgerQuery;
+use App\Domain\Settings\Models\SomitiProfile;
 use App\Filament\Support\Display;
 use App\Support\Pdf\PdfRenderer;
 use App\Support\Spreadsheet\Workbook;
@@ -56,7 +57,7 @@ final class LedgerDocument
         ['report' => $report, 'heading' => $heading] = $this->data($account, $from, $until, $memberId);
 
         $book = (new Workbook(__('reports.ledger.title')))
-            ->title([(string) config('app.name')])
+            ->title([SomitiProfile::current()->displayName()])
             ->title([$heading])
             ->blank()
             ->row([

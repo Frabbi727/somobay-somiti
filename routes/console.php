@@ -46,6 +46,13 @@ Schedule::command('backup:clean')
     ->withoutOverlapping()
     ->onOneServer();
 
+// Monthly restore drill: the newest backup is restored into a throwaway database and checked.
+Schedule::command('somiti:backup:check-restore')
+    ->monthlyOn(1, '04:00')
+    ->timezone('Asia/Dhaka')
+    ->withoutOverlapping()
+    ->onOneServer();
+
 Schedule::command('backup:monitor')
     ->dailyAt('09:00')
     ->timezone('Asia/Dhaka')

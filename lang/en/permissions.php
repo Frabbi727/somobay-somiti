@@ -84,5 +84,7 @@ return [
         'rate_plans_link_resolution' => 'Link a resolution to a rate plan',
         'rate_plans_cancel' => 'Cancel approved rate plans',
         'sms_templates_edit' => 'Edit SMS templates',
+        'somiti_profile_edit' => 'Edit the society profile (name, registration, logo)',
+        'opening_import' => 'Import members and opening balances (go-live)',
     ],
 ];

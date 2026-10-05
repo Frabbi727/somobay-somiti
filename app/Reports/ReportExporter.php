@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Reports;
 
+use App\Domain\Settings\Models\SomitiProfile;
 use App\Reports\Contracts\Report;
 use App\Support\Pdf\PdfRenderer;
 use App\Support\Spreadsheet\Workbook;
@@ -40,7 +41,7 @@ final class ReportExporter
         }
 
         $book = (new Workbook($report->title()))
-            ->title([(string) config('app.name')])
+            ->title([SomitiProfile::current()->displayName()])
             ->title([(string) ($data['heading'] ?? $report->title())])
             ->blank();
 

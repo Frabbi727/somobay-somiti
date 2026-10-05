@@ -6,8 +6,11 @@ use App\Domain\Audit\Models\AuditEntry;
 use App\Domain\Backups\Actions\DownloadBackup;
 use App\Domain\Backups\Actions\RestoreBackup;
 use App\Domain\Backups\Actions\StartBackup;
+use App\Domain\Backups\Actions\StartRestoreCheck;
 use App\Domain\Backups\Jobs\RunBackupJob;
+use App\Domain\Backups\Jobs\RunRestoreCheckJob;
 use App\Domain\Backups\Services\BackupCatalog;
+use App\Domain\Backups\Services\RestoreCheck;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Enums\Role;
 use App\Filament\Clusters\Settings\Pages\BackupsPage;
@@ -17,6 +20,7 @@ use Illuminate\Console\Scheduling\Event as ScheduledEvent;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Process\PendingProcess;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -183,4 +187,80 @@ it('leaves the data alone when the database restore fails', function (): void {
         ->toThrow(DomainRuleViolation::class, __('backups.errors.restore_failed'));
 
     expect(AuditEntry::query()->where('event', 'backup_restored')->exists())->toBeFalse();
+});
+
+it('tests a restore every month on the 1st at 04:00 Bangladesh time', function (): void {
+    $check = collect(app(Schedule::class)->events())
+        ->first(fn (ScheduledEvent $event): bool => str_contains((string) $event->command, 'somiti:backup:check-restore'));
+
+    expect($check?->expression)->toBe('0 4 1 * *')
+        ->and($check?->timezone)->toBe('Asia/Dhaka');
+});
+
+it('restores the newest backup into a throwaway database, checks the books and drops it', function (): void {
+    takeBackup();
+    $scratch = app(RestoreCheck::class)->scratchDatabase();
+
+    expect(Artisan::call('somiti:backup:check-restore'))->toBe(0);
+
+    $entry = AuditEntry::query()->where('event', 'restore_check_passed')->sole();
+    $databases = DB::select('SELECT datname FROM pg_database WHERE datname = ?', [$scratch]);
+
+    expect($entry->properties?->get('difference'))->toBe(0)
+        ->and($entry->properties?->get('disk'))->toBe('backups')
+        ->and($databases)->toBe([])
+        ->and(RestoreCheck::latest())->toMatchArray(['passed' => true])
+        ->and($this->admin->notifications()->count())->toBe(0);
+});
+
+it('fails and alerts the super admins when there is no backup to test', function (): void {
+    Process::fake();
+
+    expect(Artisan::call('somiti:backup:check-restore'))->toBe(1)
+        ->and(AuditEntry::query()->where('event', 'restore_check_failed')->sole()->properties?->get('error'))->toBe(__('backups.check.no_backup'))
+        ->and($this->admin->notifications()->count())->toBe(1)
+        ->and(RestoreCheck::latest())->toMatchArray(['passed' => false]);
+});
+
+it('fails when the restored books do not balance', function (): void {
+    takeBackup();
+    Process::fake([
+        '*SUM(debit_poisha)*' => Process::result(output: "250|4|3\n"),
+        '*' => Process::result(),
+    ]);
+
+    $result = app(RestoreCheck::class)->run();
+
+    expect($result)->toMatchArray(['passed' => false, 'difference' => 250, 'vouchers' => 4, 'members' => 3])
+        ->and($result['error'])->toBe(__('backups.check.unbalanced', ['difference' => 250]))
+        ->and($this->admin->notifications()->count())->toBe(1);
+
+    Process::assertRan(fn (PendingProcess $process): bool => in_array('DROP DATABASE IF EXISTS "'.app(RestoreCheck::class)->scratchDatabase().'"', (array) $process->command, true));
+});
+
+it('fails without touching anything when the throwaway database cannot be created', function (): void {
+    takeBackup();
+    Process::fake(['*' => Process::result(exitCode: 1, errorOutput: 'permission denied to create database')]);
+
+    expect(app(RestoreCheck::class)->run())->toMatchArray(['passed' => false, 'error' => __('backups.check.cannot_create_database')]);
+});
+
+it('queues "test restore now" for the super admin only', function (): void {
+    Queue::fake();
+    $this->actingAs($this->admin);
+
+    Livewire::test(BackupsPage::class)
+        ->callAction('testRestore')
+        ->assertHasNoActionErrors()
+        ->assertNotified(__('backups.check.started', [], 'bn'));
+
+    Queue::assertPushed(RunRestoreCheckJob::class, fn (RunRestoreCheckJob $job): bool => $job->requestedBy === $this->admin->id);
+    expect(fn () => app(StartRestoreCheck::class)(userWithRole(Role::President)))->toThrow(AuthorizationException::class);
+});
+
+it('tells whoever asked for the restore test when it passes', function (): void {
+    takeBackup();
+    (new RunRestoreCheckJob($this->admin->id))->handle(app(RestoreCheck::class));
+
+    expect($this->admin->notifications()->sole()->data['title'])->toBe(__('backups.check.passed_notify', ['members' => 0, 'vouchers' => 0], $this->admin->locale));
 });

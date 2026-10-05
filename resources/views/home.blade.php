@@ -3,17 +3,27 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ config('app.name') }}</title>
+    @php($somiti = \App\Domain\Settings\Models\SomitiProfile::current())
+    <title>{{ $somiti->displayName() }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-gradient-to-b from-emerald-50 to-white text-zinc-900 antialiased dark:from-zinc-950 dark:to-zinc-900 dark:text-zinc-100">
     <main class="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-10">
         <div class="mb-8 flex items-center justify-between gap-4">
             <div class="flex items-center gap-3">
+                @if ($logo = $somiti->logoDataUri())
+                    <img src="{{ $logo }}" alt="" class="h-11 w-11 rounded-2xl object-contain">
+                @else
                 <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-sm">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z"/></svg>
                 </span>
-                <h1 class="text-xl font-semibold leading-tight">{{ config('app.name') }}</h1>
+                @endif
+                <div>
+                    <h1 class="text-xl font-semibold leading-tight">{{ $somiti->displayName() }}</h1>
+                    @if ($somiti->registration_no)
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('somiti.registration', ['no' => \App\Filament\Support\Display::digits($somiti->registration_no)]) }}</p>
+                    @endif
+                </div>
             </div>
             <form method="POST" action="{{ route('locale', app()->getLocale() === 'bn' ? 'en' : 'bn') }}">
                 @csrf

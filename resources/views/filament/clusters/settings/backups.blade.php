@@ -12,7 +12,7 @@
     @endunless
 
     {{-- At a glance --}}
-    <div class="grid gap-4 sm:grid-cols-3">
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
             <div class="flex items-center justify-between">
                 <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('backups.last_backup') }}</p>
@@ -31,6 +31,18 @@
             <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('backups.kept') }}</p>
             <p class="mt-2 text-xl font-semibold text-gray-950 dark:text-white">{{ Display::digits(count($backups)) }} · {{ $totalSize }}</p>
             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('backups.encrypted') }}</p>
+        </div>
+        <div class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
+            <div class="flex items-center justify-between">
+                <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('backups.check.last') }}</p>
+                @if ($check !== null)
+                    <x-filament::badge :color="$check['passed'] ? 'success' : 'danger'" :icon="$check['passed'] ? 'heroicon-m-check-circle' : 'heroicon-m-x-circle'">
+                        {{ $check['passed'] ? __('backups.check.passed') : __('backups.check.failed') }}
+                    </x-filament::badge>
+                @endif
+            </div>
+            <p class="mt-2 text-xl font-semibold text-gray-950 dark:text-white">{{ $checkLabel }}</p>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('backups.check.schedule') }}</p>
         </div>
     </div>
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Reports;
 
 use App\Domain\Settings\Models\RatePlan;
+use App\Domain\Settings\Models\SomitiProfile;
 use App\Domain\Settings\Services\RateImpactPreviewer;
 use App\Support\Spreadsheet\Workbook;
 
@@ -25,7 +26,7 @@ final class RateImpactDocument
         $preview = $this->previewer->preview($plan);
 
         $book = (new Workbook(__('rates.impact.title')))
-            ->title([(string) config('app.name')])
+            ->title([SomitiProfile::current()->displayName()])
             ->title([__('rates.impact.title').' · '.$plan->code])
             ->blank()
             ->row([__('rates.impact.compared_with'), $preview->previous->code ?? __('rates.impact.no_previous')])

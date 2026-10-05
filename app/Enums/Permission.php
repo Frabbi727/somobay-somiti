@@ -80,6 +80,8 @@ enum Permission: string implements HasLabel
     case RatePlansLinkResolution = 'rate_plans.link_resolution';
     case RatePlansCancel = 'rate_plans.cancel';
     case SmsTemplatesEdit = 'sms_templates.edit';
+    case SomitiProfileEdit = 'somiti_profile.edit';
+    case OpeningImport = 'opening.import';
 
     /**
      * The roles that hold this permission until the president changes it.
@@ -104,6 +106,7 @@ enum Permission: string implements HasLabel
             self::RatePlansDraft => [Role::SuperAdmin, Role::Secretary, Role::Accountant],
             self::RatePlansLinkResolution => [Role::SuperAdmin, Role::Secretary, Role::Accountant, Role::President],
             self::SmsTemplatesEdit => [Role::SuperAdmin, Role::Secretary],
+            self::SomitiProfileEdit, self::OpeningImport => [Role::SuperAdmin, Role::President],
             default => [Role::Accountant, Role::President],
         };
     }

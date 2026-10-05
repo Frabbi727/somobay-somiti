@@ -7,7 +7,9 @@ namespace App\Filament\Clusters\Settings\Pages;
 use App\Domain\Backups\Actions\DownloadBackup;
 use App\Domain\Backups\Actions\RestoreBackup;
 use App\Domain\Backups\Actions\StartBackup;
+use App\Domain\Backups\Actions\StartRestoreCheck;
 use App\Domain\Backups\Services\BackupCatalog;
+use App\Domain\Backups\Services\RestoreCheck;
 use App\Filament\Clusters\Settings\SettingsCluster;
 use App\Filament\Concerns\ConfirmsWithTier;
 use App\Filament\Support\Display;
@@ -103,13 +105,15 @@ final class BackupsPage extends Page
             'allHealthy' => $health !== [] && collect($health)->every(fn (array $disk): bool => $disk['healthy']),
             'latest' => $latest,
             'next' => Display::dateTime($now->lessThan($tonight) ? $tonight : $tonight->addDay()),
+            'check' => RestoreCheck::latest(),
+            'checkLabel' => ($check = RestoreCheck::latest()) === null ? __('backups.never') : Display::dateTime($check['at']),
             'totalSize' => Number::fileSize(array_sum(array_column($backups, 'size')), precision: 1),
         ];
     }
 
     protected function getHeaderActions(): array
     {
-        return [$this->backupNowAction(), $this->uploadRestoreAction()];
+        return [$this->backupNowAction(), $this->testRestoreAction(), $this->uploadRestoreAction()];
     }
 
     public function backupNowAction(): Action
@@ -128,6 +132,23 @@ final class BackupsPage extends Page
             expected: 'BACKUP',
             submitLabel: __('backups.backup_now'),
             description: __('backups.backup_now_help'),
+        );
+    }
+
+    public function testRestoreAction(): Action
+    {
+        return self::tier1(
+            Action::make('testRestore')
+                ->label(__('backups.check.now'))
+                ->tooltip(__('backups.check.now_help'))
+                ->icon(Heroicon::OutlinedShieldCheck)
+                ->color('gray')
+                ->action(function (): void {
+                    DomainActionRunner::run(fn (User $actor) => app(StartRestoreCheck::class)($actor));
+                    Notification::make()->title(__('backups.check.started'))->success()->send();
+                }),
+            heading: __('backups.check.now'),
+            description: __('backups.check.now_help'),
         );
     }
 

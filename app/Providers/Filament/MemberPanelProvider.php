@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers\Filament;
 
+use App\Domain\Settings\Models\SomitiProfile;
 use App\Filament\Member\Pages\Auth\MemberLogin;
 use App\Filament\Member\Pages\Dashboard;
 use Filament\Http\Middleware\Authenticate;
@@ -33,7 +34,9 @@ final class MemberPanelProvider extends PanelProvider
             ->path('portal')
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->login(MemberLogin::class)
-            ->brandName(fn (): string => __('portal.title'))
+            ->brandName(fn (): string => SomitiProfile::current()->displayName())
+            ->brandLogo(fn (): ?string => SomitiProfile::current()->logoDataUri())
+            ->brandLogoHeight('2.25rem')
             ->colors(['primary' => Color::Emerald])
             ->darkMode()
             ->spa(hasPrefetching: true)

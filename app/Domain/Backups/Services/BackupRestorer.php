@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Backups\Services;
 
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
+use Illuminate\Contracts\Process\ProcessResult;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
@@ -56,21 +57,14 @@ final class BackupRestorer
      */
     public function restore(string $zipPath): array
     {
-        $dumpName = $this->verify($zipPath);
+        $this->verify($zipPath);
         $safety = $this->safetyBackup();
 
-        $work = storage_path('app/backup-temp/restore-'.Str::uuid());
-        File::ensureDirectoryExists($work, 0700);
+        $work = $this->workDirectory();
 
         try {
-            $zip = $this->open($zipPath);
-            if (! $zip->extractTo($work)) {
-                $zip->close();
-                throw DomainRuleViolation::because('backups.errors.cannot_open');
-            }
-            $zip->close();
-
-            $this->restoreDatabase($work.'/'.$dumpName, $work.'/restore.sql');
+            $dump = $this->extract($zipPath, $work);
+            $this->restoreDatabase($dump, $work.'/restore.sql');
             $files = $this->restoreFiles($work.'/private');
         } finally {
             File::deleteDirectory($work);
@@ -79,6 +73,37 @@ final class BackupRestorer
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         return ['safety_backup' => $safety, 'files' => $files];
+    }
+
+    /**
+     * A private scratch folder under storage/app/backup-temp; the caller deletes it.
+     */
+    public function workDirectory(): string
+    {
+        $work = storage_path('app/backup-temp/restore-'.Str::uuid());
+        File::ensureDirectoryExists($work, 0700);
+
+        return $work;
+    }
+
+    /**
+     * Unpacks a verified archive and returns the path of its database dump.
+     *
+     * @throws DomainRuleViolation
+     */
+    public function extract(string $zipPath, string $work): string
+    {
+        $dumpName = $this->verify($zipPath);
+        $zip = $this->open($zipPath);
+
+        if (! $zip->extractTo($work)) {
+            $zip->close();
+            throw DomainRuleViolation::because('backups.errors.cannot_open');
+        }
+
+        $zip->close();
+
+        return $work.'/'.$dumpName;
     }
 
     private function open(string $zipPath): ZipArchive
@@ -140,9 +165,12 @@ final class BackupRestorer
 
     /**
      * Replaces the whole public schema with the dump inside one transaction: if any statement fails,
-     * PostgreSQL rolls everything back and the current data stays as it was.
+     * PostgreSQL rolls everything back and the current data stays as it was. $database defaults to the
+     * application's own database (the monthly restore check passes a throwaway one).
+     *
+     * @throws DomainRuleViolation
      */
-    private function restoreDatabase(string $dumpPath, string $scriptPath): void
+    public function restoreDatabase(string $dumpPath, string $scriptPath, ?string $database = null): void
     {
         $in = fopen($dumpPath, 'rb');
         $out = fopen($scriptPath, 'wb');
@@ -163,27 +191,36 @@ final class BackupRestorer
         fclose($out);
         chmod($scriptPath, 0600);
 
-        $connection = (array) config('database.connections.'.config('database.default'));
-        $binaries = (string) data_get($connection, 'dump.dump_binary_path', '');
-        $psql = $binaries === '' ? 'psql' : rtrim($binaries, '/').'/psql';
-
-        $result = Process::timeout(3600)
-            ->env(['PGPASSWORD' => (string) ($connection['password'] ?? '')])
-            ->run([
-                $psql,
-                '--no-psqlrc', '--quiet', '--single-transaction', '--set', 'ON_ERROR_STOP=1',
-                '--host', (string) ($connection['host'] ?? '127.0.0.1'),
-                '--port', (string) ($connection['port'] ?? '5432'),
-                '--username', (string) ($connection['username'] ?? ''),
-                '--dbname', (string) ($connection['database'] ?? ''),
-                '--file', $scriptPath,
-            ]);
+        $result = $this->psql(['--single-transaction', '--file', $scriptPath], $database);
 
         if ($result->failed()) {
             report(new \RuntimeException('Backup restore failed: '.Str::limit($result->errorOutput(), 2000)));
 
             throw DomainRuleViolation::because('backups.errors.restore_failed');
         }
+    }
+
+    /**
+     * Runs psql against the application's database server.
+     *
+     * @param  list<string>  $arguments
+     */
+    public function psql(array $arguments, ?string $database = null): ProcessResult
+    {
+        $connection = (array) config('database.connections.'.config('database.default'));
+        $binaries = (string) data_get($connection, 'dump.dump_binary_path', '');
+
+        return Process::timeout(3600)
+            ->env(['PGPASSWORD' => (string) ($connection['password'] ?? '')])
+            ->run([
+                $binaries === '' ? 'psql' : rtrim($binaries, '/').'/psql',
+                '--no-psqlrc', '--quiet', '--set', 'ON_ERROR_STOP=1',
+                '--host', (string) ($connection['host'] ?? '127.0.0.1'),
+                '--port', (string) ($connection['port'] ?? '5432'),
+                '--username', (string) ($connection['username'] ?? ''),
+                '--dbname', $database ?? (string) ($connection['database'] ?? ''),
+                ...$arguments,
+            ]);
     }
 
     /**
