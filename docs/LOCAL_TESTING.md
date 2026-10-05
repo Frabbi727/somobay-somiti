@@ -17,7 +17,7 @@ php artisan schedule:work                  # in a 3rd terminal: dues on the 1st,
 ```
 
 `APP_URL` in `.env` must match the port you use. SMS are written to `storage/logs/laravel.log` (driver `log`).
-Two-factor login is switched off locally (`SOMITI_REQUIRE_MFA=false`); in production it is on.
+Two-factor login is off by default (`SOMITI_REQUIRE_MFA=false`); staff sign in with email + password.
 
 To start again at any time: `php artisan somiti:demo --fresh`.
 
@@ -35,7 +35,7 @@ To start again at any time: `php artisan somiti:demo --fresh`.
 | accountant2@somiti.test | Accountant | A second checker (one accountant cannot approve their own entries) |
 | auditor@somiti.test | Auditor | Read-only everywhere, all reports |
 
-**Members — http://127.0.0.1:8002/portal** (mobile + `password`). SMS codes are off locally
+**Members — http://127.0.0.1:8002/portal** (mobile + `password`). SMS codes are off by default
 (`SOMITI_PORTAL_OTP=false`); for a new member, the secretary or president opens the member and uses
 **Set portal password**. With codes on, the code is written to `storage/logs/laravel.log`.
 

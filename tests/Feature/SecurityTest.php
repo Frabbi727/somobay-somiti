@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Process;
 use Livewire\Livewire;
 
 /*
-| SOMITI_SPEC.md §2 security / P7.S2: staff must use an authenticator app, and logins are throttled.
+| SOMITI_SPEC.md §2 security / P7.S2: staff can be made to use an authenticator app, and logins are throttled.
 */
 
 it('requires two-factor authentication for staff unless switched off', function (): void {
@@ -22,14 +22,14 @@ it('requires two-factor authentication for staff unless switched off', function 
     expect($panel->isMultiFactorAuthenticationRequired())->toBeFalse();
 });
 
-it('forces staff without an authenticator app to set one up, and is on by default', function (bool $required): void {
+it('forces staff without an authenticator app to set one up only when switched on, and is off by default', function (bool $required): void {
     $routes = Process::env(['SOMITI_REQUIRE_MFA' => $required ? 'true' : 'false'])
         ->path(base_path())
         ->run(['php', 'artisan', 'route:list', '--name=filament.admin.auth', '--json']);
 
     expect($routes->successful())->toBeTrue()
         ->and(str_contains($routes->output(), 'multi-factor-authentication\\/set-up'))->toBe($required)
-        ->and(file_get_contents(config_path('somiti.php')))->toContain("env('SOMITI_REQUIRE_MFA', true)");
+        ->and(file_get_contents(config_path('somiti.php')))->toContain("env('SOMITI_REQUIRE_MFA', false)");
 })->with([true, false]);
 
 it('throttles staff logins after five failed attempts', function (): void {

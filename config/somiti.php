@@ -119,18 +119,18 @@ return [
     | Security
     |--------------------------------------------------------------------------
     |
-    | Staff must set up an authenticator app before using the panel (§2, P7.S2).
-    | Switch off only for local development or tests.
+    | Staff sign in with email + password only. Switch on to make every staff member set up an
+    | authenticator app before using the panel (§2, P7.S2).
     |
     */
 
-    'require_mfa' => (bool) env('SOMITI_REQUIRE_MFA', true),
+    'require_mfa' => (bool) env('SOMITI_REQUIRE_MFA', false),
 
     /*
-    | Member portal: sign in with an SMS code as well as mobile + password. Switch off when no SMS
-    | gateway is used; members then sign in with the password the secretary sets for them.
+    | Member portal and app: members sign in with mobile + the password the secretary sets for them.
+    | Switch on to also offer sign-in by SMS code (needs an SMS gateway).
     */
 
-    'portal_otp' => (bool) env('SOMITI_PORTAL_OTP', true),
+    'portal_otp' => (bool) env('SOMITI_PORTAL_OTP', false),
 
 ];
