@@ -14,13 +14,16 @@ use Laravel\Sanctum\PersonalAccessToken;
 /**
  * App sign-in tokens. Each sign-in is a "family": a 60-minute access token (ability member) and a
  * 30-day refresh token (ability refresh). A refresh token works once; presenting a spent one again
- * means it was copied, so every token of that user is revoked.
+ * later than REUSE_GRACE_SECONDS means it was copied, so every token of that user is revoked.
  */
 final class MemberTokens
 {
     public const int ACCESS_MINUTES = 60;
 
     public const int REFRESH_DAYS = 30;
+
+    /** A spent refresh token presented again this soon is a retry (lost response, parallel refresh), not theft. */
+    public const int REUSE_GRACE_SECONDS = 30;
 
     /**
      * @return array{access_token: string, refresh_token: string, token_type: string, expires_in: int}
@@ -58,7 +61,11 @@ final class MemberTokens
             }
 
             if (str_starts_with($token->name, 'used:')) {
-                $this->revokeAll($user);
+                $usedAt = $token->expires_at;
+
+                if ($usedAt === null || $usedAt->lt(CarbonImmutable::now()->subSeconds(self::REUSE_GRACE_SECONDS))) {
+                    $this->revokeAll($user);
+                }
 
                 return null;
             }

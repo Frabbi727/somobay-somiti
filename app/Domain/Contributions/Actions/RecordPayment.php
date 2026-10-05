@@ -31,31 +31,37 @@ final class RecordPayment
     {
         Gate::forUser($actor)->authorize('create', Payment::class);
 
-        $existing = Payment::query()->where('idempotency_key', $data->idempotencyKey)->first();
+        // One submission per idempotency key at a time: a retry that arrives while the first is still
+        // running waits here, then finds and returns the same payment instead of colliding.
+        return $this->causer->withCauser($actor, fn (): Payment => DB::transaction(function () use ($actor, $data): Payment {
+            DB::select('SELECT pg_advisory_xact_lock(hashtext(?))', ['payment:'.$data->idempotencyKey]);
 
-        if ($existing !== null) {
-            if ($existing->member_id !== $data->memberId || ! $existing->amount_poisha->equals($data->amount)) {
-                throw DomainRuleViolation::because('payments.errors.idempotency_conflict');
+            $existing = Payment::query()->where('idempotency_key', $data->idempotencyKey)->first();
+
+            if ($existing !== null) {
+                if ($existing->member_id !== $data->memberId || ! $existing->amount_poisha->equals($data->amount)) {
+                    throw DomainRuleViolation::because('payments.errors.idempotency_conflict');
+                }
+
+                return $existing;
             }
 
-            return $existing;
-        }
+            $this->assertValid($data);
+            $this->assertMemberSubmission($actor, $data);
 
-        $this->assertValid($data);
-        $this->assertMemberSubmission($actor, $data);
-
-        return $this->causer->withCauser($actor, fn (): Payment => DB::transaction(fn (): Payment => Payment::query()->create([
-            'member_id' => $data->memberId,
-            'method' => $data->method,
-            'amount_poisha' => $data->amount,
-            'trx_id' => $data->method->needsTrxId() ? $data->trxId : null,
-            'proof_path' => $data->proofPath,
-            'received_on' => $data->receivedOn->toDateString(),
-            'status' => PaymentStatus::Pending,
-            'idempotency_key' => $data->idempotencyKey,
-            'notes' => $data->notes,
-            'recorded_by' => $actor->id,
-        ]), attempts: 3));
+            return Payment::query()->create([
+                'member_id' => $data->memberId,
+                'method' => $data->method,
+                'amount_poisha' => $data->amount,
+                'trx_id' => $data->method->needsTrxId() ? $data->trxId : null,
+                'proof_path' => $data->proofPath,
+                'received_on' => $data->receivedOn->toDateString(),
+                'status' => PaymentStatus::Pending,
+                'idempotency_key' => $data->idempotencyKey,
+                'notes' => $data->notes,
+                'recorded_by' => $actor->id,
+            ]);
+        }, attempts: 3));
     }
 
     /**

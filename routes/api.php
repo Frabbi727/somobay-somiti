@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Route;
 | answers in the app's envelope; the member always comes from the token, never from input.
 */
 
-Route::prefix('v1')->middleware('api.locale')->group(function (): void {
+Route::prefix('v1')->group(function (): void {
     Route::get('config/somiti-info', [ConfigController::class, 'somitiInfo']);
     Route::get('config/logo', [ConfigController::class, 'logo'])->middleware('signed')->name('api.logo');
 

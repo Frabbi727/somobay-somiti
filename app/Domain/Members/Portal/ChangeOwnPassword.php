@@ -18,7 +18,11 @@ final class ChangeOwnPassword
 
     public function __construct(private readonly CauserResolver $causer) {}
 
-    public function __invoke(User $user, string $current, string $new): void
+    /**
+     * Signs the member out of the app everywhere — except the app session that made the change,
+     * when $keepTokenFamily names it (website changes keep none).
+     */
+    public function __invoke(User $user, string $current, string $new, ?string $keepTokenFamily = null): void
     {
         if (! Hash::check($current, $user->password)) {
             throw DomainRuleViolation::because('portal.errors.current_password');
@@ -28,8 +32,11 @@ final class ChangeOwnPassword
             throw DomainRuleViolation::because('members.errors.portal_password_short', ['min' => self::MIN_LENGTH]);
         }
 
-        $this->causer->withCauser($user, function () use ($user, $new): void {
+        $this->causer->withCauser($user, function () use ($user, $new, $keepTokenFamily): void {
             $user->forceFill(['password' => $new])->save();
+            $user->tokens()
+                ->when($keepTokenFamily !== null, fn ($query) => $query->whereNotIn('name', ['access:'.$keepTokenFamily, 'refresh:'.$keepTokenFamily]))
+                ->delete();
             activity('members')->performedOn($user)->log('portal password changed by the member');
         });
     }

@@ -7,7 +7,9 @@ use App\Domain\Contributions\Actions\ApprovePayment;
 use App\Domain\Contributions\Actions\GenerateMonthlyDues;
 use App\Domain\Contributions\Actions\RecordPayment;
 use App\Domain\Contributions\Data\PaymentData;
+use App\Domain\Members\Portal\ChangeOwnPassword;
 use App\Domain\Members\Portal\MemberSummary;
+use App\Domain\Members\Portal\MemberTokens;
 use App\Domain\Members\Portal\PortalAccounts;
 use App\Enums\Role;
 use App\Support\Time\YearMonth;
@@ -82,4 +84,16 @@ it('changes the password and signs out other devices', function (): void {
     $this->withToken($other)->getJson('/api/v1/profile')->assertUnauthorized();
     app('auth')->forgetGuards();
     $this->withToken($this->token)->getJson('/api/v1/profile')->assertOk();
+});
+
+it('signs the app out everywhere when the member changes the password on the website', function (): void {
+    $user = app(PortalAccounts::class)->forMember($this->member);
+    $user->forceFill(['password' => 'old-pass-1'])->save();
+    $tokens = app(MemberTokens::class)->issue($user);
+
+    app(ChangeOwnPassword::class)($user, 'old-pass-1', 'new-pass-2');
+
+    $this->postJson('/api/v1/auth/refresh-token', ['refresh_token' => $tokens['refresh_token']])->assertUnauthorized();
+    app('auth')->forgetGuards();
+    $this->withToken($tokens['access_token'])->getJson('/api/v1/profile')->assertUnauthorized();
 });

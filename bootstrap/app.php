@@ -19,8 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // First in the api group, so sign-in (401), rate-limit (429) and routing errors are localised too.
+        $middleware->api(prepend: [SetApiLocale::class]);
+
         $middleware->alias([
-            'api.locale' => SetApiLocale::class,
             'abilities' => CheckAbilities::class,
             'member' => EnsureMemberAccess::class,
         ]);

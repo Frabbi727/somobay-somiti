@@ -49,10 +49,8 @@ final class ProfileController
     {
         /** @var User $user */
         $user = $request->user();
-        $change($user, (string) $request->string('current_password'), (string) $request->string('password'));
-
         $family = substr($user->currentAccessToken()->name, strlen('access:'));
-        $user->tokens()->whereNotIn('name', ['access:'.$family, 'refresh:'.$family])->delete();
+        $change($user, (string) $request->string('current_password'), (string) $request->string('password'), keepTokenFamily: $family);
 
         return ApiResponse::ok(null, __('portal.profile.password_saved'));
     }

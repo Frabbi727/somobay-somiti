@@ -107,7 +107,8 @@ it('expires access tokens after an hour and rotates them with the refresh token 
     app('auth')->forgetGuards();
     $this->withToken($fresh['access_token'])->getJson('/api/v1/auth/me')->assertOk();
 
-    // Replaying the spent refresh token means it was copied: everything is revoked.
+    // Replaying the spent refresh token later means it was copied: everything is revoked.
+    $this->travel(31)->seconds();
     $this->postJson('/api/v1/auth/refresh-token', ['refresh_token' => $tokens['refresh_token']])->assertUnauthorized();
     app('auth')->forgetGuards();
     $this->withToken($fresh['access_token'])->getJson('/api/v1/auth/me')->assertUnauthorized();
@@ -143,4 +144,16 @@ it('signs the member out everywhere when staff set a new password or the member 
     $this->withToken($tokens['access_token'])->getJson('/api/v1/auth/me')->assertForbidden();
 
     expect(app(PortalAccounts::class)->forMember($this->member)->tokens()->count())->toBe(0);
+});
+
+it('does not sign the member out when a refresh is retried straight away (lost response, parallel refresh)', function (): void {
+    $tokens = apiTokens();
+    $fresh = $this->postJson('/api/v1/auth/refresh-token', ['refresh_token' => $tokens['refresh_token']])->assertOk()->json('data');
+
+    $this->travel(10)->seconds();
+    $this->postJson('/api/v1/auth/refresh-token', ['refresh_token' => $tokens['refresh_token']])->assertUnauthorized();
+
+    app('auth')->forgetGuards();
+    $this->withToken($fresh['access_token'])->getJson('/api/v1/auth/me')->assertOk();
+    $this->postJson('/api/v1/auth/refresh-token', ['refresh_token' => $fresh['refresh_token']])->assertOk();
 });

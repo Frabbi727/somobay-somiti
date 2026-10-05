@@ -20,7 +20,7 @@ architecture (GetX modules, Dio `ApiClient`, `UIState`, translations) is unchang
 |-------|----------|
 | Order | Backend API first (with tests) → six docs in the mobile repo from the real API → Flutter. |
 | Money in JSON | Every amount is `{"poisha": int, "display": string}`; `display` is formatted by the backend in the request language. Flutter shows `display` and uses `poisha` only for comparisons. |
-| Tokens | Laravel Sanctum. Access token 60 min; refresh token 30 days, single use, rotated on refresh; reuse of a spent refresh token revokes all of that member's tokens. |
+| Tokens | Laravel Sanctum. Access token 60 min; refresh token 30 days, single use, rotated on refresh; reuse of a spent refresh token more than 30 s after it was used revokes all of that member's tokens (a reuse within 30 s — a lost response or two parallel refreshes — just gets 401). Clients must refresh single-flight. |
 | Unsupported mobile modules | Loans, savings/DPS, member list, register, forgot-password, force-update: files kept, routes and menu entries removed, API constants for them removed. |
 | Notifications | The member's own SMS history (`sms_messages`), read-only, newest first, login codes excluded. No read/unread, no push. |
 | Shares screen | Current shares, share-change history, and the current month's rates from the approved rate plan. |

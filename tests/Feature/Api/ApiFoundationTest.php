@@ -49,3 +49,15 @@ it('formats money, enums and months for the app', function (): void {
         ->and(ApiValue::month(YearMonth::parse('2026-07')))->toBe('2026-07')
         ->and(ApiValue::enum(DueStatus::Open))->toMatchArray(['value' => 'open', 'label' => DueStatus::Open->getLabel()]);
 });
+
+it('answers sign-in, rate-limit and routing errors in the requested language too', function (): void {
+    $this->withHeaders(['Accept-Language' => 'en'])->withToken('nope')->getJson('/api/v1/profile')
+        ->assertUnauthorized()->assertJsonPath('message', __('api.errors.unauthenticated', [], 'en'));
+    $this->withHeaders(['Accept-Language' => 'en'])->getJson('/api/v1/nope')
+        ->assertNotFound()->assertJsonPath('message', __('api.errors.not_found', [], 'en'));
+
+    foreach (range(1, 6) as $attempt) {
+        $last = $this->withHeaders(['Accept-Language' => 'en'])->postJson('/api/v1/auth/login', ['mobile' => '01799999999', 'password' => 'x']);
+    }
+    $last->assertStatus(429)->assertJsonPath('message', __('api.errors.throttled', [], 'en'));
+});
