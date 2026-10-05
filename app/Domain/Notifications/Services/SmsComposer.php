@@ -6,6 +6,7 @@ namespace App\Domain\Notifications\Services;
 
 use App\Domain\Notifications\Enums\SmsTemplateKey;
 use App\Domain\Notifications\Models\SmsTemplate;
+use App\Domain\Settings\Models\SomitiProfile;
 
 /**
  * Fills a template's {placeholders}. Callers pass values already formatted for the locale.
@@ -24,7 +25,7 @@ final class SmsComposer
         }
 
         return $this->fill($locale === 'en' ? $template->body_en : $template->body_bn, [
-            'somiti' => (string) config('app.name'),
+            'somiti' => SomitiProfile::current()->displayName($locale),
             ...$values,
         ]);
     }

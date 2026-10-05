@@ -13,6 +13,8 @@ use App\Domain\Notifications\Jobs\SendSmsJob;
 use App\Domain\Notifications\Models\SmsMessage;
 use App\Domain\Notifications\Models\SmsTemplate;
 use App\Domain\Notifications\Services\SmsSender;
+use App\Domain\Settings\Actions\UpdateSomitiProfile;
+use App\Domain\Settings\Data\SomitiProfileData;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Enums\Role;
 use App\Filament\Clusters\Settings\Resources\SmsTemplates\Pages\EditSmsTemplate;
@@ -78,6 +80,16 @@ it('welcomes a new member by SMS in Bangla', function (): void {
 
     expect(SmsMessage::query()->sole()->status)->toBe(SmsStatus::Sent)
         ->and(SmsMessage::query()->sole()->member_id)->toBe($member->id);
+});
+
+it('names the society from its profile once one is saved', function (): void {
+    $gateway = fakeSms();
+    approvedPlan('2026-07', '500');
+    app(UpdateSomitiProfile::class)(userWithRole(Role::SuperAdmin), new SomitiProfileData(nameBn: 'সবুজ সমবায় সমিতি', nameEn: 'Sabuj Society'));
+
+    onboard(1, '2026-07', ['name_bn' => 'রহিম', 'mobile' => '01712345678']);
+
+    expect($gateway->sent[0][1])->toStartWith('রহিম, সবুজ সমবায় সমিতি-এ স্বাগতম।');
 });
 
 it('texts a receipt when a payment is approved', function (): void {
