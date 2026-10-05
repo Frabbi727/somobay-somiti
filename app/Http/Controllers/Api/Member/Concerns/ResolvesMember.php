@@ -20,4 +20,12 @@ trait ResolvesMember
 
         return $member;
     }
+
+    /**
+     * The member's name in the request language, as the portal greets them.
+     */
+    protected static function memberName(Member $member): string
+    {
+        return app()->getLocale() === 'bn' ? $member->name_bn : $member->name_en;
+    }
 }

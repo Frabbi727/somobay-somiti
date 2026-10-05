@@ -98,7 +98,7 @@ final class AuthController
 
         return ApiResponse::ok([
             'member_no' => $member->member_no,
-            'name' => $member->displayName(),
+            'name' => self::memberName($member),
             'status' => ApiValue::enum($member->status),
         ]);
     }
