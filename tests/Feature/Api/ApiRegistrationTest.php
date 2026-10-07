@@ -98,3 +98,53 @@ it('keeps members out of the registration screens', function (): void {
 
     $this->withToken(memberToken($member))->getJson('/api/v1/registration')->assertStatus(401);
 });
+
+it('refuses every registration route to anyone but the applicant', function (): void {
+    $refresh = app(MemberTokens::class)->issue($this->application->user)['refresh_token'];
+    $member = onboard(1, '2026-07', ['mobile' => '01799999999']);
+    $memberToken = memberToken($member);
+    $staff = userWithRole(Role::Accountant);
+
+    $routes = [['getJson', '/api/v1/registration'], ['putJson', '/api/v1/registration'], ['postJson', '/api/v1/registration/photo'], ['postJson', '/api/v1/registration/submit']];
+
+    foreach ($routes as [$method, $uri]) {
+        app('auth')->forgetGuards();
+        $this->withToken('')->{$method}($uri)->assertUnauthorized();
+        app('auth')->forgetGuards();
+        $this->withToken($refresh)->{$method}($uri)->assertUnauthorized();
+        app('auth')->forgetGuards();
+        $this->withToken($memberToken)->{$method}($uri)->assertUnauthorized();
+        app('auth')->forgetGuards();
+        $staffToken = $staff->createToken('access:staff', ['applicant'], now()->addHour())->plainTextToken;
+        $status = $this->withToken($staffToken)->{$method}($uri)->getStatusCode();
+        expect($status)->not->toBe(200);
+    }
+});
+
+it('serves the photo only through an untampered signed link for that registration', function (): void {
+    Storage::fake('local');
+    $url = $this->post('/api/v1/registration/photo', ['photo' => UploadedFile::fake()->image('me.jpg', 300, 300)])->json('data.data.photo_url');
+    $other = invite('01833333333');
+
+    $this->get($url.'x')->assertForbidden();
+    $this->get(str_replace('/photo/'.$this->application->id.'?', '/photo/'.$other->id.'?', $url))->assertForbidden();
+    $this->get($url)->assertOk();
+});
+
+it('leaves no file behind when the photo is refused', function (): void {
+    Storage::fake('local');
+    $this->putJson('/api/v1/registration', registrationInput())->assertOk();
+    $this->postJson('/api/v1/registration/submit', ['idempotency_key' => (string) Str::uuid()])->assertOk();
+
+    $this->post('/api/v1/registration/photo', ['photo' => UploadedFile::fake()->image('me.jpg', 300, 300)], ['Accept' => 'application/json'])->assertStatus(422);
+
+    expect(Storage::disk('local')->allFiles('member-photos'))->toBe([]);
+});
+
+it('ignores a photo_path sent in the draft', function (): void {
+    $this->putJson('/api/v1/registration', ['photo_path' => 'member-photos/x.jpg', 'name_bn' => 'করিম'])
+        ->assertOk()
+        ->assertJsonPath('data.data.photo_url', null);
+
+    expect($this->application->fresh()?->photo_path)->toBeNull();
+});

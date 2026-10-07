@@ -19,6 +19,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 /**
  * The member's own registration in the app (spec §8.4-8.7). The registration always comes from
@@ -42,14 +43,20 @@ final class RegistrationController
 
     public function photo(RegistrationPhotoRequest $request, SaveRegistrationDraft $save): JsonResponse
     {
-        $path = (string) $request->file('photo')?->store('member-photos', 'local');
+        $stored = $request->file('photo')?->store('member-photos', 'local');
+
+        if (! is_string($stored) || $stored === '') {
+            throw DomainRuleViolation::because('registration.errors.photo_invalid');
+        }
+
+        $path = $stored;
 
         try {
             $application = $save(self::application($request), RegistrationDraft::fromInput(['photo_path' => $path]));
-        } catch (DomainRuleViolation $violation) {
+        } catch (Throwable $failure) {
             Storage::disk('local')->delete($path);
 
-            throw $violation;
+            throw $failure;
         }
 
         return ApiResponse::ok(RegistrationResource::make($application), __('registration.notifications.draft_saved'));
