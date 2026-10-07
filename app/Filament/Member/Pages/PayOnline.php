@@ -92,6 +92,7 @@ final class PayOnline extends Page
                     ->disk('local')
                     ->directory('payment-proofs')
                     ->visibility('private')
+                    ->preventFilePathTampering()
                     ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp', 'application/pdf'])
                     ->maxSize((int) config('somiti.max_proof_kb'))
                     ->required(),

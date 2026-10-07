@@ -86,17 +86,38 @@ it('never saves a photo path typed into the form state', function (): void {
         ->fillForm(['name_bn' => 'করিম মিয়া', 'name_en' => 'Karim Mia'])
         ->set('data.photo_path', ['tampered' => 'member-photos/someone-else.jpg'])
         ->goToNextWizardStep()
-        ->assertHasNoFormErrors();
+        ->assertHasFormErrors(['photo_path']);
 
     expect($this->application->fresh()?->photo_path)->toBe('member-photos/mine.jpg');
 
     Livewire::test(Registration::class)
         ->fillForm(registrationInput())
         ->set('data.photo_path', ['tampered' => 'member-photos/someone-else.jpg'])
-        ->callAction('submit');
+        ->callAction('submit')
+        ->assertHasErrors(['data.photo_path']);
 
     expect($this->application->fresh()?->photo_path)->toBe('member-photos/mine.jpg');
     Storage::disk('local')->assertExists('member-photos/someone-else.jpg');
+});
+
+it('never hands out a link to another file on the private disk through the photo upload', function (): void {
+    Storage::fake('local');
+    Storage::disk('local')->put('member-photos/mine.jpg', 'mine');
+    Storage::disk('local')->put('Somiti Manager/secret.zip', 'backup');
+    app(SaveRegistrationDraft::class)($this->application, RegistrationDraft::fromInput(['photo_path' => 'member-photos/mine.jpg']));
+    $this->actingAs($this->application->user);
+
+    $page = Livewire::test(Registration::class);
+    $key = $page->instance()->form->getFlatFields(withHidden: true)['photo_path']->getKey();
+    $uploadedFiles = fn (): mixed => $page->call('callSchemaComponentMethod', $key, 'getUploadedFiles')->effects['returns'][0] ?? null;
+
+    $own = $uploadedFiles();
+    expect($own)->toBeArray()->toHaveCount(1)
+        ->and(array_values($own)[0]['url'] ?? null)->toBeString();
+
+    $page->set('data.photo_path', ['tampered' => 'Somiti Manager/secret.zip']);
+
+    expect($uploadedFiles())->toBe(['tampered' => null]);
 });
 
 it('sends a member whose registration is under review back to the status page', function (): void {

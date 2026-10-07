@@ -117,7 +117,8 @@ final class Registration extends Page
                         TextInput::make('guardian_name')->label(__('members.member.guardian_name'))->maxLength(255),
                         TextInput::make('nid')->label(__('members.member.nid'))->helperText(__('members.member.nid_help'))->regex(self::NID_PATTERN),
                         DatePicker::make('date_of_birth')->label(__('members.member.date_of_birth'))->native(false)->maxDate(now()),
-                        FileUpload::make('photo_path')->label(__('registration.field.photo'))->image()->avatar()->disk('local')->directory('member-photos')->visibility('private')->maxSize(1024),
+                        FileUpload::make('photo_path')->label(__('registration.field.photo'))->image()->avatar()->disk('local')->directory('member-photos')->visibility('private')->maxSize(1024)
+                            ->preventFilePathTampering(allowFilePathUsing: fn (string $file): bool => $file === self::application()->photo_path),
                     ]),
                 Step::make(__('registration.steps.contact'))
                     ->icon(Heroicon::OutlinedPhone)

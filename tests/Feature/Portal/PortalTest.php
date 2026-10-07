@@ -311,3 +311,23 @@ it('renders every portal page in the sidebar and follows the member language', f
 
     $this->get(Dashboard::getUrl())->assertSee('Assalamu Alaikum, Alice');
 });
+
+it('never hands out a link to another file on the private disk through the proof upload', function (): void {
+    Storage::fake('local');
+    Storage::disk('local')->put('Somiti Manager/secret.zip', 'backup');
+    actAsMember($this, $this->alice);
+
+    $page = Livewire::test(PayOnline::class)->set('data.proof_path', ['tampered' => 'Somiti Manager/secret.zip']);
+    $key = $page->instance()->form->getFlatFields(withHidden: true)['proof_path']->getKey();
+
+    $urls = $page->call('callSchemaComponentMethod', $key, 'getUploadedFiles')->effects['returns'][0] ?? null;
+
+    expect($urls)->toBe(['tampered' => null]);
+
+    $page->fillForm(['amount' => '100', 'trx_id' => 'BKX99999Q'])
+        ->set('data.proof_path', ['tampered' => 'Somiti Manager/secret.zip'])
+        ->callAction('submit')
+        ->assertHasFormErrors(['proof_path']);
+
+    expect(Payment::query()->count())->toBe(0);
+});
