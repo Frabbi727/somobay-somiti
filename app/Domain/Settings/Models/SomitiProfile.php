@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Settings\Models;
 
+use App\Enums\Role;
 use App\Policies\SomitiProfilePolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
@@ -26,6 +27,7 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property string|null $phone
  * @property string|null $email
  * @property string|null $logo_path
+ * @property list<string>|null $registration_approval_roles
  * @property int|null $updated_by
  */
 #[UsePolicy(SomitiProfilePolicy::class)]
@@ -39,6 +41,9 @@ final class SomitiProfile extends Model
     public const string LOGO_DISK = 'local';
 
     public const int MAX_LOGO_KB = 512;
+
+    /** Who approves a member's own registration, in order, until the president changes it. */
+    public const array DEFAULT_REGISTRATION_CHAIN = ['secretary', 'president'];
 
     protected $guarded = [];
 
@@ -88,6 +93,16 @@ final class SomitiProfile extends Model
         return 'data:'.$mime.';base64,'.base64_encode((string) $disk->get($this->logo_path));
     }
 
+    /**
+     * @return list<Role>
+     */
+    public function registrationApprovalChain(): array
+    {
+        $roles = $this->registration_approval_roles ?? self::DEFAULT_REGISTRATION_CHAIN;
+
+        return array_map(fn (string $role): Role => Role::from($role), $roles);
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()->logAll()->logExcept(['updated_at'])->logOnlyDirty()->dontLogEmptyChanges()->useLogName('settings');
@@ -100,6 +115,7 @@ final class SomitiProfile extends Model
     {
         return [
             'registered_on' => 'immutable_date',
+            'registration_approval_roles' => 'array',
         ];
     }
 }

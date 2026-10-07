@@ -18,6 +18,8 @@ return [
         'dues_generated' => 'Monthly dues notice',
         'payment_approved' => 'Payment received',
         'login_code' => 'Portal login code',
+        'registration_returned' => 'Registration sent back',
+        'registration_rejected' => 'Registration rejected',
     ],
     'log' => [
         'singular' => 'SMS',

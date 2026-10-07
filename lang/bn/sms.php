@@ -18,6 +18,8 @@ return [
         'dues_generated' => 'মাসিক কিস্তির নোটিশ',
         'payment_approved' => 'টাকা প্রাপ্তি',
         'login_code' => 'পোর্টাল লগইন কোড',
+        'registration_returned' => 'নিবন্ধন ফেরত',
+        'registration_rejected' => 'নিবন্ধন বাতিল',
     ],
     'log' => [
         'singular' => 'এসএমএস',
