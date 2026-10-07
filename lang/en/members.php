@@ -41,6 +41,7 @@ return [
         'share' => 'Share',
         'add' => 'Add nominee',
         'total' => 'Total :total',
+        'legacy_relation' => 'Previously: :relation',
     ],
     'share' => [
         'lots' => 'Share lots',

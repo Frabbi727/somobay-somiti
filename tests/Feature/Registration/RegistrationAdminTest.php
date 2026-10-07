@@ -101,3 +101,22 @@ it('sends back and rejects with a reason', function (): void {
     expect($returned->fresh()?->status)->toBe(MemberApplicationStatus::Returned)
         ->and($rejected->fresh()?->status)->toBe(MemberApplicationStatus::Rejected);
 });
+
+it('previews the registration fee on the final approval', function (): void {
+    $application = submittedRegistration();
+    $this->actingAs(userWithRole(Role::Secretary));
+    Livewire::test(ViewMemberApplication::class, ['record' => $application->getRouteKey()])
+        ->mountAction('approve')
+        ->assertMountedActionModalDontSee(__('members.actions.registration_fee_summary', ['amount' => '৳ 300.00']));
+    Livewire::test(ViewMemberApplication::class, ['record' => $application->getRouteKey()])
+        ->callAction('approve', ['confirm_text' => '01811111111']);
+
+    $this->actingAs(userWithRole(Role::President));
+
+    Livewire::test(ViewMemberApplication::class, ['record' => $application->getRouteKey()])
+        ->mountAction('approve')
+        ->fillForm(['shares' => 3, 'effective_from' => '2026-07'])
+        ->assertMountedActionModalSee(__('members.actions.registration_fee_summary', ['amount' => '৳ 300.00']))
+        ->fillForm(['effective_from' => '2026-06'])
+        ->assertMountedActionModalSee(__('members.errors.no_rate_plan', ['month' => '2026-06']));
+});

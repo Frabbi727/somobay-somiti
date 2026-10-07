@@ -89,3 +89,11 @@ it('checks the nominee NID format in the database', function (): void {
         'created_at' => now(), 'updated_at' => now(),
     ]))->toThrow(QueryException::class);
 });
+
+it('seeds the registration SMS templates with timestamps', function (): void {
+    $templates = DB::table('sms_templates')->whereIn('key', ['registration_returned', 'registration_rejected'])->get();
+
+    expect($templates)->toHaveCount(2)
+        ->and($templates->every(fn (object $row): bool => $row->created_at !== null && $row->updated_at !== null && (bool) $row->is_active))->toBeTrue()
+        ->and($templates->firstWhere('key', 'registration_returned')?->body_en)->toContain('{reason}');
+});

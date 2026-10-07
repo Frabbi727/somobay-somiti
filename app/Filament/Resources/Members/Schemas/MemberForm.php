@@ -14,6 +14,7 @@ use Carbon\CarbonImmutable;
 use Closure;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -105,9 +106,13 @@ final class MemberForm
                             ->columns(6)
                             ->schema([
                                 TextInput::make('name')->label(__('members.nominee.name'))->required()->columnSpan(2),
+                                Hidden::make('legacy_relation'),
                                 Select::make('relation_id')
                                     ->label(__('members.nominee.relation'))
                                     ->options(fn (): array => NomineeRelation::options())
+                                    ->helperText(fn (Get $get): ?string => is_string($get('legacy_relation')) && $get('legacy_relation') !== ''
+                                        ? (string) __('members.nominee.legacy_relation', ['relation' => $get('legacy_relation')])
+                                        : null)
                                     ->required()
                                     ->native(false),
                                 TextInput::make('nid')
@@ -162,12 +167,30 @@ final class MemberForm
             'address' => $member->address,
             'nominees' => $member->nominees->map(fn (Nominee $nominee): array => [
                 'name' => $nominee->name,
-                'relation_id' => $nominee->relation_id,
+                'relation_id' => $nominee->relation_id ?? self::matchLegacyRelation($nominee->relation),
+                'legacy_relation' => $nominee->relation_id === null ? $nominee->relation : null,
                 'nid' => $nominee->nid,
                 'mobile' => $nominee->mobile,
                 'share_percent' => Bps::of($nominee->share_bps)->toPercentString(),
             ])->values()->all(),
         ];
+    }
+
+    /**
+     * A legacy nominee (free-text relation, no relation_id) gets the active relation whose English or
+     * Bangla label matches the text, ignoring case; otherwise the office must choose one before saving.
+     */
+    private static function matchLegacyRelation(string $text): ?int
+    {
+        $needle = mb_strtolower(trim($text));
+
+        if ($needle === '') {
+            return null;
+        }
+
+        return NomineeRelation::query()->where('active', true)->orderBy('sort')->orderBy('id')->get()
+            ->first(fn (NomineeRelation $relation): bool => in_array($needle, [mb_strtolower($relation->label_en), mb_strtolower($relation->label_bn)], true))
+            ?->id;
     }
 
     private static function nomineeTotal(mixed $rows): Bps

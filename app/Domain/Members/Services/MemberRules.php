@@ -35,7 +35,7 @@ final class MemberRules
 
         $openRegistration = MemberApplication::openForMobile($data->mobile);
 
-        if ($existing === null && $openRegistration !== null && $openRegistration->id !== $ignoreApplicationId) {
+        if ($openRegistration !== null && $openRegistration->id !== $ignoreApplicationId) {
             throw DomainRuleViolation::because('registration.errors.mobile_invited', ['mobile' => $data->mobile]);
         }
 

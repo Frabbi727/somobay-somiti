@@ -8,6 +8,7 @@ use App\Domain\Members\Data\MemberData;
 use App\Domain\Members\Data\NomineeData;
 use App\Domain\Members\Models\Member;
 use App\Domain\Members\Models\Nominee;
+use App\Domain\Members\Models\NomineeRelation;
 use App\Filament\Support\Display;
 use App\Support\Money\Bps;
 use App\Support\Time\YearMonth;
@@ -77,7 +78,7 @@ final class MemberPresenter
             photoPath: $member->photo_path,
             nominees: array_values($member->nominees->map(fn (Nominee $nominee): NomineeData => new NomineeData(
                 $nominee->name,
-                $nominee->relationLabel(),
+                $nominee->relation,
                 Bps::of($nominee->share_bps),
                 $nominee->mobile,
                 $nominee->nid,
@@ -99,7 +100,8 @@ final class MemberPresenter
     }
 
     /**
-     * "Karim (Son) 60%, Salma (Wife) 40%".
+     * "Karim (Son) 60%, Salma (Wife) 40%". The relation label comes from relation_id when set (the form
+     * only carries the id), else the legacy free-text relation, so unchanged nominees render identically.
      *
      * @param  list<NomineeData>  $nominees
      */
@@ -109,8 +111,16 @@ final class MemberPresenter
             return null;
         }
 
+        $ids = array_values(array_filter(array_map(fn (NomineeData $nominee): ?int => $nominee->relationId, $nominees)));
+        $relations = $ids === [] ? collect() : NomineeRelation::query()->whereKey($ids)->get()->keyBy('id');
+
         return implode(', ', array_map(
-            fn (NomineeData $nominee): string => sprintf('%s (%s) %s', $nominee->name, $nominee->relation, $nominee->share->format(app()->getLocale())),
+            fn (NomineeData $nominee): string => sprintf(
+                '%s (%s) %s',
+                $nominee->name,
+                $relations->get($nominee->relationId)?->label() ?? $nominee->relation,
+                $nominee->share->format(app()->getLocale()),
+            ),
             $nominees,
         ));
     }

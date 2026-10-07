@@ -10,6 +10,7 @@ use App\Domain\Members\Registration\Actions\InviteMember;
 use App\Domain\Members\Registration\Enums\MemberApplicationStatus;
 use App\Domain\Members\Registration\Enums\RegistrationDecisionType;
 use App\Domain\Members\Registration\Models\MemberApplication;
+use App\Domain\Members\Services\ShareChanger;
 use App\Filament\Concerns\ConfirmsWithTier;
 use App\Filament\Support\Display;
 use App\Filament\Support\DomainActionRunner;
@@ -20,7 +21,9 @@ use Closure;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Icons\Heroicon;
 
 final class RegistrationActions
@@ -113,13 +116,20 @@ final class RegistrationActions
                     ->minValue(1)
                     ->default(fn (MemberApplication $record): ?int => $record->requested_shares)
                     ->required($final)
-                    ->visible($final),
+                    ->visible($final)
+                    ->live(onBlur: true),
                 TextInput::make('effective_from')
                     ->label(__('registration.field.effective_from'))
                     ->type('month')
                     ->regex('/^\d{4}-\d{2}$/')
                     ->default(fn (): string => (string) YearMonth::current())
                     ->required($final)
+                    ->visible($final)
+                    ->live(onBlur: true),
+                TextEntry::make('fee_summary')
+                    ->hiddenLabel()
+                    ->state(fn (Get $get): string => self::feeSummary($get('shares'), $get('effective_from')))
+                    ->weight('bold')
                     ->visible($final),
             ],
         );
@@ -168,6 +178,26 @@ final class RegistrationActions
             description: __('registration.actions.reject_description'),
             fields: [Textarea::make('reason')->label(__('registration.field.reason'))->required()->minLength(DecideRegistration::MIN_REASON)->rows(2)],
         );
+    }
+
+    /**
+     * "Registration fee due: ৳ 300.00" for the shares and month chosen on the final approval.
+     */
+    public static function feeSummary(mixed $shares, mixed $from): string
+    {
+        $count = is_numeric($shares) ? (int) $shares : 0;
+
+        if (! is_string($from) || preg_match('/^\d{4}-\d{2}$/', $from) !== 1 || $count < 1) {
+            return '';
+        }
+
+        try {
+            $fee = app(ShareChanger::class)->planFor(YearMonth::parse($from))->registration_fee_per_share_poisha->multipliedByInt($count);
+
+            return __('members.actions.registration_fee_summary', ['amount' => Display::money($fee)]);
+        } catch (\Throwable $exception) {
+            return $exception->getMessage();
+        }
     }
 
     private static function name(MemberApplication $application): string

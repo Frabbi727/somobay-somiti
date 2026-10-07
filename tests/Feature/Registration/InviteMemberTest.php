@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Members\Actions\UpdateMember;
 use App\Domain\Members\Models\Member;
 use App\Domain\Members\Registration\Actions\InviteMember;
 use App\Domain\Members\Registration\Enums\MemberApplicationStatus;
@@ -52,4 +53,13 @@ it('lets the same mobile be invited again after a rejection', function (): void 
 
     expect(invite('01855555555')->status)->toBe(MemberApplicationStatus::Invited)
         ->and(MemberApplication::query()->where('mobile', '01855555555')->count())->toBe(2);
+});
+
+it('stops an office edit from moving a member onto a mobile with an open registration', function (): void {
+    $member = onboard(1, '2026-07', ['mobile' => '01866666666']);
+    invite('01877777777');
+
+    expect(memberRuleKey(fn () => app(UpdateMember::class)(userWithRole(Role::Secretary), $member, memberData(['mobile' => '01877777777']))))
+        ->toBe('registration.errors.mobile_invited')
+        ->and($member->fresh()?->mobile)->toBe('01866666666');
 });

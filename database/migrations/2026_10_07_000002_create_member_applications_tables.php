@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Domain\Notifications\Models\SmsTemplate;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -102,6 +101,8 @@ return new class extends Migration
             $table->jsonb('registration_approval_roles')->default(DB::raw("'[\"secretary\",\"president\"]'::jsonb"));
         });
 
+        $now = now();
+
         foreach ([
             'registration_returned' => [
                 '{somiti}: আপনার নিবন্ধন সংশোধনের জন্য ফেরত পাঠানো হয়েছে। কারণ: {reason}। অ্যাপ বা {portal_url} থেকে ঠিক করে আবার জমা দিন।',
@@ -112,7 +113,12 @@ return new class extends Migration
                 '{somiti}: sorry, your membership registration was not accepted. Reason: {reason}. Please contact the office.',
             ],
         ] as $key => [$bn, $en]) {
-            SmsTemplate::query()->firstOrCreate(['key' => $key], ['body_bn' => $bn, 'body_en' => $en, 'is_active' => true]);
+            if (! DB::table('sms_templates')->where('key', $key)->exists()) {
+                DB::table('sms_templates')->insert([
+                    'key' => $key, 'body_bn' => $bn, 'body_en' => $en, 'is_active' => true,
+                    'created_at' => $now, 'updated_at' => $now,
+                ]);
+            }
         }
     }
 

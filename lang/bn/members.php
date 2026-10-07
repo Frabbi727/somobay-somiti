@@ -41,6 +41,7 @@ return [
         'share' => 'অংশ',
         'add' => 'নমিনি যোগ করুন',
         'total' => 'মোট :total',
+        'legacy_relation' => 'আগে লেখা ছিল: :relation',
     ],
     'share' => [
         'lots' => 'শেয়ার লট',

@@ -12,12 +12,15 @@ use App\Filament\Resources\Members\Pages\CreateMember;
 use App\Filament\Resources\Members\Pages\EditMember;
 use App\Filament\Resources\Members\Pages\ListMembers;
 use App\Filament\Resources\Members\Pages\ViewMember;
+use App\Filament\Resources\Members\Support\MemberPresenter;
+use App\Filament\Support\ChangeSummary;
 use App\Support\Time\YearMonth;
 use Carbon\CarbonImmutable;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Repeater;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
@@ -125,6 +128,62 @@ it('edits a member and their nominees', function (): void {
     $undo();
 
     expect($member->fresh()?->address)->toBe('Mirpur, Dhaka');
+});
+
+it('shows untouched nominees as unchanged in the save summary and the relation label on create', function (): void {
+    $member = onboard(1, '2026-07', ['nominees' => [nominee(['name' => 'Karim', 'relation_id' => relationId('son')])]]);
+    $undo = Repeater::fake();
+
+    $page = Livewire::test(EditMember::class, ['record' => $member->getRouteKey()])
+        ->fillForm(['address' => 'Mirpur, Dhaka']);
+
+    $rows = ChangeSummary::rows(
+        MemberPresenter::summaryLabels(),
+        MemberPresenter::summaryValues(MemberPresenter::fromMember($member->load('nominees'))),
+        MemberPresenter::summaryValues(MemberPresenter::dataFromState($page->get('data'))),
+    );
+
+    expect(array_column($rows, 'label'))->toBe([__('members.member.address')]);
+
+    Livewire::test(CreateMember::class)
+        ->fillForm([
+            'name_bn' => 'ক', 'name_en' => 'K', 'mobile' => '01812345678', 'shares' => 1, 'effective_from' => '2026-10',
+            'nominees' => [nominee(['name' => 'Salma', 'relation_id' => relationId('daughter')])],
+        ])
+        ->mountAction(memberFormAction('create'))
+        ->assertMountedActionModalSee('Salma (Daughter) 100.00%');
+
+    $undo();
+});
+
+it('shows a legacy nominee relation as a hint and pre-selects a matching relation', function (): void {
+    $member = onboard(1, '2026-07', ['nominees' => [
+        nominee(['name' => 'Salma', 'share_percent' => '50']),
+        nominee(['name' => 'Karim', 'nid' => '1234567891', 'share_percent' => '50']),
+    ]]);
+    DB::table('nominees')->where('member_id', $member->id)->where('name', 'Salma')->update(['relation' => 'Wife', 'relation_id' => null]);
+    DB::table('nominees')->where('member_id', $member->id)->where('name', 'Karim')->update(['relation' => 'SON', 'relation_id' => null]);
+    $undo = Repeater::fake();
+
+    Livewire::test(EditMember::class, ['record' => $member->getRouteKey()])
+        ->assertSchemaStateSet([
+            'nominees.0.relation_id' => null,
+            'nominees.0.legacy_relation' => 'Wife',
+            'nominees.1.relation_id' => relationId('son'),
+        ])
+        ->assertSee(__('members.nominee.legacy_relation', ['relation' => 'Wife']))
+        ->callAction(memberFormAction('save'))
+        ->assertHasFormErrors(['nominees.0.relation_id' => 'required']);
+
+    Livewire::test(EditMember::class, ['record' => $member->getRouteKey()])
+        ->set('data.nominees.0.relation_id', relationId('spouse'))
+        ->callAction(memberFormAction('save'))
+        ->assertHasNoFormErrors();
+
+    $undo();
+
+    expect($member->nominees()->pluck('relation_id', 'name')->all())
+        ->toEqual(['Karim' => relationId('son'), 'Salma' => relationId('spouse')]);
 });
 
 it('changes shares from the member page with a live summary', function (): void {

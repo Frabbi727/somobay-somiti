@@ -6,6 +6,7 @@ namespace App\Http\Middleware;
 
 use App\Domain\Members\Portal\AccountType;
 use App\Domain\Members\Portal\AccountTypes;
+use App\Filament\Member\Pages\Dashboard;
 use App\Filament\Member\Pages\Registration;
 use App\Filament\Member\Pages\RegistrationStatus;
 use App\Models\User;
@@ -14,7 +15,8 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Someone still registering lands on their registration status whatever portal page they open.
+ * Someone still registering lands on their registration status whatever portal page they open; a
+ * member (e.g. just approved, reloading a registration page) is sent to the dashboard instead.
  */
 final class RedirectApplicantsToRegistration
 {
@@ -24,12 +26,21 @@ final class RedirectApplicantsToRegistration
     {
         $user = $request->user();
 
-        if ($user instanceof User && $this->accounts->of($user) === AccountType::Applicant) {
-            $allowed = [RegistrationStatus::getRouteName(), Registration::getRouteName(), 'filament.member.auth.logout'];
+        if (! $user instanceof User) {
+            return $next($request);
+        }
 
-            if (! in_array($request->route()?->getName(), $allowed, true)) {
-                return redirect(RegistrationStatus::getUrl());
-            }
+        $route = $request->route()?->getName();
+        $registrationRoutes = [RegistrationStatus::getRouteName(), Registration::getRouteName()];
+
+        $type = $this->accounts->of($user);
+
+        if ($type === AccountType::Applicant && ! in_array($route, [...$registrationRoutes, 'filament.member.auth.logout'], true)) {
+            return redirect(RegistrationStatus::getUrl());
+        }
+
+        if ($type === AccountType::Member && in_array($route, $registrationRoutes, true)) {
+            return redirect(Dashboard::getUrl());
         }
 
         return $next($request);

@@ -7,6 +7,7 @@ use App\Domain\Members\Registration\Data\RegistrationDraft;
 use App\Domain\Members\Registration\Enums\MemberApplicationStatus;
 use App\Enums\Role;
 use App\Filament\Member\Pages\Auth\MemberLogin;
+use App\Filament\Member\Pages\Dashboard;
 use App\Filament\Member\Pages\Registration;
 use App\Filament\Member\Pages\RegistrationStatus;
 use Filament\Facades\Filament;
@@ -132,6 +133,12 @@ it('lets an approved member into the normal portal and out of the registration p
     $this->actingAs($this->application->user->fresh());
 
     $this->get('/portal')->assertOk();
+    $this->get(RegistrationStatus::getUrl())->assertRedirect(Dashboard::getUrl());
+    $this->get(Registration::getUrl())->assertRedirect(Dashboard::getUrl());
+});
+
+it('still refuses the registration pages to staff', function (): void {
+    $this->actingAs(userWithRole(Role::Secretary));
+
     $this->get(RegistrationStatus::getUrl())->assertForbidden();
-    $this->get(Registration::getUrl())->assertForbidden();
 });
