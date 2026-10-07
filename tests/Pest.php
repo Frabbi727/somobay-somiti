@@ -22,6 +22,8 @@ use App\Domain\Members\Models\NomineeRelation;
 use App\Domain\Members\Portal\MemberTokens;
 use App\Domain\Members\Portal\PortalAccounts;
 use App\Domain\Members\Registration\Actions\InviteMember;
+use App\Domain\Members\Registration\Actions\SaveRegistrationDraft;
+use App\Domain\Members\Registration\Data\RegistrationDraft;
 use App\Domain\Members\Registration\Models\MemberApplication;
 use App\Domain\Notifications\Contracts\SmsGateway;
 use App\Domain\Notifications\Data\SmsResult;
@@ -410,4 +412,35 @@ function memberRuleKey(Closure $callback): ?string
 function invite(string $mobile = '01811111111', string $password = 'secret-123'): MemberApplication
 {
     return app(InviteMember::class)(userWithRole(Role::Secretary), $mobile, $password);
+}
+
+/**
+ * A complete registration as the member would type it; override any field.
+ *
+ * @param  array<string, mixed>  $overrides
+ * @return array<string, mixed>
+ */
+function registrationInput(array $overrides = []): array
+{
+    return [
+        'name_bn' => 'করিম মিয়া',
+        'name_en' => 'Karim Mia',
+        'guardian_name' => 'Abdul Mia',
+        'nid' => '9876543210',
+        'date_of_birth' => '1990-01-15',
+        'address' => 'Mirpur, Dhaka',
+        'requested_shares' => 2,
+        'nominees' => [nominee()],
+        ...$overrides,
+    ];
+}
+
+/**
+ * Saves a complete draft for the applicant.
+ *
+ * @param  array<string, mixed>  $overrides
+ */
+function completeRegistration(MemberApplication $application, array $overrides = []): MemberApplication
+{
+    return app(SaveRegistrationDraft::class)($application, RegistrationDraft::fromInput(registrationInput($overrides)));
 }
