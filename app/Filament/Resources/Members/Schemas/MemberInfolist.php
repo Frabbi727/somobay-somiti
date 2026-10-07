@@ -67,10 +67,11 @@ final class MemberInfolist
                     ->schema([
                         RepeatableEntry::make('nominees')
                             ->hiddenLabel()
-                            ->columns(4)
+                            ->columns(5)
                             ->schema([
                                 TextEntry::make('name')->hiddenLabel()->weight('bold'),
-                                TextEntry::make('relation')->hiddenLabel(),
+                                TextEntry::make('relation')->hiddenLabel()->state(fn (Nominee $record): string => $record->relationLabel()),
+                                TextEntry::make('nid')->hiddenLabel()->placeholder('—'),
                                 TextEntry::make('mobile')->hiddenLabel()->placeholder('—'),
                                 TextEntry::make('share_bps')
                                     ->hiddenLabel()

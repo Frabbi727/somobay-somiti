@@ -40,6 +40,7 @@ use App\Domain\Investments\Models\Investment;
 use App\Domain\Members\Actions\CreateMember;
 use App\Domain\Members\Data\MemberData;
 use App\Domain\Members\Models\Member;
+use App\Domain\Members\Models\NomineeRelation;
 use App\Domain\Members\Portal\PortalAccounts;
 use App\Domain\Settings\Actions\ApproveRatePlan;
 use App\Domain\Settings\Actions\DraftRatePlan;
@@ -144,7 +145,7 @@ final class LocalDemoSeeder extends Seeder
             ['রহিম উদ্দিন', 'Rahim Uddin', '01711000001', 2, [['রাবেয়া খাতুন', 'Wife', '100']]],
             ['করিম মিয়া', 'Karim Mia', '01711000002', 1, [['ফাতেমা বেগম', 'Mother', '100']]],
             ['সালমা বেগম', 'Salma Begum', '01711000003', 3, [['আরিফ হোসেন', 'Son', '100']]],
-            ['জামাল হোসেন', 'Jamal Hossain', '01711000004', 1, []],
+            ['জামাল হোসেন', 'Jamal Hossain', '01711000004', 1, [['রোকেয়া হোসেন', 'Wife', '100']]],
             ['ফারুক আহমেদ', 'Faruk Ahmed', '01711000006', 1, [['নাজমা আহমেদ', 'Wife', '100']]],
         ] as [$nameBn, $nameEn, $mobile, $shares, $nominees]) {
             $this->join($nameBn, $nameEn, $mobile, $shares, $nominees, YearMonth::of(2025, 7));
@@ -162,7 +163,15 @@ final class LocalDemoSeeder extends Seeder
             'mobile' => $mobile,
             'joined_on' => $from->toDateString(),
             'address' => 'Mirpur, Dhaka',
-            'nominees' => array_map(fn (array $nominee): array => ['name' => $nominee[0], 'relation' => $nominee[1], 'share_percent' => $nominee[2]], $nominees),
+            'nominees' => array_map(fn (array $nominee): array => [
+                'name' => $nominee[0],
+                'relation_id' => NomineeRelation::query()->where('key', match ($nominee[1]) {
+                    'Wife', 'Husband' => 'spouse',
+                    default => strtolower($nominee[1]),
+                })->value('id'),
+                'nid' => '19900000000'.substr($mobile, -2),
+                'share_percent' => $nominee[2],
+            ], $nominees),
         ]), $shares, $from);
 
         $portal = app(PortalAccounts::class)->forMember($member);

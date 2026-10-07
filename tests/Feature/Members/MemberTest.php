@@ -12,6 +12,7 @@ use App\Domain\Members\Actions\UpdateMember;
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Models\Member;
 use App\Domain\Members\Models\Nominee;
+use App\Domain\Members\Models\NomineeRelation;
 use App\Domain\Settings\Actions\CancelRatePlan;
 use App\Domain\Shared\Exceptions\ImmutableRecord;
 use App\Enums\Role;
@@ -44,8 +45,8 @@ it('onboards a member with nominees, a share lot and a registration fee due', fu
         'mobile' => '+880 1712-345678',
         'nid' => '১২৩৪৫৬৭৮৯০',
         'nominees' => [
-            ['name' => 'Karim', 'relation' => 'Son', 'share_percent' => '60'],
-            ['name' => 'Salma', 'relation' => 'Wife', 'share_percent' => '40'],
+            nominee(['name' => 'Karim', 'relation_id' => relationId('son'), 'share_percent' => '60']),
+            nominee(['name' => 'Salma', 'relation_id' => relationId('spouse'), 'nid' => '১২৩৪৫৬৭৮৯০১২৩', 'share_percent' => '40']),
         ],
     ]);
 
@@ -54,6 +55,9 @@ it('onboards a member with nominees, a share lot and a registration fee due', fu
         ->and($member->nid)->toBe('1234567890')
         ->and($member->status)->toBe(MemberStatus::Active)
         ->and($member->nominees()->pluck('share_bps')->all())->toBe([6000, 4000])
+        ->and($member->nominees()->pluck('relation_id')->all())->toBe([relationId('son'), relationId('spouse')])
+        ->and($member->nominees()->pluck('relation')->all())->toBe(['Son', 'Spouse'])
+        ->and($member->nominees()->pluck('nid')->all())->toBe(['1234567890', '1234567890123'])
         ->and($member->sharesIn(YearMonth::of(2026, 7)))->toBe(2)
         ->and($member->sharesIn(YearMonth::of(2026, 6)))->toBe(0);
 
@@ -86,9 +90,17 @@ it('validates member details', function (array $overrides, string $key): void {
     'bad nid' => [['nid' => '12345'], 'members.errors.nid_format'],
     'taken nid' => [['nid' => '1111111111'], 'members.errors.nid_taken'],
     'missing english name' => [['name_en' => ' '], 'members.errors.names_required'],
-    'nominees under 100%' => [['nominees' => [['name' => 'A', 'relation' => 'Son', 'share_percent' => '60']]], 'members.errors.nominee_total'],
-    'nominee without relation' => [['nominees' => [['name' => 'A', 'relation' => '', 'share_percent' => '100']]], 'members.errors.nominee_incomplete'],
-    'nominee mobile with 12 digits' => [['nominees' => [['name' => 'A', 'relation' => 'Wife', 'share_percent' => '100', 'mobile' => '019877765644']]], 'members.errors.nominee_mobile_format'],
+    'no nominee' => [['nominees' => []], 'members.errors.nominee_required'],
+    'nominees under 100%' => [fn () => ['nominees' => [nominee(['share_percent' => '60'])]], 'members.errors.nominee_total'],
+    'nominee without relation' => [fn () => ['nominees' => [nominee(['relation_id' => null])]], 'members.errors.nominee_relation'],
+    'nominee with a switched-off relation' => [function () {
+        NomineeRelation::query()->where('key', 'other')->update(['active' => false]);
+
+        return ['nominees' => [nominee(['relation_id' => relationId('other')])]];
+    }, 'members.errors.nominee_relation'],
+    'nominee without NID' => [fn () => ['nominees' => [nominee(['nid' => ''])]], 'members.errors.nominee_nid_required'],
+    'nominee NID with 11 digits' => [fn () => ['nominees' => [nominee(['nid' => '12345678901'])]], 'members.errors.nominee_nid_format'],
+    'nominee mobile with 12 digits' => [fn () => ['nominees' => [nominee(['mobile' => '019877765644'])]], 'members.errors.nominee_mobile_format'],
 ]);
 
 it('needs an approved rate plan for the first month', function (): void {
@@ -106,12 +118,12 @@ it('skips the registration due when the fee is zero', function (): void {
 });
 
 it('updates details and replaces nominees while keeping the old ones in history', function (): void {
-    $member = onboard(overrides: ['nominees' => [['name' => 'Karim', 'relation' => 'Son', 'share_percent' => '100']]]);
+    $member = onboard(overrides: ['nominees' => [nominee(['name' => 'Karim', 'relation_id' => relationId('son')])]]);
 
     app(UpdateMember::class)(userWithRole(Role::Secretary), $member, memberData([
         'mobile' => $member->mobile,
         'name_en' => 'Rahim Uddin Mia',
-        'nominees' => [['name' => 'Salma', 'relation' => 'Wife', 'share_percent' => '100']],
+        'nominees' => [nominee(['name' => 'Salma'])],
     ]));
 
     expect($member->fresh()?->name_en)->toBe('Rahim Uddin Mia')

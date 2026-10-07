@@ -18,6 +18,7 @@ use App\Domain\Integrity\InvariantChecker;
 use App\Domain\Members\Actions\CreateMember;
 use App\Domain\Members\Data\MemberData;
 use App\Domain\Members\Models\Member;
+use App\Domain\Members\Models\NomineeRelation;
 use App\Domain\Members\Portal\MemberTokens;
 use App\Domain\Members\Portal\PortalAccounts;
 use App\Domain\Notifications\Contracts\SmsGateway;
@@ -162,6 +163,25 @@ function approvedPlan(string $month, string $shareUnit = '500', array $overrides
 }
 
 /**
+ * Id of a seeded nominee relation (father, mother, spouse, son, daughter, brother, sister, other).
+ */
+function relationId(string $key): int
+{
+    return (int) NomineeRelation::query()->where('key', $key)->value('id');
+}
+
+/**
+ * A valid nominee form row; override any field.
+ *
+ * @param  array<string, mixed>  $overrides
+ * @return array<string, mixed>
+ */
+function nominee(array $overrides = []): array
+{
+    return ['name' => 'Karima', 'relation_id' => relationId('spouse'), 'nid' => '1234567890', 'share_percent' => '100', ...$overrides];
+}
+
+/**
  * Member form data with defaults; pass overrides in form shape (e.g. 'mobile', 'nominees').
  *
  * @param  array<string, mixed>  $overrides
@@ -176,6 +196,7 @@ function memberData(array $overrides = []): MemberData
         'name_en' => 'Rahim Uddin',
         'mobile' => sprintf('0171%07d', $counter),
         'joined_on' => '2026-07-01',
+        'nominees' => [nominee()],
         ...$overrides,
     ]);
 }

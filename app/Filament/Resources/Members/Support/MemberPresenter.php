@@ -77,10 +77,11 @@ final class MemberPresenter
             photoPath: $member->photo_path,
             nominees: array_values($member->nominees->map(fn (Nominee $nominee): NomineeData => new NomineeData(
                 $nominee->name,
-                $nominee->relation,
+                $nominee->relationLabel(),
                 Bps::of($nominee->share_bps),
                 $nominee->mobile,
                 $nominee->nid,
+                $nominee->relation_id,
             ))->all()),
         );
     }

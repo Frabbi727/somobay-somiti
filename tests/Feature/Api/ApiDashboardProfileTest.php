@@ -27,7 +27,7 @@ beforeEach(function (): void {
     $this->seed(ChartOfAccountsSeeder::class);
     app(OpenFiscalYear::class)(userWithRole(Role::Accountant), 2026);
     approvedPlan('2026-07', '500');
-    $this->member = onboard(2, '2026-07', ['name_bn' => 'রহিম', 'name_en' => 'Rahim', 'nominees' => [['name' => 'Karima', 'relation' => 'Wife', 'share_percent' => '100']]]);
+    $this->member = onboard(2, '2026-07', ['name_bn' => 'রহিম', 'name_en' => 'Rahim', 'nominees' => [nominee(['name' => 'Karima'])]]);
     app(GenerateMonthlyDues::class)(YearMonth::parse('2026-07'));
     $this->token = memberToken($this->member);
 });
@@ -53,7 +53,7 @@ it('shows the member summary exactly as the portal computes it, with recent paym
 });
 
 it('shows the profile the portal shows, with nominees, read-only', function (): void {
-    $this->withToken($this->token)->getJson('/api/v1/profile')
+    $this->withToken($this->token)->withHeader('Accept-Language', 'bn')->getJson('/api/v1/profile')
         ->assertOk()
         ->assertJsonPath('data.member_no', $this->member->member_no)
         ->assertJsonPath('data.name_bn', 'রহিম')
@@ -62,7 +62,7 @@ it('shows the profile the portal shows, with nominees, read-only', function (): 
         ->assertJsonPath('data.joined_on', '2026-07-01')
         ->assertJsonPath('data.status.value', 'active')
         ->assertJsonPath('data.nominees.0.name', 'Karima')
-        ->assertJsonPath('data.nominees.0.relation', 'Wife')
+        ->assertJsonPath('data.nominees.0.relation', 'স্বামী/স্ত্রী')
         ->assertJsonPath('data.nominees.0.share_percent', '100.00');
 });
 

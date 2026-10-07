@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Domain\Members\Services;
 
 use App\Domain\Members\Data\MemberData;
-use App\Domain\Members\Data\NomineeData;
 use App\Domain\Members\Models\Member;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
-use App\Support\Money\Bps;
 
 final class MemberRules
 {
+    public function __construct(private readonly NomineeRules $nominees) {}
+
     public function assertValid(MemberData $data, ?Member $existing = null): void
     {
         if ($data->nameBn === '' || $data->nameEn === '') {
@@ -36,37 +36,6 @@ final class MemberRules
             throw DomainRuleViolation::because('members.errors.nid_taken');
         }
 
-        $this->assertNominees($data->nominees);
-    }
-
-    /**
-     * Nominees are optional, but when given their shares must add up to exactly 100% and a mobile,
-     * if entered, must be a valid Bangladeshi number.
-     *
-     * @param  list<NomineeData>  $nominees
-     */
-    private function assertNominees(array $nominees): void
-    {
-        if ($nominees === []) {
-            return;
-        }
-
-        $total = 0;
-
-        foreach ($nominees as $nominee) {
-            if ($nominee->name === '' || $nominee->relation === '' || $nominee->share->isZero()) {
-                throw DomainRuleViolation::because('members.errors.nominee_incomplete');
-            }
-
-            if ($nominee->mobile !== null && preg_match('/^01[3-9]\d{8}$/', $nominee->mobile) !== 1) {
-                throw DomainRuleViolation::because('members.errors.nominee_mobile_format', ['name' => $nominee->name]);
-            }
-
-            $total += $nominee->share->value;
-        }
-
-        if ($total !== 10_000) {
-            throw DomainRuleViolation::because('members.errors.nominee_total', ['total' => Bps::of($total)->format(app()->getLocale())]);
-        }
+        $this->nominees->assertValid($data->nominees);
     }
 }

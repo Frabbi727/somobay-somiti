@@ -54,8 +54,8 @@ it('adds a member with shares, nominees and a photo', function (): void {
             'shares' => 2,
             'effective_from' => '2026-10',
             'nominees' => [
-                ['name' => 'Karim', 'relation' => 'Son', 'share_percent' => '50'],
-                ['name' => 'Salma', 'relation' => 'Wife', 'share_percent' => '50'],
+                ['name' => 'Karim', 'relation_id' => relationId('son'), 'nid' => '1234567890', 'share_percent' => '50'],
+                ['name' => 'Salma', 'relation_id' => relationId('spouse'), 'nid' => '1234567891', 'share_percent' => '50'],
             ],
         ])
         ->assertSee(__('members.nominee.total', ['total' => '100.00%']))
@@ -75,30 +75,49 @@ it('adds a member with shares, nominees and a photo', function (): void {
 });
 
 it('rejects an invalid mobile before confirming', function (): void {
+    $undo = Repeater::fake();
+
     Livewire::test(CreateMember::class)
-        ->fillForm(['name_bn' => 'ক', 'name_en' => 'K', 'mobile' => '12345', 'shares' => 1, 'effective_from' => '2026-10'])
+        ->fillForm(['name_bn' => 'ক', 'name_en' => 'K', 'mobile' => '12345', 'shares' => 1, 'effective_from' => '2026-10', 'nominees' => [nominee()]])
         ->mountAction(memberFormAction('create'))
         ->assertHasFormErrors(['mobile']);
+
+    $undo();
+});
+
+it('asks for at least one nominee with an NID', function (): void {
+    $undo = Repeater::fake();
+
+    Livewire::test(CreateMember::class)
+        ->fillForm(['name_bn' => 'ক', 'name_en' => 'K', 'mobile' => '01812345678', 'shares' => 1, 'effective_from' => '2026-10', 'nominees' => []])
+        ->mountAction(memberFormAction('create'))
+        ->assertHasFormErrors(['nominees']);
+
+    $undo();
 });
 
 it('reports a missing rate plan as a notification', function (): void {
+    $undo = Repeater::fake();
+
     Livewire::test(CreateMember::class)
-        ->fillForm(['name_bn' => 'ক', 'name_en' => 'K', 'mobile' => '01812345678', 'shares' => 1, 'effective_from' => '2026-06'])
+        ->fillForm(['name_bn' => 'ক', 'name_en' => 'K', 'mobile' => '01812345678', 'shares' => 1, 'effective_from' => '2026-06', 'nominees' => [nominee()]])
         ->callAction(memberFormAction('create'))
         ->assertNotified(__('members.errors.no_rate_plan', ['month' => '2026-06']));
+
+    $undo();
 
     expect(Member::query()->count())->toBe(0);
 });
 
 it('edits a member and their nominees', function (): void {
-    $member = onboard(1, '2026-07', ['nominees' => [['name' => 'Karim', 'relation' => 'Son', 'share_percent' => '100']]]);
+    $member = onboard(1, '2026-07', ['nominees' => [nominee(['name' => 'Karim', 'relation_id' => relationId('son')])]]);
     $undo = Repeater::fake();
 
     Livewire::test(EditMember::class, ['record' => $member->getRouteKey()])
-        ->assertSchemaStateSet(['nominees.0.share_percent' => '100.00'])
+        ->assertSchemaStateSet(['nominees.0.share_percent' => '100.00', 'nominees.0.relation_id' => relationId('son'), 'nominees.0.nid' => '1234567890'])
         ->fillForm([
             'address' => 'Mirpur, Dhaka',
-            'nominees' => [['name' => 'Karim', 'relation' => 'Son', 'share_percent' => '100']],
+            'nominees' => [['name' => 'Karim', 'relation_id' => relationId('son'), 'nid' => '1234567890', 'share_percent' => '100']],
         ])
         ->callAction(memberFormAction('save'))
         ->assertHasNoFormErrors();

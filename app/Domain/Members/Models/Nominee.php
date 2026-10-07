@@ -18,10 +18,12 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property int $member_id
  * @property string $name
  * @property string $relation
+ * @property int|null $relation_id
  * @property string|null $mobile
  * @property string|null $nid
  * @property int $share_bps
  * @property int $sort
+ * @property-read NomineeRelation|null $nomineeRelation
  */
 #[UsePolicy(NomineePolicy::class)]
 final class Nominee extends Model
@@ -36,6 +38,22 @@ final class Nominee extends Model
     public function member(): BelongsTo
     {
         return $this->belongsTo(Member::class);
+    }
+
+    /**
+     * @return BelongsTo<NomineeRelation, $this>
+     */
+    public function nomineeRelation(): BelongsTo
+    {
+        return $this->belongsTo(NomineeRelation::class, 'relation_id');
+    }
+
+    /**
+     * The relation in the current language; older nominees show the text typed in at the time.
+     */
+    public function relationLabel(): string
+    {
+        return $this->nomineeRelation?->label() ?? $this->relation;
     }
 
     public function share(): Bps
@@ -53,6 +71,6 @@ final class Nominee extends Model
      */
     protected function casts(): array
     {
-        return ['share_bps' => 'integer', 'sort' => 'integer'];
+        return ['share_bps' => 'integer', 'sort' => 'integer', 'relation_id' => 'integer'];
     }
 }

@@ -154,8 +154,8 @@ it('releases months paid in advance after the exit month back into the settlemen
 
 it('splits a deceased member’s settlement between the nominees by their shares', function (): void {
     $member = onboard(1, '2026-07', ['nominees' => [
-        ['name' => 'Ayesha', 'relation' => 'Wife', 'share_percent' => '66.67'],
-        ['name' => 'Rafi', 'relation' => 'Son', 'share_percent' => '33.33'],
+        nominee(['name' => 'Ayesha', 'share_percent' => '66.67']),
+        nominee(['name' => 'Rafi', 'relation_id' => relationId('son'), 'share_percent' => '33.33']),
     ]]);
     generateMonth('2026-07');
     travelTo('2026-07-05');

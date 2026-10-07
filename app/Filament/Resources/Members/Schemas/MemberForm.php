@@ -6,6 +6,7 @@ namespace App\Filament\Resources\Members\Schemas;
 
 use App\Domain\Members\Models\Member;
 use App\Domain\Members\Models\Nominee;
+use App\Domain\Members\Models\NomineeRelation;
 use App\Support\Contact\MobileNumber;
 use App\Support\Money\Bps;
 use App\Support\Time\YearMonth;
@@ -14,6 +15,7 @@ use Closure;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
@@ -97,11 +99,21 @@ final class MemberForm
                         Repeater::make('nominees')
                             ->hiddenLabel()
                             ->addActionLabel(__('members.nominee.add'))
-                            ->defaultItems(0)
-                            ->columns(5)
+                            ->defaultItems(1)
+                            ->minItems(1)
+                            ->required()
+                            ->columns(6)
                             ->schema([
                                 TextInput::make('name')->label(__('members.nominee.name'))->required()->columnSpan(2),
-                                TextInput::make('relation')->label(__('members.nominee.relation'))->required(),
+                                Select::make('relation_id')
+                                    ->label(__('members.nominee.relation'))
+                                    ->options(fn (): array => NomineeRelation::options())
+                                    ->required()
+                                    ->native(false),
+                                TextInput::make('nid')
+                                    ->label(__('members.nominee.nid'))
+                                    ->required()
+                                    ->regex('/^([0-9০-৯]{10}|[0-9০-৯]{13}|[0-9০-৯]{17})$/u'),
                                 TextInput::make('mobile')
                                     ->label(__('members.nominee.mobile'))
                                     ->tel()
@@ -150,7 +162,8 @@ final class MemberForm
             'address' => $member->address,
             'nominees' => $member->nominees->map(fn (Nominee $nominee): array => [
                 'name' => $nominee->name,
-                'relation' => $nominee->relation,
+                'relation_id' => $nominee->relation_id,
+                'nid' => $nominee->nid,
                 'mobile' => $nominee->mobile,
                 'share_percent' => Bps::of($nominee->share_bps)->toPercentString(),
             ])->values()->all(),

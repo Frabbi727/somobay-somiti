@@ -23,7 +23,7 @@ final class ProfileController
 
     public function show(Request $request): JsonResponse
     {
-        $member = self::member($request)->load('nominees');
+        $member = self::member($request)->load('nominees.nomineeRelation');
 
         return ApiResponse::ok([
             'member_no' => $member->member_no,
@@ -35,7 +35,7 @@ final class ProfileController
             'status' => ApiValue::enum($member->status),
             'nominees' => $member->nominees->map(fn (Nominee $nominee): array => [
                 'name' => $nominee->name,
-                'relation' => $nominee->relation,
+                'relation' => $nominee->relationLabel(),
                 'share_percent' => $nominee->share()->toPercentString(),
                 'share_display' => $nominee->share()->format(app()->getLocale()),
             ])->values()->all(),
