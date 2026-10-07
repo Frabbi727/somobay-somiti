@@ -6,13 +6,14 @@ namespace App\Domain\Members\Services;
 
 use App\Domain\Members\Data\MemberData;
 use App\Domain\Members\Models\Member;
+use App\Domain\Members\Registration\Models\MemberApplication;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 
 final class MemberRules
 {
     public function __construct(private readonly NomineeRules $nominees) {}
 
-    public function assertValid(MemberData $data, ?Member $existing = null): void
+    public function assertValid(MemberData $data, ?Member $existing = null, ?int $ignoreApplicationId = null): void
     {
         if ($data->nameBn === '' || $data->nameEn === '') {
             throw DomainRuleViolation::because('members.errors.names_required');
@@ -30,6 +31,12 @@ final class MemberRules
 
         if ((clone $others)->where('mobile', $data->mobile)->exists()) {
             throw DomainRuleViolation::because('members.errors.mobile_taken', ['mobile' => $data->mobile]);
+        }
+
+        $openRegistration = MemberApplication::openForMobile($data->mobile);
+
+        if ($existing === null && $openRegistration !== null && $openRegistration->id !== $ignoreApplicationId) {
+            throw DomainRuleViolation::because('registration.errors.mobile_invited', ['mobile' => $data->mobile]);
         }
 
         if ($data->nid !== null && (clone $others)->where('nid', $data->nid)->exists()) {

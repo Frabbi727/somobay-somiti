@@ -21,6 +21,8 @@ use App\Domain\Members\Models\Member;
 use App\Domain\Members\Models\NomineeRelation;
 use App\Domain\Members\Portal\MemberTokens;
 use App\Domain\Members\Portal\PortalAccounts;
+use App\Domain\Members\Registration\Actions\InviteMember;
+use App\Domain\Members\Registration\Models\MemberApplication;
 use App\Domain\Notifications\Contracts\SmsGateway;
 use App\Domain\Notifications\Data\SmsResult;
 use App\Domain\Settings\Actions\ApproveRatePlan;
@@ -400,4 +402,12 @@ function memberRuleKey(Closure $callback): ?string
     }
 
     return null;
+}
+
+/**
+ * The secretary invites a new member (mobile + password); returns the open registration.
+ */
+function invite(string $mobile = '01811111111', string $password = 'secret-123'): MemberApplication
+{
+    return app(InviteMember::class)(userWithRole(Role::Secretary), $mobile, $password);
 }
