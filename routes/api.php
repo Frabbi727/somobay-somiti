@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\Member\DuesController;
 use App\Http\Controllers\Api\Member\NotificationsController;
 use App\Http\Controllers\Api\Member\PaymentsController;
 use App\Http\Controllers\Api\Member\ProfileController;
+use App\Http\Controllers\Api\Member\RegistrationController;
 use App\Http\Controllers\Api\Member\SharesController;
 use App\Http\Controllers\Api\Member\StatementController;
 use Illuminate\Support\Facades\Route;
@@ -37,8 +38,15 @@ Route::prefix('v1')->group(function (): void {
         Route::get('auth/me', [AuthController::class, 'me']);
     });
 
-    // Registration routes are added in Task 10 inside this group.
-    Route::middleware(['auth:sanctum', 'abilities:applicant', 'applicant', 'throttle:member-api'])->group(function (): void {});
+    Route::get('registration/photo/{application}', [RegistrationController::class, 'photoFile'])
+        ->middleware('signed')->whereNumber('application')->name('api.registration.photo');
+
+    Route::middleware(['auth:sanctum', 'abilities:applicant', 'applicant', 'throttle:member-api'])->group(function (): void {
+        Route::get('registration', [RegistrationController::class, 'show']);
+        Route::put('registration', [RegistrationController::class, 'update']);
+        Route::post('registration/photo', [RegistrationController::class, 'photo']);
+        Route::post('registration/submit', [RegistrationController::class, 'submit']);
+    });
 
     Route::middleware(['auth:sanctum', 'refuse-applicant', 'abilities:member', 'member', 'throttle:member-api'])->group(function (): void {
         Route::get('dashboard/summary', [DashboardController::class, 'summary']);

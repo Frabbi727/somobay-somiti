@@ -24,7 +24,7 @@ beforeEach(function (): void {
 function memberApiRoutes(): array
 {
     return collect(Route::getRoutes()->getRoutes())
-        ->filter(fn (RouteDefinition $route): bool => str_starts_with($route->uri(), 'api/v1/') && in_array('GET', $route->methods(), true) && ! str_starts_with($route->uri(), 'api/v1/config/') && $route->uri() !== 'api/v1/statement/pdf-signed')
+        ->filter(fn (RouteDefinition $route): bool => str_starts_with($route->uri(), 'api/v1/') && in_array('GET', $route->methods(), true) && ! str_starts_with($route->uri(), 'api/v1/config/') && $route->uri() !== 'api/v1/statement/pdf-signed' && ! str_starts_with($route->uri(), 'api/v1/registration'))
         ->map(fn (RouteDefinition $route): string => '/'.preg_replace('/\{[^}]+\}/', '1', $route->uri()))
         ->values()->all();
 }
