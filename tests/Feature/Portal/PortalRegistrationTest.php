@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Domain\Members\Registration\Actions\DecideRegistration;
 use App\Domain\Members\Registration\Actions\SaveRegistrationDraft;
 use App\Domain\Members\Registration\Data\RegistrationDraft;
 use App\Domain\Members\Registration\Enums\MemberApplicationStatus;
+use App\Domain\Members\Registration\Enums\RegistrationDecisionType;
 use App\Enums\Role;
 use App\Filament\Member\Pages\Auth\MemberLogin;
 use App\Filament\Member\Pages\Dashboard;
@@ -29,6 +31,23 @@ it('signs an invited member in to the portal', function (): void {
         ->assertHasNoFormErrors();
 
     $this->assertAuthenticatedAs($this->application->user);
+});
+
+it('tells a rejected applicant why they cannot sign in, only after the right password', function (): void {
+    $application = submittedRegistrationFrom($this->application);
+    app(DecideRegistration::class)(userWithRole(Role::Secretary), $application, RegistrationDecisionType::Reject, 'Lives outside the area');
+
+    Livewire::test(MemberLogin::class)
+        ->fillForm(['mobile' => '01811111111', 'password' => 'wrong-pass'])
+        ->call('authenticate')
+        ->assertHasFormErrors(['mobile' => __('portal.errors.wrong_password')]);
+
+    Livewire::test(MemberLogin::class)
+        ->fillForm(['mobile' => '01811111111', 'password' => 'secret-123'])
+        ->call('authenticate')
+        ->assertHasFormErrors(['mobile' => __('portal.errors.registration_rejected')]);
+
+    $this->assertGuest();
 });
 
 it('keeps an applicant on the registration pages', function (): void {
@@ -59,6 +78,29 @@ it('saves each wizard step and submits after the summary', function (): void {
         ->assertRedirect(RegistrationStatus::getUrl());
 
     expect($this->application->fresh()?->status)->toBe(MemberApplicationStatus::Submitted);
+});
+
+it('saves the date of birth the date picker sends with a time', function (): void {
+    $this->actingAs($this->application->user);
+
+    Livewire::test(Registration::class)
+        ->fillForm(['name_bn' => 'করিম মিয়া', 'name_en' => 'Karim Mia'])
+        ->set('data.date_of_birth', '1990-01-15 00:00:00')
+        ->goToNextWizardStep()
+        ->assertHasNoFormErrors()
+        ->assertNotNotified();
+
+    expect($this->application->fresh()?->date_of_birth?->toDateString())->toBe('1990-01-15');
+});
+
+it('shows why the registration was sent back on the correction form', function (): void {
+    $application = submittedRegistrationFrom($this->application);
+    app(DecideRegistration::class)(userWithRole(Role::Secretary), $application, RegistrationDecisionType::Return, 'Please add a photo');
+    $this->actingAs($this->application->user);
+
+    Livewire::test(Registration::class)
+        ->assertSee('Please correct your registration')
+        ->assertSee('Please add a photo');
 });
 
 it('stores a photo uploaded in the form when the registration is submitted', function (): void {

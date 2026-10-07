@@ -133,6 +133,11 @@ final class MemberLogin extends Login
         $user = app(Timebox::class)->call(function (Timebox $timebox) use ($data): User {
             $user = $this->usesCode($data['method'] ?? null) ? $this->userFromCode($data) : $this->userFromPassword($data);
 
+            if ($user === null && ! $this->usesCode($data['method'] ?? null)
+                && app(MemberCredentials::class)->isRejectedApplicant((string) ($data['mobile'] ?? ''), (string) ($data['password'] ?? ''))) {
+                throw ValidationException::withMessages(['data.mobile' => __('portal.errors.registration_rejected')]);
+            }
+
             if ($user === null || ! $user->canAccessPanel(Filament::getPanel('member'))) {
                 $this->throwFailureValidationException();
             }

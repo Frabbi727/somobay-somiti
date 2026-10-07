@@ -30,6 +30,13 @@ final class MemberApplicationNominee extends Model
     protected $guarded = [];
 
     /**
+     * The relation label is shown wherever a nominee is, and Livewire re-fetches records without nested eager loads.
+     *
+     * @var list<string>
+     */
+    protected $with = ['nomineeRelation'];
+
+    /**
      * @return BelongsTo<NomineeRelation, $this>
      */
     public function nomineeRelation(): BelongsTo

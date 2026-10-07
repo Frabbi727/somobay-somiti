@@ -80,7 +80,7 @@ function expectedTiers(): array
         // No confirmation: navigation and downloads.
         'view' => null, 'edit' => null, 'pdf' => null, 'excel' => null, 'receipt' => null,
         'downloadImpact' => null, 'generate' => null, 'newVoucher' => null, 'collect' => null,
-        'meeting' => null, 'reload' => null, 'download' => null,
+        'meeting' => null, 'reload' => null, 'download' => null, 'openMember' => null,
     ];
 }
 

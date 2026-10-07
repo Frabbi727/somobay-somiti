@@ -85,6 +85,7 @@ return [
         'code_expired' => 'The code has expired or was used up. Ask for a new one.',
         'code_wrong' => 'That code is not correct.',
         'wrong_password' => 'Mobile number or password is not correct.',
+        'registration_rejected' => 'Your registration was not approved. Please contact the somiti office.',
         'current_password' => 'Your current password is not correct.',
     ],
     'account_type' => ['member' => 'Member', 'applicant' => 'Registering'],

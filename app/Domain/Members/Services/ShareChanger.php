@@ -93,6 +93,25 @@ final class ShareChanger
         $this->record($actor, $member, ShareChangeType::Decrease, $shares, $from, $reason);
     }
 
+    /**
+     * The month a new share change should start from by default: this month, or the month after
+     * the last month that already has dues.
+     */
+    public function firstOpenMonth(): YearMonth
+    {
+        $generated = $this->generated->latest();
+
+        return $generated === null ? YearMonth::current() : YearMonth::current()->max($generated->next());
+    }
+
+    /**
+     * The last month that already has dues; no share change may start in or before it.
+     */
+    public function latestGeneratedMonth(): ?YearMonth
+    {
+        return $this->generated->latest();
+    }
+
     public function planFor(YearMonth $month): RatePlan
     {
         try {

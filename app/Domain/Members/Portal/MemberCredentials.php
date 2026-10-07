@@ -6,6 +6,7 @@ namespace App\Domain\Members\Portal;
 
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Models\Member;
+use App\Domain\Members\Registration\Enums\MemberApplicationStatus;
 use App\Domain\Members\Registration\Models\MemberApplication;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
@@ -37,6 +38,27 @@ final class MemberCredentials
         $application = $normalized === null ? null : MemberApplication::openForMobile($normalized);
 
         return $application !== null && Hash::check($password, $application->user->password) ? $application->user : null;
+    }
+
+    /**
+     * Whether these are the right credentials of an applicant whose registration was rejected
+     * for good (no open registration and no member for the mobile).
+     */
+    public function isRejectedApplicant(string $mobile, string $password): bool
+    {
+        $normalized = MobileNumber::normalize($mobile);
+
+        if ($normalized === null || $this->member($mobile) !== null || MemberApplication::openForMobile($normalized) !== null) {
+            return false;
+        }
+
+        $application = MemberApplication::query()
+            ->where('mobile', $normalized)
+            ->where('status', MemberApplicationStatus::Rejected)
+            ->latest('id')
+            ->first();
+
+        return $application !== null && Hash::check($password, $application->user->password);
     }
 
     /**

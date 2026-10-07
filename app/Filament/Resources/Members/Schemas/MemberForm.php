@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Members\Schemas;
 use App\Domain\Members\Models\Member;
 use App\Domain\Members\Models\Nominee;
 use App\Domain\Members\Models\NomineeRelation;
+use App\Domain\Members\Services\ShareChanger;
 use App\Support\Contact\MobileNumber;
 use App\Support\Money\Bps;
 use App\Support\Time\YearMonth;
@@ -43,7 +44,7 @@ final class MemberForm
                             ->label(__('members.member.nid'))
                             ->helperText(__('members.member.nid_help'))
                             ->regex('/^([0-9০-৯]{10}|[0-9০-৯]{13}|[0-9০-৯]{17})$/u'),
-                        DatePicker::make('date_of_birth')->label(__('members.member.date_of_birth'))->native(false)->maxDate(now()),
+                        DatePicker::make('date_of_birth')->label(__('members.member.date_of_birth'))->native(false)->maxDate(now())->defaultFocusedDate(now()->subYears(30)->startOfYear()),
                         DatePicker::make('joined_on')
                             ->label(__('members.member.joined_on'))
                             ->native(false)
@@ -91,7 +92,7 @@ final class MemberForm
                             ->helperText(__('members.member.effective_from_help'))
                             ->type('month')
                             ->regex('/^\d{4}-\d{2}$/')
-                            ->default(fn (): string => (string) YearMonth::current())
+                            ->default(fn (): string => (string) app(ShareChanger::class)->firstOpenMonth())
                             ->required($creating),
                     ]),
                 Section::make(__('members.member.nominees_section'))

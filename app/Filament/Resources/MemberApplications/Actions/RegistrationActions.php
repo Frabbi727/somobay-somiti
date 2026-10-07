@@ -12,6 +12,7 @@ use App\Domain\Members\Registration\Enums\RegistrationDecisionType;
 use App\Domain\Members\Registration\Models\MemberApplication;
 use App\Domain\Members\Services\ShareChanger;
 use App\Filament\Concerns\ConfirmsWithTier;
+use App\Filament\Resources\Members\MemberResource;
 use App\Filament\Support\Display;
 use App\Filament\Support\DomainActionRunner;
 use App\Models\User;
@@ -94,6 +95,7 @@ final class RegistrationActions
                 $shares = isset($data['shares']) && $data['shares'] !== '' ? (int) $data['shares'] : null;
 
                 $result = DomainActionRunner::run(fn (User $actor): MemberApplication => app(DecideRegistration::class)($actor, $record, RegistrationDecisionType::Approve, null, $shares, $from));
+                $record->refresh();
 
                 Notification::make()
                     ->title($result->status === MemberApplicationStatus::Approved
@@ -122,7 +124,7 @@ final class RegistrationActions
                     ->label(__('registration.field.effective_from'))
                     ->type('month')
                     ->regex('/^\d{4}-\d{2}$/')
-                    ->default(fn (): string => (string) YearMonth::current())
+                    ->default(fn (): string => (string) app(ShareChanger::class)->firstOpenMonth())
                     ->required($final)
                     ->visible($final)
                     ->live(onBlur: true),
@@ -145,6 +147,7 @@ final class RegistrationActions
             ->authorize('decide')
             ->action(function (MemberApplication $record, array $data): void {
                 DomainActionRunner::run(fn (User $actor): MemberApplication => app(DecideRegistration::class)($actor, $record, RegistrationDecisionType::Return, (string) ($data['reason'] ?? '')));
+                $record->refresh();
                 Notification::make()->title(__('registration.notifications.sent_back', ['name' => self::name($record)]))->success()->send();
             });
 
@@ -167,6 +170,7 @@ final class RegistrationActions
             ->authorize('decide')
             ->action(function (MemberApplication $record, array $data): void {
                 DomainActionRunner::run(fn (User $actor): MemberApplication => app(DecideRegistration::class)($actor, $record, RegistrationDecisionType::Reject, (string) ($data['reason'] ?? '')));
+                $record->refresh();
                 Notification::make()->title(__('registration.notifications.rejected', ['name' => self::name($record)]))->success()->send();
             });
 
@@ -181,6 +185,20 @@ final class RegistrationActions
     }
 
     /**
+     * The member record created by the final approval.
+     */
+    public static function openMember(): Action
+    {
+        return Action::make('openMember')
+            ->label(__('registration.actions.open_member'))
+            ->tooltip(__('registration.actions.open_member'))
+            ->icon(Heroicon::OutlinedUser)
+            ->color('gray')
+            ->visible(fn (MemberApplication $record): bool => $record->member_id !== null && (bool) auth()->user()?->can('view', $record->member))
+            ->url(fn (MemberApplication $record): string => MemberResource::getUrl('view', ['record' => $record->member_id]));
+    }
+
+    /**
      * "Registration fee due: ৳ 300.00" for the shares and month chosen on the final approval.
      */
     public static function feeSummary(mixed $shares, mixed $from): string
@@ -192,7 +210,14 @@ final class RegistrationActions
         }
 
         try {
-            $fee = app(ShareChanger::class)->planFor(YearMonth::parse($from))->registration_fee_per_share_poisha->multipliedByInt($count);
+            $month = YearMonth::parse($from);
+            $generated = app(ShareChanger::class)->latestGeneratedMonth();
+
+            if ($generated !== null && $month->isSameOrBefore($generated)) {
+                return __('members.errors.month_generated', ['month' => (string) $month, 'latest' => (string) $generated]);
+            }
+
+            $fee = app(ShareChanger::class)->planFor($month)->registration_fee_per_share_poisha->multipliedByInt($count);
 
             return __('members.actions.registration_fee_summary', ['amount' => Display::money($fee)]);
         } catch (\Throwable $exception) {

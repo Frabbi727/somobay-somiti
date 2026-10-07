@@ -75,6 +75,54 @@ it('takes a registration through both approvals after typing the mobile', functi
         ->and(Member::query()->sole()->sharesIn(YearMonth::of(2026, 7)))->toBe(3);
 });
 
+it('keeps showing every nominee after a decision', function (): void {
+    $application = app(SubmitRegistration::class)(completeRegistration(invite(), ['nominees' => [
+        nominee(['name' => 'Karima', 'share_percent' => '60']),
+        nominee(['name' => 'Rahim', 'relation_id' => relationId('son'), 'nid' => '1234567891', 'share_percent' => '40']),
+    ]]), (string) Str::uuid());
+    $this->actingAs(userWithRole(Role::Secretary));
+
+    Livewire::test(ViewMemberApplication::class, ['record' => $application->getRouteKey()])
+        ->callAction('approve', ['confirm_text' => '01811111111'])
+        ->assertHasNoActionErrors()
+        ->assertSee('Rahim')
+        ->assertSee('President approval pending')
+        ->assertDontSee('Secretary approval pending');
+});
+
+it('links an approved registration to its member', function (): void {
+    $application = approveRegistration(submittedRegistration());
+    $this->actingAs(userWithRole(Role::Secretary));
+
+    Livewire::test(ViewMemberApplication::class, ['record' => $application->getRouteKey()])
+        ->assertSee('Approved')
+        ->assertDontSee('You are now a member')
+        ->assertActionVisible('openMember')
+        ->assertActionHidden('approve');
+});
+
+it('starts the final approval in the first month without dues', function (): void {
+    onboard();
+    generateMonth('2026-07');
+    $application = submittedRegistration();
+    $this->actingAs(userWithRole(Role::Secretary));
+    Livewire::test(ViewMemberApplication::class, ['record' => $application->getRouteKey()])
+        ->callAction('approve', ['confirm_text' => '01811111111']);
+
+    $this->actingAs(userWithRole(Role::President));
+
+    Livewire::test(ViewMemberApplication::class, ['record' => $application->getRouteKey()])
+        ->mountAction('approve')
+        ->assertSchemaStateSet(['effective_from' => '2026-08'], 'mountedActionSchema0')
+        ->fillForm(['effective_from' => '2026-07'])
+        ->assertMountedActionModalSee(__('members.errors.month_generated', ['month' => '2026-07', 'latest' => '2026-07']))
+        ->fillForm(['effective_from' => '2026-08', 'confirm_text' => '01811111111'])
+        ->callMountedAction()
+        ->assertHasNoActionErrors();
+
+    expect($application->fresh()?->status)->toBe(MemberApplicationStatus::Approved);
+});
+
 it('hides the decision buttons from the wrong role', function (): void {
     $application = submittedRegistration();
     $this->actingAs(userWithRole(Role::President));

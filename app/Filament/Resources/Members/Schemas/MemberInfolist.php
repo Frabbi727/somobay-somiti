@@ -69,12 +69,12 @@ final class MemberInfolist
                             ->hiddenLabel()
                             ->columns(5)
                             ->schema([
-                                TextEntry::make('name')->hiddenLabel()->weight('bold'),
-                                TextEntry::make('relation')->hiddenLabel()->state(fn (Nominee $record): string => $record->relationLabel()),
-                                TextEntry::make('nid')->hiddenLabel()->placeholder('—'),
-                                TextEntry::make('mobile')->hiddenLabel()->placeholder('—'),
+                                TextEntry::make('name')->label(__('members.nominee.name'))->weight('bold'),
+                                TextEntry::make('relation')->label(__('members.nominee.relation'))->state(fn (Nominee $record): string => $record->relationLabel()),
+                                TextEntry::make('nid')->label(__('members.nominee.nid'))->placeholder('—'),
+                                TextEntry::make('mobile')->label(__('members.nominee.mobile'))->placeholder('—'),
                                 TextEntry::make('share_bps')
-                                    ->hiddenLabel()
+                                    ->label(__('members.nominee.share'))
                                     ->state(fn (Nominee $record): string => $record->share()->format(app()->getLocale())),
                             ]),
                     ]),

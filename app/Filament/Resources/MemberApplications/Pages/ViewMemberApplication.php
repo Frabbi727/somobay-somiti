@@ -33,6 +33,7 @@ final class ViewMemberApplication extends ViewRecord
             RegistrationActions::approve(),
             RegistrationActions::sendBack(),
             RegistrationActions::reject(),
+            RegistrationActions::openMember(),
         ];
     }
 }

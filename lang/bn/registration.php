@@ -62,6 +62,7 @@ return [
         'submitted_at' => 'জমার সময়',
         'invited_by' => 'আমন্ত্রণকারী',
         'photo' => 'ছবি',
+        'photo_placeholder' => 'ছবি এখানে টেনে আনুন বা <span class="filepond--label-action">বেছে নিন</span>',
     ],
     'steps' => [
         'personal' => 'ব্যক্তিগত',
@@ -71,6 +72,7 @@ return [
         'review' => 'যাচাই',
     ],
     'actions' => [
+        'open_member' => 'সদস্য দেখুন',
         'invite' => 'সদস্য আমন্ত্রণ',
         'invite_heading' => 'নতুন সদস্য আমন্ত্রণ',
         'invite_description' => 'সদস্য এই মোবাইল ও পাসওয়ার্ড দিয়ে লগইন করে নিজের নিবন্ধন পূরণ করবেন।',

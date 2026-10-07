@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\MemberApplications\Schemas;
 
+use App\Domain\Members\Registration\Enums\MemberApplicationStatus;
 use App\Domain\Members\Registration\Models\MemberApplication;
 use App\Domain\Members\Registration\Models\MemberApplicationNominee;
 use App\Domain\Members\Registration\Services\RegistrationTimeline;
@@ -19,7 +20,9 @@ final class MemberApplicationInfolist
     public static function configure(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make(fn (MemberApplication $record): string => app(RegistrationTimeline::class)->headline($record))
+            Section::make(fn (MemberApplication $record): string => $record->status === MemberApplicationStatus::Submitted
+                ? app(RegistrationTimeline::class)->headline($record)
+                : $record->status->getLabel())
                 ->columnSpanFull()
                 ->schema([
                     ViewEntry::make('timeline')
@@ -50,11 +53,11 @@ final class MemberApplicationInfolist
                         ->hiddenLabel()
                         ->columns(5)
                         ->schema([
-                            TextEntry::make('name')->hiddenLabel()->weight('bold'),
-                            TextEntry::make('relation_id')->hiddenLabel()->state(fn (MemberApplicationNominee $record): string => $record->nomineeRelation?->label() ?? '—'),
-                            TextEntry::make('nid')->hiddenLabel()->placeholder('—'),
-                            TextEntry::make('mobile')->hiddenLabel()->placeholder('—'),
-                            TextEntry::make('share_bps')->hiddenLabel()->state(fn (MemberApplicationNominee $record): string => $record->share()->format(app()->getLocale())),
+                            TextEntry::make('name')->label(__('members.nominee.name'))->weight('bold'),
+                            TextEntry::make('relation_id')->label(__('members.nominee.relation'))->state(fn (MemberApplicationNominee $record): string => $record->nomineeRelation?->label() ?? '—'),
+                            TextEntry::make('nid')->label(__('members.nominee.nid'))->placeholder('—'),
+                            TextEntry::make('mobile')->label(__('members.nominee.mobile'))->placeholder('—'),
+                            TextEntry::make('share_bps')->label(__('members.nominee.share'))->state(fn (MemberApplicationNominee $record): string => $record->share()->format(app()->getLocale())),
                         ]),
                 ]),
         ]);

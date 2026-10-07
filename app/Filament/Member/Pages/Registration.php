@@ -10,6 +10,7 @@ use App\Domain\Members\Registration\Actions\SubmitRegistration;
 use App\Domain\Members\Registration\Data\RegistrationDraft;
 use App\Domain\Members\Registration\Models\MemberApplication;
 use App\Domain\Members\Registration\Models\MemberApplicationNominee;
+use App\Domain\Members\Registration\Services\RegistrationTimeline;
 use App\Filament\Concerns\ConfirmsWithTier;
 use App\Filament\Member\Concerns\ScopedToApplicant;
 use App\Filament\Support\ChangeSummary;
@@ -103,6 +104,20 @@ final class Registration extends Page
         ]);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    protected function getViewData(): array
+    {
+        $application = self::application();
+        $timeline = app(RegistrationTimeline::class);
+
+        return [
+            'returned' => $timeline->decision($application),
+            'headline' => $timeline->headline($application),
+        ];
+    }
+
     public function form(Schema $schema): Schema
     {
         return $schema->statePath('data')->components([
@@ -116,8 +131,8 @@ final class Registration extends Page
                         TextInput::make('name_en')->label(__('members.member.name_en'))->required()->maxLength(255),
                         TextInput::make('guardian_name')->label(__('members.member.guardian_name'))->maxLength(255),
                         TextInput::make('nid')->label(__('members.member.nid'))->helperText(__('members.member.nid_help'))->regex(self::NID_PATTERN),
-                        DatePicker::make('date_of_birth')->label(__('members.member.date_of_birth'))->native(false)->maxDate(now()),
-                        FileUpload::make('photo_path')->label(__('registration.field.photo'))->image()->avatar()->disk('local')->directory('member-photos')->visibility('private')->maxSize(1024)
+                        DatePicker::make('date_of_birth')->label(__('members.member.date_of_birth'))->native(false)->maxDate(now())->defaultFocusedDate(now()->subYears(30)->startOfYear()),
+                        FileUpload::make('photo_path')->label(__('registration.field.photo'))->placeholder(__('registration.field.photo_placeholder'))->image()->avatar()->disk('local')->directory('member-photos')->visibility('private')->maxSize(1024)
                             ->preventFilePathTampering(allowFilePathUsing: fn (string $file): bool => $file === self::application()->photo_path),
                     ]),
                 Step::make(__('registration.steps.contact'))
@@ -206,7 +221,7 @@ final class Registration extends Page
      */
     private function saveDraft(array $fields): void
     {
-        $this->save(Arr::only($this->data, array_values(array_diff($fields, ['photo_path']))));
+        $this->save(Arr::only($this->draftData(), array_values(array_diff($fields, ['photo_path']))));
     }
 
     /**
@@ -215,6 +230,24 @@ final class Registration extends Page
     private function save(array $input): void
     {
         DomainActionRunner::run(fn (User $actor): MemberApplication => app(SaveRegistrationDraft::class)(self::application(), RegistrationDraft::fromInput($input)));
+    }
+
+    /**
+     * The form data as the member typed it, with the date of birth as Y-m-d: the date picker
+     * keeps a time on the date in its state.
+     *
+     * @return array<string, mixed>
+     */
+    private function draftData(): array
+    {
+        $data = $this->data;
+        $date = $data['date_of_birth'] ?? null;
+
+        if (is_string($date) && preg_match('/^\d{4}-\d{2}-\d{2}/', $date, $match) === 1) {
+            $data['date_of_birth'] = $match[0];
+        }
+
+        return $data;
     }
 
     /**
@@ -251,7 +284,7 @@ final class Registration extends Page
             'address' => __('members.member.address'),
             'requested_shares' => __('registration.field.requested_shares'),
             'nominees' => __('members.member.nominees_section'),
-        ], [], [...$this->data, 'nominees' => $nominees]);
+        ], [], [...$this->draftData(), 'nominees' => $nominees]);
     }
 
     private static function nomineeTotal(mixed $rows): Bps

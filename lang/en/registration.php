@@ -62,6 +62,7 @@ return [
         'submitted_at' => 'Submitted',
         'invited_by' => 'Invited by',
         'photo' => 'Photo',
+        'photo_placeholder' => 'Drop a photo here or <span class="filepond--label-action">choose one</span>',
     ],
     'steps' => [
         'personal' => 'Personal',
@@ -71,6 +72,7 @@ return [
         'review' => 'Review',
     ],
     'actions' => [
+        'open_member' => 'Open member',
         'invite' => 'Invite member',
         'invite_heading' => 'Invite a new member',
         'invite_description' => 'The member signs in with this mobile and password and fills in their own registration.',
