@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Domain\Members\Portal\PortalAccounts;
+use App\Domain\Members\Portal\AccountTypes;
 use App\Domain\Settings\Services\RolePermissions;
 use App\Enums\Permission;
 use App\Enums\Role;
@@ -56,7 +56,7 @@ class User extends Authenticatable implements FilamentUser
     public function canAccessPanel(Panel $panel): bool
     {
         if ($panel->getId() === 'member') {
-            return ! $this->isStaff() && app(PortalAccounts::class)->activeMemberOf($this) !== null;
+            return ! $this->isStaff() && app(AccountTypes::class)->of($this) !== null;
         }
 
         return $this->isStaff() && $this->isActive();

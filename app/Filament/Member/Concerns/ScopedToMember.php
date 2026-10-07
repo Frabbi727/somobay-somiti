@@ -13,6 +13,16 @@ use App\Models\User;
  */
 trait ScopedToMember
 {
+    /**
+     * Member pages (and their menu items) exist only for members, not for people still registering.
+     */
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+
+        return $user instanceof User && app(PortalAccounts::class)->activeMemberOf($user) !== null;
+    }
+
     protected static function member(): Member
     {
         $user = auth()->user();
