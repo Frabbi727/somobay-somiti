@@ -20,4 +20,7 @@ return [
         'throttled' => 'Too many attempts. Please wait a minute and try again.',
         'server' => 'Something went wrong. Please try again later.',
     ],
+    'registration' => [
+        'member_only' => 'Your registration is not approved yet. Please update the app if you do not see your registration status.',
+    ],
 ];

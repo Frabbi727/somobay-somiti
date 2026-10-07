@@ -6,6 +6,7 @@ namespace App\Domain\Members\Portal;
 
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Models\Member;
+use App\Domain\Members\Registration\Models\MemberApplication;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use App\Support\Contact\MobileNumber;
@@ -13,7 +14,7 @@ use Illuminate\Support\Facades\Hash;
 
 /**
  * Who a mobile number + password (or SMS code) belongs to — one check for the portal and the app.
- * Only members who have not exited can sign in.
+ * Members who have not exited, and people with an open registration, can sign in.
  */
 final class MemberCredentials
 {
@@ -26,13 +27,16 @@ final class MemberCredentials
     {
         $member = $this->member($mobile);
 
-        if ($member === null) {
-            return null;
+        if ($member !== null) {
+            $user = $this->accounts->forMember($member);
+
+            return Hash::check($password, $user->password) ? $user : null;
         }
 
-        $user = $this->accounts->forMember($member);
+        $normalized = MobileNumber::normalize($mobile);
+        $application = $normalized === null ? null : MemberApplication::openForMobile($normalized);
 
-        return Hash::check($password, $user->password) ? $user : null;
+        return $application !== null && Hash::check($password, $application->user->password) ? $application->user : null;
     }
 
     /**

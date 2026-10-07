@@ -87,4 +87,5 @@ return [
         'wrong_password' => 'Mobile number or password is not correct.',
         'current_password' => 'Your current password is not correct.',
     ],
+    'account_type' => ['member' => 'Member', 'applicant' => 'Registering'],
 ];

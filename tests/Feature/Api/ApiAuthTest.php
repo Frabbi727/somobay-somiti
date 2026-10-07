@@ -38,6 +38,7 @@ it('signs a member in with mobile and password and returns a token pair', functi
     apiLogin(['mobile' => '+880 1712-345678', 'password' => 'secret-123'])
         ->assertOk()
         ->assertJsonStructure(['data' => ['access_token', 'refresh_token', 'token_type', 'expires_in']])
+        ->assertJsonPath('data.account_type', 'member')
         ->assertJsonPath('data.token_type', 'Bearer')
         ->assertJsonPath('data.expires_in', 3600);
 

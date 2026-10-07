@@ -3,13 +3,16 @@
 declare(strict_types=1);
 
 use App\Http\Api\ApiExceptionRenderer;
+use App\Http\Middleware\EnsureApplicantAccess;
 use App\Http\Middleware\EnsureMemberAccess;
+use App\Http\Middleware\RefuseApplicantTokens;
 use App\Http\Middleware\SetApiLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Laravel\Sanctum\Http\Middleware\CheckAbilities;
+use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -24,7 +27,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'abilities' => CheckAbilities::class,
+            'ability' => CheckForAnyAbility::class,
             'member' => EnsureMemberAccess::class,
+            'applicant' => EnsureApplicantAccess::class,
+            'refuse-applicant' => RefuseApplicantTokens::class,
         ]);
 
         $middleware->redirectGuestsTo(fn (Request $request): string => $request->is('portal', 'portal/*')

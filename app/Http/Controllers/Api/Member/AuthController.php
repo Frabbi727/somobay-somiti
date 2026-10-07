@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\Member;
 
+use App\Domain\Members\Portal\AccountType;
+use App\Domain\Members\Portal\AccountTypes;
 use App\Domain\Members\Portal\LoginCodes;
 use App\Domain\Members\Portal\MemberCredentials;
 use App\Domain\Members\Portal\MemberTokens;
+use App\Domain\Members\Portal\PortalAccounts;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Http\Api\ApiResponse;
 use App\Http\Api\ApiValue;
@@ -92,11 +95,35 @@ final class AuthController
         return ApiResponse::ok(null, __('api.auth.signed_out'));
     }
 
-    public function me(Request $request): JsonResponse
+    public function me(Request $request, AccountTypes $accounts, PortalAccounts $portal): JsonResponse
     {
-        $member = self::member($request);
+        /** @var User $user */
+        $user = $request->user();
+
+        if ($accounts->of($user) === AccountType::Applicant) {
+            $application = $accounts->openApplicationOf($user);
+            abort_if($application === null, 403);
+
+            return ApiResponse::ok([
+                'account_type' => AccountType::Applicant->value,
+                'mobile' => $application->mobile,
+                'registration' => [
+                    'status' => ApiValue::enum($application->status),
+                    'next_action' => $application->nextAction()->value,
+                ],
+            ]);
+        }
+
+        $member = $portal->activeMemberOf($user);
+
+        if ($member === null) {
+            $this->tokens->revokeAll($user);
+
+            return ApiResponse::error(__('api.errors.forbidden'), 403);
+        }
 
         return ApiResponse::ok([
+            'account_type' => AccountType::Member->value,
             'member_no' => $member->member_no,
             'name' => self::memberName($member),
             'status' => ApiValue::enum($member->status),

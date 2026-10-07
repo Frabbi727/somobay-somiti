@@ -87,4 +87,5 @@ return [
         'wrong_password' => 'মোবাইল নম্বর বা পাসওয়ার্ড সঠিক নয়।',
         'current_password' => 'বর্তমান পাসওয়ার্ড সঠিক নয়।',
     ],
+    'account_type' => ['member' => 'সদস্য', 'applicant' => 'নিবন্ধনাধীন'],
 ];

@@ -458,6 +458,14 @@ function submittedRegistration(string $mobile = '01811111111'): MemberApplicatio
 }
 
 /**
+ * Completes and submits an existing invitation.
+ */
+function submittedRegistrationFrom(MemberApplication $application): MemberApplication
+{
+    return app(SubmitRegistration::class)(completeRegistration($application), (string) Str::uuid());
+}
+
+/**
  * Approves every remaining step of the chain, each by a fresh user holding that role.
  */
 function approveRegistration(MemberApplication $application, string $from = '2026-07', ?int $shares = null): MemberApplication

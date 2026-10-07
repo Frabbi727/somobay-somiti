@@ -32,10 +32,15 @@ Route::prefix('v1')->group(function (): void {
     Route::post('auth/send-code', [AuthController::class, 'sendCode'])->middleware('throttle:member-login');
     Route::post('auth/refresh-token', [AuthController::class, 'refresh'])->middleware('throttle:member-refresh');
 
-    Route::middleware(['auth:sanctum', 'abilities:member', 'member', 'throttle:member-api'])->group(function (): void {
+    Route::middleware(['auth:sanctum', 'ability:member,applicant', 'throttle:member-api'])->group(function (): void {
         Route::post('auth/logout', [AuthController::class, 'logout']);
         Route::get('auth/me', [AuthController::class, 'me']);
+    });
 
+    // Registration routes are added in Task 10 inside this group.
+    Route::middleware(['auth:sanctum', 'abilities:applicant', 'applicant', 'throttle:member-api'])->group(function (): void {});
+
+    Route::middleware(['auth:sanctum', 'refuse-applicant', 'abilities:member', 'member', 'throttle:member-api'])->group(function (): void {
         Route::get('dashboard/summary', [DashboardController::class, 'summary']);
         Route::get('profile', [ProfileController::class, 'show']);
         Route::post('profile/change-password', [ProfileController::class, 'changePassword']);

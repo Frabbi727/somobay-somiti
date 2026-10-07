@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 use Laravel\Sanctum\PersonalAccessToken;
 
 /**
- * App sign-in tokens. Each sign-in is a "family": a 60-minute access token (ability member) and a
+ * App sign-in tokens. Each sign-in is a "family": a 60-minute access token (ability member, or applicant while registering) and a
  * 30-day refresh token (ability refresh). A refresh token works once; presenting a spent one again
  * later than REUSE_GRACE_SECONDS means it was copied, so every token of that user is revoked.
  */
@@ -25,15 +25,18 @@ final class MemberTokens
     /** A spent refresh token presented again this soon is a retry (lost response, parallel refresh), not theft. */
     public const int REUSE_GRACE_SECONDS = 30;
 
+    public function __construct(private readonly AccountTypes $accounts) {}
+
     /**
-     * @return array{access_token: string, refresh_token: string, token_type: string, expires_in: int}
+     * @return array{access_token: string, refresh_token: string, token_type: string, expires_in: int, account_type: string}
      */
     public function issue(User $user, ?string $family = null): array
     {
         $family ??= (string) Str::uuid();
         $now = CarbonImmutable::now();
+        $type = $this->accounts->of($user) ?? AccountType::Member;
 
-        $access = $user->createToken('access:'.$family, ['member'], $now->addMinutes(self::ACCESS_MINUTES));
+        $access = $user->createToken('access:'.$family, [$type->value], $now->addMinutes(self::ACCESS_MINUTES));
         $refresh = $user->createToken('refresh:'.$family, ['refresh'], $now->addDays(self::REFRESH_DAYS));
 
         return [
@@ -41,11 +44,12 @@ final class MemberTokens
             'refresh_token' => $refresh->plainTextToken,
             'token_type' => 'Bearer',
             'expires_in' => self::ACCESS_MINUTES * 60,
+            'account_type' => $type->value,
         ];
     }
 
     /**
-     * @return array{access_token: string, refresh_token: string, token_type: string, expires_in: int}
+     * @return array{access_token: string, refresh_token: string, token_type: string, expires_in: int, account_type: string}
      *
      * @throws AuthenticationException
      */
@@ -71,6 +75,13 @@ final class MemberTokens
             }
 
             if (! str_starts_with($token->name, 'refresh:') || ! $token->can('refresh') || ($token->expires_at !== null && $token->expires_at->isPast())) {
+                return null;
+            }
+
+            // A rejected registration or an exited member has nothing left to refresh into.
+            if ($this->accounts->of($user) === null) {
+                $this->revokeAll($user);
+
                 return null;
             }
 
