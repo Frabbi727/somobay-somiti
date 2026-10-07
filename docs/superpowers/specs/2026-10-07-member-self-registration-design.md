@@ -1,6 +1,6 @@
 # Member self-registration and approval — design
 
-Date: 2026-10-07 · Status: awaiting review
+Date: 2026-10-07 · Status: approved, implemented
 
 Repos: backend `somobay-somiti` (branch `production`), mobile `somobay_somiti_mobile_app` (branch `member-api`).
 
@@ -132,8 +132,9 @@ legacy rows and is shown when `relation_id` is null. New and edited nominees alw
 | timestamps | no soft deletes; never deleted |
 
 ### 5.4 `member_application_nominees` (new)
-`application_id`, `name`, `relation_id` FK, `mobile` nullable, `nid` NOT NULL (10/13/17 digits
-CHECK), `share_bps` (1–10000 CHECK), `sort`. Replaced as a whole on each draft save (only while
+`application_id`, `name`, `relation_id` FK, `mobile` nullable, `nid` nullable (10/13/17 digits
+CHECK when present), `share_bps` (0–10000 CHECK), `sort`. Draft rows may be incomplete; the full
+nominee rules (NID required, share > 0, total 100%) run at submit. Replaced as a whole on each draft save (only while
 the application is editable).
 
 ### 5.5 `member_application_decisions` (new, insert-only)
@@ -144,7 +145,8 @@ block UPDATE/DELETE (same as `rate_plan_approvals` / activity log).
 
 ### 5.6 `somiti_profiles.registration_approval_roles` (new column)
 jsonb, NOT NULL, default `["secretary","president"]`. Values must be staff `Role` values except
-`super_admin` and `auditor`; at least one; no duplicates. Edited on the Somiti profile settings
+`super_admin` and `auditor`; at least one; no duplicates; the last role must hold `members.create` (checked when saving the
+order). Edited on the Somiti profile settings
 page (T2).
 
 ## 6. Business rules
@@ -154,7 +156,9 @@ page (T2).
   Password min 6 (as `SetPortalPassword`). Creates the `User` (role `member`, name = mobile until
   approval, locale bn) and the application `invited`. Activity log `members/registration.invited`.
 - **R2 Edit.** Only the applicant, only while `invited` or `returned`. Partial saves allowed; each
-  field is format-checked on save (mobile is not editable — it is the login).
+  field is format-checked on save (date of birth not in the future, email, lengths, nominee
+  NID/mobile/relation; mobile is not editable — it is the login). `photo_path` must be under
+  `member-photos/` and is never accepted from client input.
 - **R3 Submit.** Full validation: `MemberRules` (names, NID format/uniqueness against members and
   open applications) + `NomineeRules` (≥ 1 nominee; each has name, relation from the active list,
   NID; optional mobile valid; shares total exactly 10000 bps) + `requested_shares ≥ 1`. Snapshot
@@ -293,8 +297,9 @@ Side effects: decision-free; notifies approvers of step 0; activity log.
     `RegistrationFees`.
   - **Return for correction** — T3 with required reason.
   - **Reject permanently** — T3 with required reason.
-- **Nominee relations** — resource in the Settings cluster (create/edit/deactivate, T1).
-- **Approval chain** — ordered multi-select on the Somiti profile page (T2).
+- **Nominee relations** — resource in the Settings cluster (create/edit/deactivate, T1; the relation key cannot change after creation).
+- **Approval chain** — ordered multi-select on the Somiti profile page (T2); must end with a role that holds
+  `members.create`.
 - **Member form** — nominee relation becomes a select of active relations, NID required, at least
   one nominee. Existing members with old data: the form shows the legacy text and requires a
   choice only when saving.

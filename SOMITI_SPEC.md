@@ -125,6 +125,12 @@ Bangladesh's cooperative sector is large: the International Co-operative Allianc
   1. The secretary enters the member (Bangla/English name, NID, mobile, photo), nominees (shares summing to 100%), N shares and effective month M.
   2. The confirmation modal shows a summary.
   3. The system creates a share-lot and a registration-fee due (N × fee@M), sends a welcome SMS and creates the portal login.
+- **W1a Self-registration.** The secretary (or anyone with `members.create`) invites a member with
+  only a mobile and a password. The member signs in on the app or `/portal`, fills in their details
+  and nominees (at least one, NID required, relation from the managed list), and submits. The
+  registration passes the approval order set in Settings (default Secretary → President); approvers
+  can approve, send it back for correction or reject it. The last approval runs W1 (member number,
+  share lot, registration fee, welcome SMS). Design: `docs/superpowers/specs/2026-10-07-member-self-registration-design.md`.
 - **W2 Monthly cycle (1st of month, 00:30 Asia/Dhaka, or manual):**
   1. Resolve the plan.
   2. Create deposit and service-charge dues with snapshots, idempotently.
