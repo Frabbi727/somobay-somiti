@@ -21,10 +21,13 @@ use App\Domain\Members\Models\Member;
 use App\Domain\Members\Models\NomineeRelation;
 use App\Domain\Members\Portal\MemberTokens;
 use App\Domain\Members\Portal\PortalAccounts;
+use App\Domain\Members\Registration\Actions\DecideRegistration;
 use App\Domain\Members\Registration\Actions\InviteMember;
 use App\Domain\Members\Registration\Actions\SaveRegistrationDraft;
 use App\Domain\Members\Registration\Actions\SubmitRegistration;
 use App\Domain\Members\Registration\Data\RegistrationDraft;
+use App\Domain\Members\Registration\Enums\MemberApplicationStatus;
+use App\Domain\Members\Registration\Enums\RegistrationDecisionType;
 use App\Domain\Members\Registration\Models\MemberApplication;
 use App\Domain\Notifications\Contracts\SmsGateway;
 use App\Domain\Notifications\Data\SmsResult;
@@ -452,4 +455,24 @@ function completeRegistration(MemberApplication $application, array $overrides =
 function submittedRegistration(string $mobile = '01811111111'): MemberApplication
 {
     return app(SubmitRegistration::class)(completeRegistration(invite($mobile)), (string) Str::uuid());
+}
+
+/**
+ * Approves every remaining step of the chain, each by a fresh user holding that role.
+ */
+function approveRegistration(MemberApplication $application, string $from = '2026-07', ?int $shares = null): MemberApplication
+{
+    while ($application->status === MemberApplicationStatus::Submitted) {
+        $role = $application->currentRole() ?? throw new RuntimeException('no current step');
+        $application = app(DecideRegistration::class)(
+            userWithRole($role),
+            $application,
+            RegistrationDecisionType::Approve,
+            null,
+            $shares,
+            YearMonth::parse($from),
+        );
+    }
+
+    return $application;
 }

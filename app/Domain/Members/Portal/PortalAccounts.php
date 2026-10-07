@@ -16,23 +16,31 @@ use Illuminate\Support\Str;
  */
 final class PortalAccounts
 {
-    public function forMember(Member $member): User
+    /**
+     * The member's portal login. A member who registered themselves keeps the login they used
+     * ($user); otherwise one is created.
+     */
+    public function forMember(Member $member, ?User $user = null): User
     {
         if ($member->user_id !== null) {
-            $user = User::query()->find($member->user_id);
+            $existing = User::query()->find($member->user_id);
 
-            if ($user !== null) {
-                return $user;
+            if ($existing !== null) {
+                return $existing;
             }
         }
 
-        $user = User::query()->create([
-            'name' => $member->name_en,
-            'email' => null,
-            'password' => Str::random(48),
-            'locale' => 'bn',
-        ]);
-        $user->assignRole(Role::Member->value);
+        if ($user === null) {
+            $user = User::query()->create([
+                'name' => $member->name_en,
+                'email' => null,
+                'password' => Str::random(48),
+                'locale' => 'bn',
+            ]);
+            $user->assignRole(Role::Member->value);
+        } else {
+            $user->forceFill(['name' => $member->name_en])->save();
+        }
 
         $member->forceFill(['user_id' => $user->id])->saveQuietly();
 

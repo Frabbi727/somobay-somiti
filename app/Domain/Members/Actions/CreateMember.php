@@ -32,12 +32,12 @@ final class CreateMember
         private readonly CauserResolver $causer,
     ) {}
 
-    public function __invoke(User $actor, MemberData $data, int $shares, YearMonth $effectiveFrom): Member
+    public function __invoke(User $actor, MemberData $data, int $shares, YearMonth $effectiveFrom, ?User $portalUser = null): Member
     {
         Gate::forUser($actor)->authorize('create', Member::class);
         $this->rules->assertValid($data);
 
-        return $this->causer->withCauser($actor, fn (): Member => DB::transaction(function () use ($actor, $data, $shares, $effectiveFrom): Member {
+        return $this->causer->withCauser($actor, fn (): Member => DB::transaction(function () use ($actor, $data, $shares, $effectiveFrom, $portalUser): Member {
             $number = (int) DB::scalar("SELECT nextval('member_no_seq')");
 
             $member = Member::query()->create([
@@ -49,7 +49,7 @@ final class CreateMember
 
             $this->nominees->replace($member, $data->nominees);
             $this->shares->increase($actor, $member, $shares, $effectiveFrom, 'Joined');
-            $this->portal->forMember($member);
+            $this->portal->forMember($member, $portalUser);
 
             event(new MemberJoined($member));
 

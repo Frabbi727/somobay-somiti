@@ -95,6 +95,15 @@ final class MemberTokens
         }
     }
 
+    /**
+     * Ends the short-lived access tokens but keeps refresh tokens, so the app's next refresh
+     * gets a token for the user's new account type (applicant → member) without signing in.
+     */
+    public function revokeAccessTokens(User $user): void
+    {
+        $user->tokens()->where('name', 'like', 'access:%')->delete();
+    }
+
     public function revokeAll(User $user): void
     {
         $user->tokens()->delete();
