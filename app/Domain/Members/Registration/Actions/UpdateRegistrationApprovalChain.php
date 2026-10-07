@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Domain\Members\Registration\Actions;
 
 use App\Domain\Settings\Models\SomitiProfile;
+use App\Domain\Settings\Services\RolePermissions;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
+use App\Enums\Permission;
 use App\Enums\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -38,6 +40,12 @@ final class UpdateRegistrationApprovalChain
             throw DomainRuleViolation::because('registration.errors.chain_invalid');
         }
 
+        $last = array_last($roles) ?? throw DomainRuleViolation::because('registration.errors.chain_invalid');
+
+        if (! $this->roleHolds($last, Permission::MembersCreate)) {
+            throw DomainRuleViolation::because('registration.errors.chain_last_cannot_create', ['role' => $last->getLabel()]);
+        }
+
         return $this->causer->withCauser($actor, fn (): SomitiProfile => DB::transaction(function () use ($actor, $values): SomitiProfile {
             $profile = SomitiProfile::query()->whereKey(SomitiProfile::ID)->lockForUpdate()->first()
                 ?? throw DomainRuleViolation::because('registration.errors.profile_first');
@@ -46,5 +54,16 @@ final class UpdateRegistrationApprovalChain
 
             return $profile;
         }, attempts: 3));
+    }
+
+    private function roleHolds(Role $role, Permission $permission): bool
+    {
+        return DB::table('role_has_permissions')
+            ->join('roles', 'roles.id', '=', 'role_has_permissions.role_id')
+            ->join('permissions', 'permissions.id', '=', 'role_has_permissions.permission_id')
+            ->where('roles.guard_name', RolePermissions::GUARD)
+            ->where('roles.name', $role->value)
+            ->where('permissions.name', $permission->value)
+            ->exists();
     }
 }

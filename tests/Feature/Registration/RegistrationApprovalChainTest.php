@@ -45,3 +45,8 @@ it('saves the order from the settings page', function (): void {
 
     expect(SomitiProfile::current()->registrationApprovalChain())->toBe([Role::President]);
 });
+
+it('refuses an order that ends with a role who cannot add members', function (): void {
+    expect(memberRuleKey(fn () => app(UpdateRegistrationApprovalChain::class)(userWithRole(Role::President), [Role::Secretary, Role::Cashier])))
+        ->toBe('registration.errors.chain_last_cannot_create');
+});

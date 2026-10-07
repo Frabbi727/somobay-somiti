@@ -137,6 +137,7 @@ return [
         'effective_from_required' => 'Choose the month the shares start from.',
         'final_needs_create' => 'The last approver must be allowed to add members.',
         'chain_invalid' => 'Choose each role once, from the committee roles.',
+        'chain_last_cannot_create' => 'The last approver (:role) must be allowed to add members. Give that role the permission first, or put another role last.',
         'profile_first' => 'Save the society profile first.',
     ],
 ];
