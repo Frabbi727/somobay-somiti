@@ -39,7 +39,7 @@ final readonly class RegistrationDraft
             $text = self::text($input[$field]);
 
             $attributes[$field] = match ($field) {
-                'requested_shares' => is_numeric($input[$field]) ? (int) $input[$field] : null,
+                'requested_shares' => self::wholeNumber($input[$field]),
                 'nid' => $text === null ? null : BanglaNumber::toAscii(preg_replace('/\s+/', '', $text) ?? $text),
                 default => $text,
             };
@@ -71,6 +71,21 @@ final readonly class RegistrationDraft
         }
 
         return $nominees;
+    }
+
+    private static function wholeNumber(mixed $value): ?int
+    {
+        if (is_int($value)) {
+            return $value;
+        }
+
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $ascii = BanglaNumber::toAscii(trim($value));
+
+        return preg_match('/^\d{1,9}$/', $ascii) === 1 ? (int) $ascii : null;
     }
 
     private static function text(mixed $value): ?string

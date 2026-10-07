@@ -118,6 +118,10 @@ return [
         'nominee_total' => 'Total: :total',
     ],
     'errors' => [
+        'date_of_birth_invalid' => 'Enter a valid date of birth (not in the future).',
+        'email_invalid' => 'Enter a valid email address.',
+        'field_too_long' => 'One of the details is too long.',
+        'photo_invalid' => 'The photo could not be used. Please upload it again.',
         'mobile_invited' => 'Mobile :mobile already has an open registration.',
         'password_short' => 'The password must be at least :min characters.',
         'not_editable' => 'This registration can no longer be changed.',
