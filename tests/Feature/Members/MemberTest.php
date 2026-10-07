@@ -13,7 +13,6 @@ use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Models\Member;
 use App\Domain\Members\Models\Nominee;
 use App\Domain\Settings\Actions\CancelRatePlan;
-use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Domain\Shared\Exceptions\ImmutableRecord;
 use App\Enums\Role;
 use App\Support\Contact\MobileNumber;
@@ -26,17 +25,6 @@ use Illuminate\Support\Facades\DB;
 beforeEach(function (): void {
     $this->plan = approvedPlan('2026-07', '500');
 });
-
-function memberRuleKey(Closure $callback): ?string
-{
-    try {
-        $callback();
-    } catch (DomainRuleViolation $violation) {
-        return $violation->translationKey;
-    }
-
-    return null;
-}
 
 it('normalises Bangladeshi mobile numbers', function (string $input, ?string $expected): void {
     expect(MobileNumber::normalize($input))->toBe($expected);

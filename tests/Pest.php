@@ -27,6 +27,7 @@ use App\Domain\Settings\Actions\DraftRatePlan;
 use App\Domain\Settings\Actions\SubmitRatePlan;
 use App\Domain\Settings\Data\RatePlanData;
 use App\Domain\Settings\Models\RatePlan;
+use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Enums\Role;
 use App\Models\User;
 use App\Support\Money\Money;
@@ -364,4 +365,18 @@ function memberToken(Member $member): string
     $user = app(PortalAccounts::class)->forMember($member);
 
     return app(MemberTokens::class)->issue($user)['access_token'];
+}
+
+/**
+ * The translation key of the DomainRuleViolation the callback throws, or null when it passes.
+ */
+function memberRuleKey(Closure $callback): ?string
+{
+    try {
+        $callback();
+    } catch (DomainRuleViolation $violation) {
+        return $violation->translationKey;
+    }
+
+    return null;
 }

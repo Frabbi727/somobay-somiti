@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\Member;
 
+use App\Domain\Members\Models\NomineeRelation;
 use App\Domain\Settings\Models\SomitiProfile;
 use App\Http\Api\ApiResponse;
 use Illuminate\Http\JsonResponse;
@@ -31,6 +32,16 @@ final class ConfigController
             'logo_url' => $profile->logo_path === null ? null : URL::temporarySignedRoute('api.logo', now()->addHour()),
             'otp_enabled' => (bool) config('somiti.portal_otp'),
         ]);
+    }
+
+    /**
+     * The relation list for the nominee dropdown, in the request language (no sign-in needed).
+     */
+    public function nomineeRelations(): JsonResponse
+    {
+        return ApiResponse::ok(NomineeRelation::query()->where('active', true)->orderBy('sort')->orderBy('id')->get()
+            ->map(fn (NomineeRelation $relation): array => ['id' => $relation->id, 'key' => $relation->key, 'label' => $relation->label()])
+            ->values()->all());
     }
 
     public function logo(): Response
