@@ -109,6 +109,7 @@ return [
         'edit' => 'সম্পর্ক সম্পাদনা',
     ],
     'errors' => [
+        'relation_key_locked' => 'সম্পর্ক তৈরির পর কী বদলানো যায় না।',
         'relation_key_format' => 'কী-তে শুধু ছোট হাতের ইংরেজি অক্ষর ও _ থাকতে পারে (২–৩০টি)।',
         'relation_key_taken' => ':key কী আগেই ব্যবহৃত হয়েছে।',
         'relation_labels_required' => 'বাংলা ও ইংরেজি দুই নামই লাগবে।',

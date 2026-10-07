@@ -45,6 +45,14 @@ it('validates relations', function (array $input, string $key): void {
     'no label' => [['key' => 'uncle', 'label_bn' => '', 'label_en' => 'Uncle'], 'members.errors.relation_labels_required'],
 ]);
 
+it('keeps the key once the relation exists', function (): void {
+    $relation = NomineeRelation::query()->where('key', 'father')->firstOrFail();
+
+    expect(memberRuleKey(fn () => app(SaveNomineeRelation::class)(userWithRole(Role::Secretary), $relation, NomineeRelationData::fromForm([
+        'key' => 'dad', 'label_bn' => 'পিতা', 'label_en' => 'Father',
+    ]))))->toBe('members.errors.relation_key_locked');
+});
+
 it('lets only staff who edit members change the list', function (): void {
     app(SaveNomineeRelation::class)(userWithRole(Role::Cashier), null, NomineeRelationData::fromForm([
         'key' => 'uncle', 'label_bn' => 'চাচা', 'label_en' => 'Uncle',

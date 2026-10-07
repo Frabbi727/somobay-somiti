@@ -23,6 +23,10 @@ final class SaveNomineeRelation
     {
         Gate::forUser($actor)->authorize($relation === null ? 'create' : 'update', $relation ?? NomineeRelation::class);
 
+        if ($relation !== null && $data->key !== $relation->key) {
+            throw DomainRuleViolation::because('members.errors.relation_key_locked');
+        }
+
         if (preg_match('/^[a-z_]{2,30}$/', $data->key) !== 1) {
             throw DomainRuleViolation::because('members.errors.relation_key_format');
         }

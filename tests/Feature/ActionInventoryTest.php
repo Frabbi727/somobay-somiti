@@ -53,6 +53,8 @@ function expectedTiers(): array
         'ViewMeeting › cancel' => 'T1',
         'MeetingActions › hold' => 'T2',
         'ViewMeeting › hold' => 'T2',
+        'ManageNomineeRelations › create' => 'T1',
+        'ManageNomineeRelations table › edit' => 'T1',
         'CreateJournalDraft form › create' => 'T1',
         'EditJournalDraft form › save' => 'T1',
 
@@ -178,7 +180,9 @@ it('asks for the right confirmation tier on every action', function (): void {
         }
 
         // Navigating to a create page is not the write itself; the form's create button is.
-        $want = $name === 'create' && ! isFormButton($key) ? null : $expected[$tierKey];
+        $want = array_key_exists("{$location} › {$name}", $expected)
+            ? $expected["{$location} › {$name}"]
+            : ($name === 'create' && ! isFormButton($key) ? null : $expected[$tierKey]);
 
         if (tierOf($action) !== $want) {
             $problems[] = sprintf('%s: tier %s, expected %s', $key, tierOf($action) ?? 'none', $want ?? 'none');

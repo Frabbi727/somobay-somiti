@@ -109,6 +109,7 @@ return [
         'edit' => 'Edit relation',
     ],
     'errors' => [
+        'relation_key_locked' => 'The key cannot change once the relation exists.',
         'relation_key_format' => 'The key may only have lower-case English letters and _ (2–30).',
         'relation_key_taken' => 'The key :key is already used.',
         'relation_labels_required' => 'Both the Bangla and English names are required.',

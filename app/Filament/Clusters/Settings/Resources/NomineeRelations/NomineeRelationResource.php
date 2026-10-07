@@ -9,6 +9,7 @@ use App\Domain\Members\Data\NomineeRelationData;
 use App\Domain\Members\Models\NomineeRelation;
 use App\Filament\Clusters\Settings\Resources\NomineeRelations\Pages\ManageNomineeRelations;
 use App\Filament\Clusters\Settings\SettingsCluster;
+use App\Filament\Concerns\ConfirmsWithTier;
 use App\Filament\Support\DomainActionRunner;
 use App\Models\User;
 use BackedEnum;
@@ -24,6 +25,8 @@ use Filament\Tables\Table;
 
 final class NomineeRelationResource extends Resource
 {
+    use ConfirmsWithTier;
+
     protected static ?string $model = NomineeRelation::class;
 
     protected static ?string $cluster = SettingsCluster::class;
@@ -45,7 +48,7 @@ final class NomineeRelationResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->columns(2)->components([
-            TextInput::make('key')->label(__('members.relation.key'))->helperText(__('members.relation.key_help'))->required()->regex('/^[a-z_]{2,30}$/')->maxLength(30),
+            TextInput::make('key')->label(__('members.relation.key'))->helperText(__('members.relation.key_help'))->required()->regex('/^[a-z_]{2,30}$/')->maxLength(30)->disabled(fn (?NomineeRelation $record): bool => $record !== null),
             TextInput::make('sort')->label(__('members.relation.sort'))->integer()->default(0),
             TextInput::make('label_bn')->label(__('members.relation.label_bn'))->required()->maxLength(50),
             TextInput::make('label_en')->label(__('members.relation.label_en'))->required()->maxLength(50),
@@ -64,13 +67,16 @@ final class NomineeRelationResource extends Resource
                 IconColumn::make('active')->label(__('members.relation.active'))->boolean(),
             ])
             ->recordActions([
-                EditAction::make()
-                    ->icon(Heroicon::OutlinedPencilSquare)
-                    ->color('warning')
-                    ->tooltip(__('members.relation.edit'))
-                    ->using(fn (NomineeRelation $record, array $data): NomineeRelation => DomainActionRunner::run(
-                        fn (User $actor): NomineeRelation => app(SaveNomineeRelation::class)($actor, $record, NomineeRelationData::fromForm($data)),
-                    )),
+                self::tier1(
+                    EditAction::make()
+                        ->icon(Heroicon::OutlinedPencilSquare)
+                        ->color('warning')
+                        ->tooltip(__('members.relation.edit'))
+                        ->using(fn (NomineeRelation $record, array $data): NomineeRelation => DomainActionRunner::run(
+                            fn (User $actor): NomineeRelation => app(SaveNomineeRelation::class)($actor, $record, NomineeRelationData::fromForm([...$data, 'key' => $record->key])),
+                        )),
+                    __('members.relation.edit'),
+                ),
             ]);
     }
 
