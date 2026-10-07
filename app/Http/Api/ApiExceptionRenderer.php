@@ -22,7 +22,7 @@ use Throwable;
 final class ApiExceptionRenderer
 {
     /** Domain rule keys that mean "conflict" rather than "invalid". */
-    private const array CONFLICTS = ['payments.errors.idempotency_conflict'];
+    private const array CONFLICTS = ['payments.errors.idempotency_conflict', 'registration.errors.idempotency_conflict'];
 
     public function __invoke(Throwable $e, Request $request): ?JsonResponse
     {

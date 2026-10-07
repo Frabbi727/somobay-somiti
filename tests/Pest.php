@@ -23,6 +23,7 @@ use App\Domain\Members\Portal\MemberTokens;
 use App\Domain\Members\Portal\PortalAccounts;
 use App\Domain\Members\Registration\Actions\InviteMember;
 use App\Domain\Members\Registration\Actions\SaveRegistrationDraft;
+use App\Domain\Members\Registration\Actions\SubmitRegistration;
 use App\Domain\Members\Registration\Data\RegistrationDraft;
 use App\Domain\Members\Registration\Models\MemberApplication;
 use App\Domain\Notifications\Contracts\SmsGateway;
@@ -443,4 +444,12 @@ function registrationInput(array $overrides = []): array
 function completeRegistration(MemberApplication $application, array $overrides = []): MemberApplication
 {
     return app(SaveRegistrationDraft::class)($application, RegistrationDraft::fromInput(registrationInput($overrides)));
+}
+
+/**
+ * An invited, completed and submitted registration (waiting for the first approver).
+ */
+function submittedRegistration(string $mobile = '01811111111'): MemberApplication
+{
+    return app(SubmitRegistration::class)(completeRegistration(invite($mobile)), (string) Str::uuid());
 }
