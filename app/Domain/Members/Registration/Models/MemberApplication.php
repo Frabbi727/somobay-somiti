@@ -16,6 +16,7 @@ use App\Policies\MemberApplicationPolicy;
 use App\Support\Money\Bps;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -68,6 +69,19 @@ final class MemberApplication extends Model
     public static function openForMobile(string $mobile): ?self
     {
         return self::query()->where('mobile', $mobile)->whereIn('status', MemberApplicationStatus::openValues())->first();
+    }
+
+    /**
+     * Registrations whose current step is for one of the user's roles.
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeWaitingFor(Builder $query, User $user): void
+    {
+        $roles = $user->getRoleNames()->all();
+
+        $query->where('status', MemberApplicationStatus::Submitted)
+            ->whereRaw('(approval_chain ->> current_step) = ANY(?::text[])', ['{'.implode(',', $roles).'}']);
     }
 
     /**

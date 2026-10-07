@@ -62,10 +62,12 @@ function expectedTiers(): array
         'approve' => 'T3', 'reject' => 'T3', 'reverse' => 'T3', 'post' => 'T3', 'close' => 'T3',
         'unlock' => 'T3', 'waive' => 'T3', 'delete' => 'T3', 'cancel' => 'T3', 'deactivate' => 'T3',
         'refund' => 'T3', 'bulkApprove' => 'T3', 'savePermissions' => 'T3', 'backupNow' => 'T3', 'uploadRestore' => 'T3', 'applyLateFees' => 'T3', 'applyAdvance' => 'T3',
+        'sendBack' => 'T3',
 
         // T2: member, settings, share and payment entry — show what changes.
         'create' => 'T2', 'save' => 'T2', 'toggleActive' => 'T2', 'submit' => 'T2', 'record' => 'T2',
         'changeShares' => 'T2', 'linkResolution' => 'T2', 'prepare' => 'T2', 'openNextFiscalYear' => 'T2', 'openPreviousFiscalYear' => 'T2',
+        'invite' => 'T2',
 
         // T1: low-risk, reversible.
         'restore' => 'T1', 'testRestore' => 'T1', 'duplicate' => 'T1', 'reactivate' => 'T1', 'lock' => 'T1', 'setPortalPassword' => 'T1',
@@ -96,6 +98,7 @@ function expectedLooks(): array
         'bulkApprove' => [Heroicon::OutlinedCheckCircle, 'success'],
         'reject' => [Heroicon::OutlinedNoSymbol, 'danger'],
         'reverse' => [Heroicon::OutlinedArrowUturnLeft, 'danger'],
+        'sendBack' => [Heroicon::OutlinedArrowUturnLeft, 'warning'],
         'pdf' => [Heroicon::OutlinedPrinter, 'info'],
         'excel' => [Heroicon::OutlinedArrowDownTray, 'gray'],
         'collect' => [Heroicon::OutlinedBanknotes, 'success'],
