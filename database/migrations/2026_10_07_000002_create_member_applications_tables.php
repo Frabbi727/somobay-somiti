@@ -69,7 +69,11 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        DB::statement('ALTER TABLE member_application_nominees ADD CONSTRAINT member_application_nominees_share_valid CHECK (share_bps BETWEEN 0 AND 10000)');
+        DB::unprepared(<<<'SQL'
+            ALTER TABLE member_application_nominees
+                ADD CONSTRAINT member_application_nominees_share_valid CHECK (share_bps BETWEEN 0 AND 10000),
+                ADD CONSTRAINT member_application_nominees_nid_format CHECK (nid IS NULL OR nid ~ '^([0-9]{10}|[0-9]{13}|[0-9]{17})$');
+            SQL);
 
         Schema::create('member_application_decisions', function (Blueprint $table): void {
             $table->id();

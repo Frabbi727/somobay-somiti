@@ -80,3 +80,12 @@ it('tells the member what to do next', function (): void {
     $application->status = MemberApplicationStatus::Rejected;
     expect($application->nextAction()->value)->toBe('none');
 });
+
+it('checks the nominee NID format in the database', function (): void {
+    $application = rawApplication();
+
+    expect(fn () => DB::table('member_application_nominees')->insert([
+        'application_id' => $application->id, 'name' => 'Nominee', 'nid' => '123', 'share_bps' => 10000,
+        'created_at' => now(), 'updated_at' => now(),
+    ]))->toThrow(QueryException::class);
+});
