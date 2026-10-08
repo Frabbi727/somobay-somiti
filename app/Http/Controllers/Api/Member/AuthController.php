@@ -60,6 +60,10 @@ final class AuthController
             return $user;
         }, (int) config('auth.timebox_duration', 200_000));
 
+        if ($user === null && ! $usesCode && $this->credentials->isRejectedApplicant($mobile, (string) $request->string('password'))) {
+            throw ValidationException::withMessages(['mobile' => __('portal.errors.registration_rejected')]);
+        }
+
         if ($user === null) {
             throw ValidationException::withMessages(['mobile' => __('api.auth.failed')]);
         }

@@ -73,6 +73,11 @@ it('refuses a rejected applicant everywhere', function (): void {
     app('auth')->forgetGuards();
 
     $this->postJson('/api/v1/auth/refresh-token', ['refresh_token' => $tokens['refresh_token']])->assertStatus(401);
-    $this->postJson('/api/v1/auth/login', ['mobile' => '01811111111', 'password' => 'secret-123'])->assertStatus(422);
+    $this->postJson('/api/v1/auth/login', ['mobile' => '01811111111', 'password' => 'secret-123'])
+        ->assertStatus(422)
+        ->assertJsonPath('errors.mobile.0', __('portal.errors.registration_rejected'));
+    $this->postJson('/api/v1/auth/login', ['mobile' => '01811111111', 'password' => 'wrong-pass'])
+        ->assertStatus(422)
+        ->assertJsonPath('errors.mobile.0', __('api.auth.failed'));
     expect(PersonalAccessToken::query()->count())->toBe(0);
 });
