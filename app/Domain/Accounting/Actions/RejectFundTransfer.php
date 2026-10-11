@@ -6,6 +6,7 @@ namespace App\Domain\Accounting\Actions;
 
 use App\Domain\Accounting\Enums\TransferStatus;
 use App\Domain\Accounting\Models\FundTransfer;
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +15,10 @@ use Spatie\Activitylog\Support\CauserResolver;
 
 final class RejectFundTransfer
 {
-    public function __construct(private readonly CauserResolver $causer) {}
+    public function __construct(
+        private readonly CauserResolver $causer,
+        private readonly WorkflowNotifier $notifier,
+    ) {}
 
     public function __invoke(User $actor, FundTransfer $transfer, string $reason): FundTransfer
     {
@@ -34,6 +38,8 @@ final class RejectFundTransfer
             Gate::forUser($actor)->authorize('reject', $locked);
 
             $locked->update(['status' => TransferStatus::Rejected, 'rejected_by' => $actor->id, 'rejection_reason' => $reason]);
+
+            $this->notifier->outcome($locked, 'rejected', [$locked->recorded_by]);
 
             return $locked;
         }, attempts: 3));

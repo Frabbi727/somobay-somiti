@@ -7,6 +7,7 @@ namespace App\Domain\YearEnd\Actions;
 use App\Domain\Accounting\Models\FiscalYear;
 use App\Domain\Governance\Enums\ResolutionSubject;
 use App\Domain\Governance\Services\RequiredResolutions;
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Domain\YearEnd\Data\AppropriationRates;
 use App\Domain\YearEnd\Models\YearEnd;
@@ -31,6 +32,7 @@ final class ApproveYearEnd
         private readonly RequiredResolutions $resolutions,
         private readonly YearEndPoster $poster,
         private readonly CauserResolver $causer,
+        private readonly WorkflowNotifier $notifier,
     ) {}
 
     public function __invoke(User $actor, YearEnd $yearEnd): YearEnd
@@ -69,6 +71,9 @@ final class ApproveYearEnd
 
             if ($locked->isFullyApproved()) {
                 $this->poster->post($actor, $locked, $fiscalYear, $figures);
+                $this->notifier->outcome($locked, 'posted', [$locked->prepared_by, $locked->president_approved_by]);
+            } else {
+                $this->notifier->waiting($locked, event: 'next_approval');
             }
 
             return $locked;

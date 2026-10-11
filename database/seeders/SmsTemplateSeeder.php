@@ -13,6 +13,25 @@ use Illuminate\Database\Seeder;
  */
 final class SmsTemplateSeeder extends Seeder
 {
+    /**
+     * Also inserted by the 2026_10_11_000003 migration, so a live install gets them on deploy.
+     *
+     * @return array<string, array{0: string, 1: string}>
+     */
+    public static function paymentOutcomes(): array
+    {
+        return [
+            SmsTemplateKey::PaymentRejected->value => [
+                '{name}, আপনার {amount} পেমেন্ট গ্রহণ করা হয়নি। কারণ: {reason}। প্রশ্ন থাকলে অফিসে যোগাযোগ করুন। -{somiti}',
+                '{name}, your payment of {amount} was not accepted. Reason: {reason}. Please contact the office with any question. -{somiti}',
+            ],
+            SmsTemplateKey::PaymentReversed->value => [
+                '{name}, আপনার {amount} পেমেন্ট বাতিল করা হয়েছে। কারণ: {reason}। প্রশ্ন থাকলে অফিসে যোগাযোগ করুন। -{somiti}',
+                '{name}, your payment of {amount} was cancelled. Reason: {reason}. Please contact the office with any question. -{somiti}',
+            ],
+        ];
+    }
+
     public function run(): void
     {
         $defaults = [
@@ -40,6 +59,7 @@ final class SmsTemplateSeeder extends Seeder
                 '{somiti}: দুঃখিত, আপনার সদস্য নিবন্ধন গ্রহণ করা হয়নি। কারণ: {reason}। বিস্তারিত জানতে অফিসে যোগাযোগ করুন।',
                 '{somiti}: sorry, your membership registration was not accepted. Reason: {reason}. Please contact the office.',
             ],
+            ...self::paymentOutcomes(),
         ];
 
         foreach ($defaults as $key => [$bn, $en]) {

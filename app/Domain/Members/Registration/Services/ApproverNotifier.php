@@ -5,39 +5,23 @@ declare(strict_types=1);
 namespace App\Domain\Members\Registration\Services;
 
 use App\Domain\Members\Registration\Models\MemberApplication;
-use App\Models\User;
-use Filament\Notifications\Notification;
-use Filament\Support\Icons\Heroicon;
-use Illuminate\Support\Facades\DB;
+use App\Domain\Notifications\Services\WorkflowNotifier;
 
 /**
- * Tells everyone holding the role at the current step that a registration waits for them
- * (admin panel bell). Sent after commit, so a rolled-back decision notifies nobody.
+ * Tells everyone who may decide the current step that a registration waits for them (admin panel
+ * bell, with a link to the application, in each approver's language). Sent after commit, so a
+ * rolled-back decision notifies nobody.
  */
 final class ApproverNotifier
 {
+    public function __construct(private readonly WorkflowNotifier $notifier) {}
+
     public function notifyStep(MemberApplication $application): void
     {
-        $role = $application->currentRole();
-
-        if ($role === null) {
+        if ($application->currentRole() === null) {
             return;
         }
 
-        $name = $application->name_bn ?? $application->mobile;
-
-        DB::afterCommit(function () use ($role, $name): void {
-            $approvers = User::role($role->value)->whereNull('deactivated_at')->get();
-
-            if ($approvers->isEmpty()) {
-                return;
-            }
-
-            Notification::make()
-                ->title(__('registration.notifications.waiting_for_you', ['name' => $name]))
-                ->icon(Heroicon::OutlinedUserPlus)
-                ->info()
-                ->sendToDatabase($approvers);
-        });
+        $this->notifier->waiting($application, 'decide');
     }
 }

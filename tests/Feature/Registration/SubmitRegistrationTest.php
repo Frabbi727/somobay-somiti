@@ -7,6 +7,7 @@ use App\Domain\Members\Registration\Actions\SubmitRegistration;
 use App\Domain\Members\Registration\Data\RegistrationDraft;
 use App\Domain\Members\Registration\Enums\MemberApplicationStatus;
 use App\Enums\Role;
+use App\Filament\Resources\MemberApplications\MemberApplicationResource;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Str;
 
@@ -21,7 +22,9 @@ it('submits a complete registration to the first step of the chain', function ()
         ->and($submitted->current_step)->toBe(0)
         ->and($submitted->submission_no)->toBe(1)
         ->and($submitted->submitted_at)->not->toBeNull()
-        ->and($secretary->notifications()->count())->toBe(1);
+        ->and($secretary->notifications()->count())->toBe(1)
+        ->and($secretary->notifications()->sole()->data['actions'][0]['url'])
+        ->toBe(MemberApplicationResource::getUrl('view', ['record' => $submitted], panel: 'admin'));
 });
 
 it('answers a repeated submit with the same key without submitting twice', function (): void {

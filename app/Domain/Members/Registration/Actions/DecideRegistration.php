@@ -12,6 +12,7 @@ use App\Domain\Members\Registration\Models\MemberApplication;
 use App\Domain\Members\Registration\Services\ApproverNotifier;
 use App\Domain\Notifications\Enums\SmsTemplateKey;
 use App\Domain\Notifications\Services\SmsSender;
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Enums\Permission;
 use App\Models\User;
@@ -36,6 +37,7 @@ final class DecideRegistration
         private readonly SmsSender $sms,
         private readonly MemberTokens $tokens,
         private readonly CauserResolver $causer,
+        private readonly WorkflowNotifier $workflow,
     ) {}
 
     public function __invoke(
@@ -136,6 +138,7 @@ final class DecideRegistration
 
         $application->forceFill(['member_id' => $member->id])->save();
         $this->tokens->revokeAccessTokens($application->user);
+        $this->workflow->applicantOutcome($application, 'approved');
     }
 
     private function sendBack(MemberApplication $application, string $reason): void
@@ -146,6 +149,8 @@ final class DecideRegistration
             'reason' => $reason,
             'portal_url' => url('/portal'),
         ], null, sprintf('registration:%d:%d:return', $application->id, $application->submission_no), $application);
+
+        $this->workflow->applicantOutcome($application, 'returned');
     }
 
     private function reject(MemberApplication $application, string $reason): void

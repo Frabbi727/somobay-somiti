@@ -7,6 +7,7 @@ namespace App\Domain\Accounting\Actions;
 use App\Domain\Accounting\Data\JournalDraftData;
 use App\Domain\Accounting\Enums\VoucherType;
 use App\Domain\Accounting\Models\JournalDraft;
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +20,10 @@ use Spatie\Activitylog\Support\CauserResolver;
  */
 final class SaveJournalDraft
 {
-    public function __construct(private readonly CauserResolver $causer) {}
+    public function __construct(
+        private readonly CauserResolver $causer,
+        private readonly WorkflowNotifier $notifier,
+    ) {}
 
     public function __invoke(User $actor, ?JournalDraft $draft, JournalDraftData $data): JournalDraft
     {
@@ -42,7 +46,10 @@ final class SaveJournalDraft
             ];
 
             if ($draft === null) {
-                return JournalDraft::query()->create([...$attributes, 'created_by' => $actor->id]);
+                $created = JournalDraft::query()->create([...$attributes, 'created_by' => $actor->id]);
+                $this->notifier->waiting($created, 'post');
+
+                return $created;
             }
 
             $locked = JournalDraft::query()->whereKey($draft->getKey())->lockForUpdate()->firstOrFail();

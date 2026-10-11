@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Settings\Actions;
 
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Settings\Enums\ApprovalDecision;
 use App\Domain\Settings\Enums\RatePlanStatus;
 use App\Domain\Settings\Models\RatePlan;
@@ -18,7 +19,10 @@ use Spatie\Activitylog\Support\CauserResolver;
  */
 final class RejectRatePlan
 {
-    public function __construct(private readonly CauserResolver $causer) {}
+    public function __construct(
+        private readonly CauserResolver $causer,
+        private readonly WorkflowNotifier $notifier,
+    ) {}
 
     public function __invoke(User $actor, RatePlan $plan, string $comment): RatePlan
     {
@@ -47,6 +51,8 @@ final class RejectRatePlan
             ]);
 
             $locked->forceFill(['status' => RatePlanStatus::Draft])->save();
+
+            $this->notifier->outcome($locked, 'returned', [$locked->created_by]);
 
             return $locked;
         }, attempts: 3));

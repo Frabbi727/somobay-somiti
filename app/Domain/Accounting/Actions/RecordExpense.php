@@ -9,6 +9,7 @@ use App\Domain\Accounting\Enums\AccountType;
 use App\Domain\Accounting\Enums\ExpenseStatus;
 use App\Domain\Accounting\Models\Account;
 use App\Domain\Accounting\Models\Expense;
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use App\Support\Time\YearMonth;
@@ -23,7 +24,10 @@ use Spatie\Activitylog\Support\CauserResolver;
  */
 final class RecordExpense
 {
-    public function __construct(private readonly CauserResolver $causer) {}
+    public function __construct(
+        private readonly CauserResolver $causer,
+        private readonly WorkflowNotifier $notifier,
+    ) {}
 
     public function __invoke(User $actor, ExpenseData $data): Expense
     {
@@ -44,7 +48,7 @@ final class RecordExpense
         return $this->causer->withCauser($actor, fn (): Expense => DB::transaction(function () use ($actor, $data): Expense {
             $number = (int) DB::scalar("SELECT nextval('expense_no_seq')");
 
-            return Expense::query()->create([
+            $record = Expense::query()->create([
                 'expense_no' => sprintf('E-%05d', $number),
                 'account_id' => $data->accountId,
                 'paid_from' => $data->paidFrom,
@@ -58,6 +62,10 @@ final class RecordExpense
                 'idempotency_key' => $data->idempotencyKey,
                 'recorded_by' => $actor->id,
             ]);
+
+            $this->notifier->waiting($record);
+
+            return $record;
         }, attempts: 3));
     }
 

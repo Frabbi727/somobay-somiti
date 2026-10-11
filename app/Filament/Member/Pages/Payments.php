@@ -7,6 +7,7 @@ namespace App\Filament\Member\Pages;
 use App\Domain\Contributions\Enums\PaymentStatus;
 use App\Domain\Contributions\Models\Payment;
 use App\Filament\Member\Concerns\ScopedToMember;
+use App\Filament\Member\Support\PaymentStatusNote;
 use App\Filament\Support\Display;
 use App\Reports\ReceiptDocument;
 use BackedEnum;
@@ -55,7 +56,7 @@ final class Payments extends Page implements HasTable
                 TextColumn::make('method')->label(__('payments.field.method'))->badge()->color('gray'),
                 TextColumn::make('trx_id')->label(__('payments.field.trx_id'))->placeholder('—')->visibleFrom('md'),
                 TextColumn::make('amount_poisha')->label(__('payments.field.amount'))->formatStateUsing(fn (Payment $record): string => Display::money($record->amount_poisha))->alignment(Alignment::End)->weight('bold'),
-                TextColumn::make('status')->label(__('payments.field.status'))->badge(),
+                TextColumn::make('status')->label(__('payments.field.status'))->badge()->description(fn (Payment $record): ?string => PaymentStatusNote::for($record))->wrap(),
             ])
             ->filters([
                 SelectFilter::make('status')->label(__('payments.field.status'))->options(PaymentStatus::class),

@@ -7,6 +7,7 @@ namespace App\Filament\Member\Widgets;
 use App\Domain\Contributions\Models\Payment;
 use App\Filament\Member\Concerns\ScopedToMember;
 use App\Filament\Member\Pages\Payments;
+use App\Filament\Member\Support\PaymentStatusNote;
 use App\Filament\Support\Display;
 use Filament\Actions\Action;
 use Filament\Support\Enums\Alignment;
@@ -36,7 +37,7 @@ final class RecentPaymentsWidget extends TableWidget
                 TextColumn::make('received_on')->label(__('payments.field.received_on'))->formatStateUsing(fn (Payment $record): string => Display::date($record->received_on)),
                 TextColumn::make('method')->label(__('payments.field.method'))->badge()->color('gray'),
                 TextColumn::make('amount_poisha')->label(__('payments.field.amount'))->formatStateUsing(fn (Payment $record): string => Display::money($record->amount_poisha))->alignment(Alignment::End),
-                TextColumn::make('status')->label(__('payments.field.status'))->badge(),
+                TextColumn::make('status')->label(__('payments.field.status'))->badge()->description(fn (Payment $record): ?string => PaymentStatusNote::for($record))->wrap(),
             ])
             ->headerActions([
                 Action::make('all')

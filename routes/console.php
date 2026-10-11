@@ -22,6 +22,13 @@ Schedule::command('somiti:late-fees:apply')
     ->withoutOverlapping()
     ->onOneServer();
 
+// One bell reminder a day to whoever has approvals waiting longer than somiti.approval_reminder_days.
+Schedule::command('somiti:approvals:remind')
+    ->dailyAt('09:00')
+    ->timezone('Asia/Dhaka')
+    ->withoutOverlapping()
+    ->onOneServer();
+
 Schedule::command('somiti:integrity:check')
     ->dailyAt('02:00')
     ->timezone('Asia/Dhaka')

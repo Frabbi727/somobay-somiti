@@ -7,6 +7,7 @@ namespace App\Domain\Investments\Actions;
 use App\Domain\Accounting\Actions\ReverseJournal;
 use App\Domain\Investments\Enums\InvestmentStatus;
 use App\Domain\Investments\Models\Investment;
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +16,10 @@ use Spatie\Activitylog\Support\CauserResolver;
 
 final class RejectInvestment
 {
-    public function __construct(private readonly CauserResolver $causer) {}
+    public function __construct(
+        private readonly CauserResolver $causer,
+        private readonly WorkflowNotifier $notifier,
+    ) {}
 
     public function __invoke(User $actor, Investment $investment, string $reason): Investment
     {
@@ -35,6 +39,8 @@ final class RejectInvestment
             Gate::forUser($actor)->authorize('reject', $locked);
 
             $locked->update(['status' => InvestmentStatus::Rejected, 'rejected_by' => $actor->id, 'rejection_reason' => $reason]);
+
+            $this->notifier->outcome($locked, 'rejected', [$locked->recorded_by]);
 
             return $locked;
         }, attempts: 3));

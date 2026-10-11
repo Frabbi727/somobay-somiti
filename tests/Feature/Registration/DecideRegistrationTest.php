@@ -138,3 +138,15 @@ it('rejects permanently: signs the applicant out and frees the mobile', function
 it('refuses decisions on a registration that is not waiting', function (): void {
     expect(memberRuleKey(fn () => decide(Role::Secretary, completeRegistration(invite()), RegistrationDecisionType::Approve)))->toBe('registration.errors.not_pending');
 });
+
+it('tells the applicant in the portal when the registration is approved or sent back', function (): void {
+    $application = submittedRegistration();
+    app(DecideRegistration::class)(userWithRole(Role::Secretary), $application, RegistrationDecisionType::Return, 'Photo is blurred');
+
+    expect($application->user->notifications()->sole()->data['title'])->toBe(__('notifications.applicant.returned.title'));
+
+    $approved = approveRegistration(submittedRegistrationFrom($application->fresh()));
+
+    expect($approved->user->notifications()->pluck('data')->pluck('title')->all())
+        ->toEqualCanonicalizing([__('notifications.applicant.returned.title'), __('notifications.applicant.approved.title')]);
+});

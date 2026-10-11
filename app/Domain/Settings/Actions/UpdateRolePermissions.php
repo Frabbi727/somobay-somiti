@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Domain\Settings\Actions;
 
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Settings\Models\SomitiProfile;
 use App\Domain\Settings\Services\RolePermissions;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Enums\Permission;
 use App\Enums\Role;
+use App\Filament\Clusters\Settings\Pages\RolePermissionsPage;
+use App\Filament\Support\Display;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -28,6 +31,7 @@ final class UpdateRolePermissions
     public function __construct(
         private readonly RolePermissions $permissions,
         private readonly CauserResolver $causer,
+        private readonly WorkflowNotifier $notifier,
     ) {}
 
     /**
@@ -38,7 +42,7 @@ final class UpdateRolePermissions
     {
         Gate::forUser($actor)->authorize('manageRolePermissions');
 
-        return $this->causer->withCauser($actor, fn (): array => DB::transaction(function () use ($grid): array {
+        return $this->causer->withCauser($actor, fn (): array => DB::transaction(function () use ($actor, $grid): array {
             $roles = RoleModel::query()
                 ->where('guard_name', RolePermissions::GUARD)
                 ->whereIn('name', array_map(fn (Role $role): string => $role->value, Permission::editableRoles()))
@@ -105,6 +109,11 @@ final class UpdateRolePermissions
                     'granted' => $change['granted'],
                 ], $changes)])
                 ->log('role permissions changed');
+
+            $count = count($changes);
+            $this->notifier->accessChanged($actor, 'role_permissions', fn (): array => [
+                'count' => Display::digits($count),
+            ], RolePermissionsPage::getUrl(panel: 'admin'));
 
             return $changes;
         }, attempts: 3));

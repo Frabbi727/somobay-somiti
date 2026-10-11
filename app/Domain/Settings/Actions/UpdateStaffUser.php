@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Domain\Settings\Actions;
 
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Settings\Data\StaffUserData;
 use App\Domain\Settings\Services\StaffUserRules;
 use App\Enums\Role;
+use App\Filament\Clusters\Settings\Resources\Users\UserResource;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -17,6 +19,7 @@ final class UpdateStaffUser
     public function __construct(
         private readonly StaffUserRules $rules,
         private readonly CauserResolver $causer,
+        private readonly WorkflowNotifier $notifier,
     ) {}
 
     public function __invoke(User $actor, User $user, StaffUserData $data): User
@@ -43,6 +46,13 @@ final class UpdateStaffUser
             ])->save();
 
             $locked->syncRoles($data->roleNames());
+
+            if ($before !== collect($data->roleNames())->sort()->values()->all()) {
+                $this->notifier->accessChanged($actor, 'user_roles', fn (): array => [
+                    'name' => $locked->name,
+                    'roles' => implode(', ', array_map(fn (Role $role): string => $role->getLabel(), $data->roles)),
+                ], UserResource::getUrl('edit', ['record' => $locked], panel: 'admin'));
+            }
 
             activity('users')->performedOn($locked)->withProperties([
                 'roles' => ['old' => $before, 'new' => collect($data->roleNames())->sort()->values()->all()],

@@ -7,6 +7,7 @@ namespace App\Domain\Accounting\Actions;
 use App\Domain\Accounting\Data\FundTransferData;
 use App\Domain\Accounting\Enums\TransferStatus;
 use App\Domain\Accounting\Models\FundTransfer;
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use App\Support\Time\YearMonth;
@@ -21,7 +22,10 @@ use Spatie\Activitylog\Support\CauserResolver;
  */
 final class RecordFundTransfer
 {
-    public function __construct(private readonly CauserResolver $causer) {}
+    public function __construct(
+        private readonly CauserResolver $causer,
+        private readonly WorkflowNotifier $notifier,
+    ) {}
 
     public function __invoke(User $actor, FundTransferData $data): FundTransfer
     {
@@ -42,7 +46,7 @@ final class RecordFundTransfer
         return $this->causer->withCauser($actor, fn (): FundTransfer => DB::transaction(function () use ($actor, $data): FundTransfer {
             $number = (int) DB::scalar("SELECT nextval('transfer_no_seq')");
 
-            return FundTransfer::query()->create([
+            $record = FundTransfer::query()->create([
                 'transfer_no' => sprintf('T-%05d', $number),
                 'from_method' => $data->from,
                 'to_method' => $data->to,
@@ -56,6 +60,10 @@ final class RecordFundTransfer
                 'idempotency_key' => $data->idempotencyKey,
                 'recorded_by' => $actor->id,
             ]);
+
+            $this->notifier->waiting($record);
+
+            return $record;
         }, attempts: 3));
     }
 

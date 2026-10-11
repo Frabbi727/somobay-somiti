@@ -6,6 +6,7 @@ namespace App\Domain\Contributions\Actions;
 
 use App\Domain\Contributions\Enums\PaymentStatus;
 use App\Domain\Contributions\Models\Payment;
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -18,7 +19,10 @@ use Spatie\Activitylog\Support\CauserResolver;
  */
 final class RejectPayment
 {
-    public function __construct(private readonly CauserResolver $causer) {}
+    public function __construct(
+        private readonly CauserResolver $causer,
+        private readonly WorkflowNotifier $notifier,
+    ) {}
 
     public function __invoke(User $actor, Payment $payment, string $reason): Payment
     {
@@ -41,6 +45,8 @@ final class RejectPayment
                 'rejected_at' => CarbonImmutable::now(),
                 'rejection_reason' => trim($reason),
             ])->save();
+
+            $this->notifier->paymentOutcome($locked, 'rejected');
 
             return $locked;
         }, attempts: 3));

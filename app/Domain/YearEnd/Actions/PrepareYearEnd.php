@@ -14,6 +14,7 @@ use App\Domain\Contributions\Enums\PaymentStatus;
 use App\Domain\Contributions\Models\Payment;
 use App\Domain\Investments\Enums\InvestmentStatus;
 use App\Domain\Investments\Models\Investment;
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Domain\YearEnd\Data\AppropriationRates;
 use App\Domain\YearEnd\Enums\YearEndStatus;
@@ -35,6 +36,7 @@ final class PrepareYearEnd
     public function __construct(
         private readonly YearEndCalculator $calculator,
         private readonly CauserResolver $causer,
+        private readonly WorkflowNotifier $notifier,
     ) {}
 
     public function __invoke(User $actor, FiscalYear $fiscalYear, AppropriationRates $rates, ?int $resolutionId = null): YearEnd
@@ -56,7 +58,7 @@ final class PrepareYearEnd
 
             $figures = $this->calculator->calculate($year, $rates);
 
-            return YearEnd::query()->create([
+            $record = YearEnd::query()->create([
                 'fiscal_year_id' => $year->id,
                 'status' => YearEndStatus::Draft,
                 'net_profit_poisha' => $figures->netProfit,
@@ -73,6 +75,10 @@ final class PrepareYearEnd
                 'resolution_id' => $resolutionId,
                 'prepared_by' => $actor->id,
             ]);
+
+            $this->notifier->waiting($record);
+
+            return $record;
         }, attempts: 3));
     }
 

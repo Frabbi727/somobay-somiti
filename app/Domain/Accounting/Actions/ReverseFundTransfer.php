@@ -9,6 +9,7 @@ use App\Domain\Accounting\Models\FundTransfer;
 use App\Domain\Accounting\Models\JournalEntry;
 use App\Domain\Accounting\Services\Accounts;
 use App\Domain\Accounting\Services\FundsGuard;
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -26,6 +27,7 @@ final class ReverseFundTransfer
         private readonly Accounts $accounts,
         private readonly FundsGuard $funds,
         private readonly CauserResolver $causer,
+        private readonly WorkflowNotifier $notifier,
     ) {}
 
     public function __invoke(User $actor, FundTransfer $transfer, string $reason): FundTransfer
@@ -64,6 +66,8 @@ final class ReverseFundTransfer
                 'reversal_reason' => trim($reason),
                 'reversal_journal_entry_id' => $reversal->id,
             ]);
+
+            $this->notifier->outcome($locked, 'reversed', [$locked->recorded_by, $locked->approved_by]);
 
             return $locked;
         }, attempts: 3));

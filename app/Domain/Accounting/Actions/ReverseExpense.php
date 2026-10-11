@@ -7,6 +7,7 @@ namespace App\Domain\Accounting\Actions;
 use App\Domain\Accounting\Enums\ExpenseStatus;
 use App\Domain\Accounting\Models\Expense;
 use App\Domain\Accounting\Models\JournalEntry;
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -22,6 +23,7 @@ final class ReverseExpense
     public function __construct(
         private readonly ReverseJournal $reverseJournal,
         private readonly CauserResolver $causer,
+        private readonly WorkflowNotifier $notifier,
     ) {}
 
     public function __invoke(User $actor, Expense $expense, string $reason): Expense
@@ -57,6 +59,8 @@ final class ReverseExpense
                 'reversal_reason' => trim($reason),
                 'reversal_journal_entry_id' => $reversal->id,
             ]);
+
+            $this->notifier->outcome($locked, 'reversed', [$locked->recorded_by, $locked->approved_by]);
 
             return $locked;
         }, attempts: 3));

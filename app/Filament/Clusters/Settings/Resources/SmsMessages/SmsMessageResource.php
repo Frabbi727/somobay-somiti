@@ -4,12 +4,18 @@ declare(strict_types=1);
 
 namespace App\Filament\Clusters\Settings\Resources\SmsMessages;
 
+use App\Domain\Notifications\Actions\ResendSms;
 use App\Domain\Notifications\Enums\SmsStatus;
 use App\Domain\Notifications\Models\SmsMessage;
 use App\Filament\Clusters\Settings\Resources\SmsMessages\Pages\ListSmsMessages;
 use App\Filament\Clusters\Settings\SettingsCluster;
+use App\Filament\Concerns\ConfirmsWithTier;
 use App\Filament\Support\Display;
+use App\Filament\Support\DomainActionRunner;
+use App\Models\User;
 use BackedEnum;
+use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -19,6 +25,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 final class SmsMessageResource extends Resource
 {
+    use ConfirmsWithTier;
+
     protected static ?string $model = SmsMessage::class;
 
     protected static ?string $cluster = SettingsCluster::class;
@@ -55,7 +63,24 @@ final class SmsMessageResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('status')->label(__('sms.log.status'))->options(SmsStatus::class),
-            ]);
+            ])
+            ->recordActions([self::resendAction()]);
+    }
+
+    public static function resendAction(): Action
+    {
+        $action = Action::make('resend')
+            ->label(__('sms.log.resend'))
+            ->tooltip(__('sms.log.resend_help'))
+            ->icon(Heroicon::OutlinedArrowPath)
+            ->color('warning')
+            ->authorize('resend')
+            ->action(function (SmsMessage $record): void {
+                DomainActionRunner::run(fn (User $actor): SmsMessage => app(ResendSms::class)($actor, $record));
+                Notification::make()->title(__('sms.log.resent'))->success()->send();
+            });
+
+        return self::tier1($action, fn (SmsMessage $record): string => __('sms.log.resend_heading', ['to' => Display::digits($record->to)]));
     }
 
     public static function getPages(): array

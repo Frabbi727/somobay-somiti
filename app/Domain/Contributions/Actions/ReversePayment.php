@@ -14,6 +14,7 @@ use App\Domain\Contributions\Models\Payment;
 use App\Domain\Contributions\Services\AdvanceLedger;
 use App\Domain\Contributions\Services\DuePosting;
 use App\Domain\Members\Models\Member;
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -34,6 +35,7 @@ final class ReversePayment
         private readonly AdvanceLedger $advances,
         private readonly DuePosting $posting,
         private readonly CauserResolver $causer,
+        private readonly WorkflowNotifier $notifier,
     ) {}
 
     public function __invoke(User $actor, Payment $payment, string $reason): Payment
@@ -89,6 +91,8 @@ final class ReversePayment
                 'reversal_reason' => $reason,
                 'reversal_journal_entry_id' => $reversal->id,
             ])->save();
+
+            $this->notifier->paymentOutcome($locked, 'reversed');
 
             return $locked;
         }, attempts: 3));

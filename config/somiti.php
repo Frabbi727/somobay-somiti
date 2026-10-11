@@ -122,6 +122,13 @@ return [
     'expense_president_threshold_poisha' => (int) env('SOMITI_EXPENSE_PRESIDENT_THRESHOLD_POISHA', 1_000_000),
 
     /*
+    | Approval reminders: once a day, anyone with items that have waited longer than this many days
+    | for them gets one bell reminder. 0 turns reminders off.
+    */
+
+    'approval_reminder_days' => (int) env('SOMITI_APPROVAL_REMINDER_DAYS', 3),
+
+    /*
     | Member portal and app: members sign in with mobile + the password the secretary sets for them.
     | Switch on to also offer sign-in by SMS code (needs an SMS gateway).
     */

@@ -12,6 +12,7 @@ use App\Domain\Accounting\Enums\VoucherType;
 use App\Domain\Accounting\Models\FundTransfer;
 use App\Domain\Accounting\Services\Accounts;
 use App\Domain\Accounting\Services\FundsGuard;
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -30,6 +31,7 @@ final class ApproveFundTransfer
         private readonly Accounts $accounts,
         private readonly FundsGuard $funds,
         private readonly CauserResolver $causer,
+        private readonly WorkflowNotifier $notifier,
     ) {}
 
     public function __invoke(User $actor, FundTransfer $transfer): FundTransfer
@@ -70,6 +72,8 @@ final class ApproveFundTransfer
                 'approved_at' => CarbonImmutable::now(),
                 'journal_entry_id' => $entry->id,
             ]);
+
+            $this->notifier->outcome($locked, 'approved', [$locked->recorded_by]);
 
             return $locked->setRelation('journalEntry', $entry);
         }, attempts: 3));

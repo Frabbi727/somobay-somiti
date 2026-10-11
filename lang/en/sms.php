@@ -20,6 +20,8 @@ return [
         'login_code' => 'Portal login code',
         'registration_returned' => 'Registration sent back',
         'registration_rejected' => 'Registration rejected',
+        'payment_rejected' => 'Payment not accepted',
+        'payment_reversed' => 'Payment cancelled',
     ],
     'log' => [
         'singular' => 'SMS',
@@ -28,6 +30,10 @@ return [
         'to' => 'To',
         'body' => 'Message',
         'status' => 'Status',
+        'resend' => 'Send again',
+        'resend_help' => 'Try this failed message again, e.g. after the SMS balance is topped up',
+        'resend_heading' => 'Send this message to :to again?',
+        'resent' => 'The message is queued again.',
     ],
     'status' => [
         'queued' => 'Queued',
@@ -36,6 +42,7 @@ return [
     ],
     'errors' => [
         'body_required' => 'Both texts are required.',
+        'not_failed' => 'Only a failed message can be sent again. Refresh the page to see its current status.',
         'unknown_placeholder' => ':placeholder is not available for this message.',
     ],
 ];

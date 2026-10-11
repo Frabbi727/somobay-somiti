@@ -17,6 +17,7 @@ use App\Domain\Investments\Enums\InvestmentEntryKind;
 use App\Domain\Investments\Enums\InvestmentStatus;
 use App\Domain\Investments\Models\Investment;
 use App\Domain\Investments\Services\InvestmentLimits;
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -38,6 +39,7 @@ final class ApproveInvestment
         private readonly RequiredResolutions $resolutions,
         private readonly InvestmentLimits $limits,
         private readonly CauserResolver $causer,
+        private readonly WorkflowNotifier $notifier,
     ) {}
 
     public function __invoke(User $actor, Investment $investment): Investment
@@ -81,6 +83,8 @@ final class ApproveInvestment
                 'journal_entry_id' => $entry->id,
                 'limit_warnings' => $warnings === [] ? null : implode("\n", $warnings),
             ]);
+
+            $this->notifier->outcome($locked, 'approved', [$locked->recorded_by]);
 
             return $locked->setRelation('journalEntry', $entry);
         }, attempts: 3));

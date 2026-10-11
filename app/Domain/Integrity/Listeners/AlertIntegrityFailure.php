@@ -26,6 +26,7 @@ final class AlertIntegrityFailure
 
         $recipients = User::query()
             ->role([Role::SuperAdmin->value, Role::Accountant->value])
+            ->whereNull('deactivated_at')
             ->get();
 
         foreach ($recipients as $user) {

@@ -11,6 +11,7 @@ use App\Domain\Accounting\Models\Account;
 use App\Domain\Accounting\Models\JournalDraft;
 use App\Domain\Accounting\Models\JournalEntry;
 use App\Domain\Accounting\Services\Reconciliation;
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +26,7 @@ final class PostJournalDraft
     public function __construct(
         private readonly PostJournal $post,
         private readonly Reconciliation $reconciliation,
+        private readonly WorkflowNotifier $notifier,
     ) {}
 
     public function __invoke(User $actor, JournalDraft $draft): JournalEntry
@@ -61,6 +63,8 @@ final class PostJournalDraft
 
             $locked->journal_entry_id = $entry->id;
             $locked->save();
+
+            $this->notifier->outcome($locked, 'posted', [$locked->created_by, $locked->updated_by]);
 
             return $entry;
         }, attempts: 3);

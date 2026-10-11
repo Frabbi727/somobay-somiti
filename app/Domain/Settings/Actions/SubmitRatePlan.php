@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Settings\Actions;
 
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Settings\Enums\RatePlanStatus;
 use App\Domain\Settings\Models\RatePlan;
 use App\Domain\Settings\Services\RatePlanRules;
@@ -23,6 +24,7 @@ final class SubmitRatePlan
     public function __construct(
         private readonly RatePlanRules $rules,
         private readonly CauserResolver $causer,
+        private readonly WorkflowNotifier $notifier,
     ) {}
 
     public function __invoke(User $actor, RatePlan $plan): RatePlan
@@ -42,6 +44,8 @@ final class SubmitRatePlan
                 'submission_no' => $locked->submission_no + 1,
                 'submitted_at' => CarbonImmutable::now(),
             ])->save();
+
+            $this->notifier->waiting($locked);
 
             return $locked;
         }, attempts: 3));

@@ -12,6 +12,7 @@ use App\Domain\Accounting\Models\Account;
 use App\Domain\Accounting\Models\Expense;
 use App\Domain\Accounting\Services\Accounts;
 use App\Domain\Accounting\Services\FundsGuard;
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -30,6 +31,7 @@ final class ApproveExpense
         private readonly Accounts $accounts,
         private readonly FundsGuard $funds,
         private readonly CauserResolver $causer,
+        private readonly WorkflowNotifier $notifier,
     ) {}
 
     public function __invoke(User $actor, Expense $expense): Expense
@@ -65,6 +67,8 @@ final class ApproveExpense
                 'approved_at' => CarbonImmutable::now(),
                 'journal_entry_id' => $entry->id,
             ]);
+
+            $this->notifier->outcome($locked, 'approved', [$locked->recorded_by]);
 
             return $locked->setRelation('journalEntry', $entry);
         }, attempts: 3));

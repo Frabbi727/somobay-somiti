@@ -36,6 +36,7 @@ use App\Enums\Role;
 use App\Filament\Resources\MemberExits\Pages\CreateMemberExit;
 use App\Filament\Resources\MemberExits\Pages\ListMemberExits;
 use App\Filament\Resources\MemberExits\Pages\ViewMemberExit;
+use App\Models\User;
 use App\Support\Money\Money;
 use App\Support\Time\YearMonth;
 use Carbon\CarbonImmutable;
@@ -153,6 +154,15 @@ it('ends every share from the month after the exit month', function (): void {
         ->and(ShareTransaction::query()->where('member_id', $member->id)->latest('id')->first()?->type)->toBe(ShareChangeType::Exit)
         ->and($stays->fresh()?->sharesIn(YearMonth::of(2026, 8)))->toBe(1)
         ->and(app(ExitedMembersHoldNoShares::class)->run())->toBe([]);
+});
+
+it('tells the requester the exit is approved and asks the payers to pay it', function (): void {
+    $member = onboard(1, '2026-07');
+    $exit = approvedJulyExit($member, fn (MemberExit $exit) => app(ApproveExit::class)($this->president, $exit));
+    $requester = User::query()->findOrFail($exit->requested_by);
+
+    expect($requester->notifications()->pluck('data')->pluck('title')->all())->toContain(__('notifications.exit.approved.title'))
+        ->and($this->accountant->notifications()->pluck('data')->pluck('title')->all())->toContain(__('notifications.exit.to_pay.title'));
 });
 
 it('leaves an exited member out of the dividend for the year they leave', function (): void {

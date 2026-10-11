@@ -25,6 +25,7 @@ use App\Domain\Governance\Services\RequiredResolutions;
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Models\Member;
 use App\Domain\Members\Services\ShareChanger;
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Domain\YearEnd\Enums\DividendStatus;
 use App\Domain\YearEnd\Models\DividendLine;
@@ -62,6 +63,7 @@ final class ApproveExit
         private readonly RequiredResolutions $resolutions,
         private readonly ShareChanger $shares,
         private readonly CauserResolver $causer,
+        private readonly WorkflowNotifier $notifier,
     ) {}
 
     public function __invoke(User $actor, MemberExit $exit): MemberExit
@@ -117,6 +119,9 @@ final class ApproveExit
                 'approved_by' => $actor->id,
                 'approved_at' => CarbonImmutable::now(),
             ]);
+
+            $this->notifier->outcome($locked, 'approved', [$locked->requested_by]);
+            $this->notifier->waiting($locked, 'pay', 'to_pay');
 
             return $locked;
         }, attempts: 3));

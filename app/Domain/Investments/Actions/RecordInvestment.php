@@ -8,6 +8,7 @@ use App\Domain\Accounting\Services\Accounts;
 use App\Domain\Investments\Data\InvestmentData;
 use App\Domain\Investments\Enums\InvestmentStatus;
 use App\Domain\Investments\Models\Investment;
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use App\Support\Time\YearMonth;
@@ -24,6 +25,7 @@ final class RecordInvestment
     public function __construct(
         private readonly Accounts $accounts,
         private readonly CauserResolver $causer,
+        private readonly WorkflowNotifier $notifier,
     ) {}
 
     public function __invoke(User $actor, InvestmentData $data): Investment
@@ -45,7 +47,7 @@ final class RecordInvestment
         return $this->causer->withCauser($actor, fn (): Investment => DB::transaction(function () use ($actor, $data): Investment {
             $number = (int) DB::scalar("SELECT nextval('investment_no_seq')");
 
-            return Investment::query()->create([
+            $record = Investment::query()->create([
                 'investment_no' => sprintf('INV-%04d', $number),
                 'type' => $data->type,
                 'account_id' => $this->accounts->byCode($data->type->accountCode())->id,
@@ -63,6 +65,10 @@ final class RecordInvestment
                 'idempotency_key' => $data->idempotencyKey,
                 'recorded_by' => $actor->id,
             ]);
+
+            $this->notifier->waiting($record);
+
+            return $record;
         }, attempts: 3));
     }
 

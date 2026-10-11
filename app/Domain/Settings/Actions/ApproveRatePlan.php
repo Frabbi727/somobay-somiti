@@ -6,6 +6,7 @@ namespace App\Domain\Settings\Actions;
 
 use App\Domain\Governance\Enums\ResolutionSubject;
 use App\Domain\Governance\Services\RequiredResolutions;
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Settings\Contracts\RatePlanUsage;
 use App\Domain\Settings\Enums\ApprovalDecision;
 use App\Domain\Settings\Enums\RatePlanStatus;
@@ -35,6 +36,7 @@ final class ApproveRatePlan
         private readonly RatePlanRules $rules,
         private readonly RatePlanUsage $usage,
         private readonly CauserResolver $causer,
+        private readonly WorkflowNotifier $notifier,
     ) {}
 
     public function __invoke(User $actor, RatePlan $plan, ?string $comment = null): RatePlan
@@ -66,6 +68,7 @@ final class ApproveRatePlan
 
             if (array_diff(array_map(fn (Role $role): string => $role->value, self::REQUIRED_ROLES), array_map(fn (Role $role): string => $role->value, $approved)) === []) {
                 $this->finalise($locked);
+                $this->notifier->outcome($locked, 'approved', [$locked->created_by]);
             }
 
             return $locked;

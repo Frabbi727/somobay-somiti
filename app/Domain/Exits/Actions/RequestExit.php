@@ -11,6 +11,7 @@ use App\Domain\Exits\Enums\ExitStatus;
 use App\Domain\Exits\Models\MemberExit;
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Models\Member;
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use App\Support\Money\Money;
@@ -24,7 +25,10 @@ use Spatie\Activitylog\Support\CauserResolver;
  */
 final class RequestExit
 {
-    public function __construct(private readonly CauserResolver $causer) {}
+    public function __construct(
+        private readonly CauserResolver $causer,
+        private readonly WorkflowNotifier $notifier,
+    ) {}
 
     public function __invoke(User $actor, Member $member, ExitReason $reason, string $details, YearMonth $exitMonth, Money $exitFee, ?int $resolutionId = null): MemberExit
     {
@@ -59,7 +63,7 @@ final class RequestExit
 
             $number = (int) DB::scalar("SELECT nextval('exit_no_seq')");
 
-            return MemberExit::query()->create([
+            $record = MemberExit::query()->create([
                 'exit_no' => sprintf('X-%04d', $number),
                 'member_id' => $locked->id,
                 'reason_type' => $reason,
@@ -70,6 +74,10 @@ final class RequestExit
                 'resolution_id' => $resolutionId,
                 'requested_by' => $actor->id,
             ]);
+
+            $this->notifier->waiting($record);
+
+            return $record;
         }, attempts: 3));
     }
 

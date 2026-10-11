@@ -23,6 +23,7 @@ use App\Domain\Contributions\Services\AllocationEngine;
 use App\Domain\Contributions\Services\DuePosting;
 use App\Domain\Contributions\Services\PrepaidLocker;
 use App\Domain\Members\Models\Member;
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Settings\Enums\AdvancePolicy;
 use App\Domain\Settings\Services\RateResolver;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
@@ -53,6 +54,7 @@ final class ApprovePayment
         private readonly Accounts $accounts,
         private readonly PostJournal $post,
         private readonly CauserResolver $causer,
+        private readonly WorkflowNotifier $notifier,
     ) {}
 
     public function __invoke(User $actor, Payment $payment): Payment
@@ -130,6 +132,7 @@ final class ApprovePayment
             ])->save();
 
             event(new PaymentApproved($locked));
+            $this->notifier->paymentOutcome($locked, 'approved');
 
             return $locked;
         }, attempts: 3));

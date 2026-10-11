@@ -10,6 +10,7 @@ use App\Domain\Contributions\Enums\PaymentStatus;
 use App\Domain\Contributions\Models\Payment;
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Models\Member;
+use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use App\Support\Time\YearMonth;
@@ -25,7 +26,10 @@ use Spatie\Activitylog\Support\CauserResolver;
  */
 final class RecordPayment
 {
-    public function __construct(private readonly CauserResolver $causer) {}
+    public function __construct(
+        private readonly CauserResolver $causer,
+        private readonly WorkflowNotifier $notifier,
+    ) {}
 
     public function __invoke(User $actor, PaymentData $data): Payment
     {
@@ -49,7 +53,7 @@ final class RecordPayment
             $this->assertValid($data);
             $this->assertMemberSubmission($actor, $data);
 
-            return Payment::query()->create([
+            $payment = Payment::query()->create([
                 'member_id' => $data->memberId,
                 'method' => $data->method,
                 'amount_poisha' => $data->amount,
@@ -61,6 +65,10 @@ final class RecordPayment
                 'notes' => $data->notes,
                 'recorded_by' => $actor->id,
             ]);
+
+            $this->notifier->waiting($payment);
+
+            return $payment;
         }, attempts: 3));
     }
 

@@ -51,6 +51,11 @@ return [
         'open_only' => 'Only unpaid',
         'none' => 'Nothing outstanding. Thank you!',
     ],
+    'payment_note' => [
+        'pending' => 'Waiting for the office to check it. Your dues update once it is approved.',
+        'rejected' => 'Not accepted: :reason. Check the details and pay again, or contact the office.',
+        'reversed' => 'Cancelled by the office: :reason.',
+    ],
     'receipts' => [
         'download' => 'Receipt (PDF)',
         'pending' => 'Waiting for approval',
