@@ -51,6 +51,15 @@ return [
         'open_only' => 'Only unpaid',
         'none' => 'Nothing outstanding. Thank you!',
     ],
+    'alerts' => [
+        'pending_heading' => ':count payment(s) being checked by the office',
+        'pending_body' => 'Your latest one is :amount from :date. Your dues update once it is approved; you do not need to pay it again.',
+        'rejected_heading' => 'Your payment of :amount was not accepted',
+        'reversed_heading' => 'Your payment of :amount was cancelled',
+        'reason' => 'Reason: :reason',
+        'rejected_next' => 'Check the details and pay again, or contact the office.',
+        'reversed_next' => 'Contact the office if you have a question.',
+    ],
     'payment_note' => [
         'pending' => 'Waiting for the office to check it. Your dues update once it is approved.',
         'rejected' => 'Not accepted: :reason. Check the details and pay again, or contact the office.',

@@ -9,6 +9,7 @@ use App\Domain\Contributions\Models\Payment;
 use App\Domain\Contributions\Models\PaymentAllocation;
 use App\Filament\Resources\JournalEntries\JournalEntryResource;
 use App\Filament\Support\Display;
+use App\Filament\Support\HistorySection;
 use App\Support\Money\Money;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
@@ -74,6 +75,7 @@ final class PaymentInfolist
                                 TextEntry::make('amount_poisha')->hiddenLabel()->state(fn (PaymentAllocation $record): string => Display::money($record->amount_poisha)),
                             ]),
                     ]),
+                HistorySection::make(),
             ]);
     }
 }

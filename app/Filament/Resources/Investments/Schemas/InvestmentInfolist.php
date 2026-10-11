@@ -8,6 +8,7 @@ use App\Domain\Investments\Models\Investment;
 use App\Domain\Investments\Models\InvestmentLedgerEntry;
 use App\Filament\Resources\JournalEntries\JournalEntryResource;
 use App\Filament\Support\Display;
+use App\Filament\Support\HistorySection;
 use App\Support\Money\Bps;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
@@ -89,6 +90,7 @@ final class InvestmentInfolist
                         ])
                         ->placeholder('—'),
                 ]),
+            HistorySection::make(),
         ]);
     }
 }

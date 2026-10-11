@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Expenses\Schemas;
 use App\Domain\Accounting\Models\Expense;
 use App\Filament\Resources\JournalEntries\JournalEntryResource;
 use App\Filament\Support\Display;
+use App\Filament\Support\HistorySection;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -56,6 +57,7 @@ final class ExpenseInfolist
                     TextEntry::make('rejection_reason')->label(__('expenses.field.reason'))->visible(fn (Expense $record): bool => $record->rejection_reason !== null),
                     TextEntry::make('reversal_reason')->label(__('expenses.field.reason'))->visible(fn (Expense $record): bool => $record->reversal_reason !== null),
                 ]),
+            HistorySection::make(),
         ]);
     }
 }

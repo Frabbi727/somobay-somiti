@@ -7,6 +7,7 @@ namespace App\Filament\Member\Pages;
 use App\Domain\Members\Portal\MemberSummary;
 use App\Filament\Member\Concerns\ScopedToMember;
 use App\Filament\Member\Widgets\MemberStatsWidget;
+use App\Filament\Member\Widgets\PaymentAlertsWidget;
 use App\Filament\Member\Widgets\RecentPaymentsWidget;
 use Filament\Actions\Action;
 use Filament\Pages\Dashboard as BaseDashboard;
@@ -32,7 +33,7 @@ final class Dashboard extends BaseDashboard
 
     public function getWidgets(): array
     {
-        return [MemberStatsWidget::class, RecentPaymentsWidget::class];
+        return [PaymentAlertsWidget::class, MemberStatsWidget::class, RecentPaymentsWidget::class];
     }
 
     public function getColumns(): int

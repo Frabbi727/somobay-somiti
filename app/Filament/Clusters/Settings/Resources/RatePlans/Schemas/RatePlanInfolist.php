@@ -11,6 +11,7 @@ use App\Domain\Settings\Models\RatePlanApproval;
 use App\Filament\Clusters\Settings\Resources\RatePlans\Support\RatePlanPresenter;
 use App\Filament\Resources\Meetings\MeetingResource;
 use App\Filament\Support\Display;
+use App\Filament\Support\HistorySection;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
@@ -103,6 +104,7 @@ final class RatePlanInfolist
                                     ->state(fn (RatePlanApproval $record): string => Display::dateTime($record->created_at)),
                             ]),
                     ]),
+                HistorySection::make(),
             ]);
     }
 }

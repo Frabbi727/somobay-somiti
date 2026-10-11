@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Domain\Reporting;
 
-use App\Domain\Contributions\Enums\DueStatus;
 use App\Domain\Contributions\Enums\PaymentStatus;
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Models\Member;
@@ -23,11 +22,13 @@ final class SomitiSnapshot
         return Member::query()->where('status', MemberStatus::Active)->count();
     }
 
+    /**
+     * Members with something unpaid past its due date — the same rule as the Defaulters report, so
+     * the dashboard and the report always show the same people.
+     */
     public function membersOverdue(CarbonImmutable $today): int
     {
-        return Member::query()
-            ->whereHas('dues', fn ($query) => $query->where('status', DueStatus::Open)->where('due_date', '<', $today->toDateString()))
-            ->count();
+        return count(app(MemberReports::class)->defaulters($today));
     }
 
     public function collectedIn(YearMonth $month): Money

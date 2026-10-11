@@ -11,11 +11,11 @@ use App\Domain\YearEnd\Services\YearEndCalculator;
 use App\Enums\Role;
 use App\Filament\Member\Pages\Auth\MemberLogin;
 use App\Filament\Member\Pages\Dashboard as MemberDashboard;
+use App\Filament\Pages\Dashboard;
 use App\Models\User;
 use Database\Seeders\LocalDemoSeeder;
 use Database\Seeders\StaffUserSeeder;
 use Filament\Facades\Filament;
-use Filament\Pages\Dashboard;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
 

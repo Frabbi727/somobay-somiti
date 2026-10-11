@@ -7,6 +7,7 @@ use App\Filament\Clusters\Settings\Resources\RatePlans\RatePlanResource;
 use App\Filament\Clusters\Settings\Resources\SmsTemplates\SmsTemplateResource;
 use App\Filament\Clusters\Settings\Resources\Users\UserResource;
 use App\Filament\Pages\Collections\CollectPayment;
+use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\Reports\CashBookPage;
 use App\Filament\Pages\Reports\IntegrityReport;
 use App\Filament\Pages\Reports\MemberStatementPage;
@@ -22,7 +23,6 @@ use App\Filament\Resources\Payments\PaymentResource;
 use App\Filament\Resources\YearEnds\YearEndResource;
 use Database\Seeders\ChartOfAccountsSeeder;
 use Filament\Facades\Filament;
-use Filament\Pages\Dashboard;
 
 /*
 | What each role sees in the staff panel (App\Enums\Area). Pages not listed for a role must be refused.

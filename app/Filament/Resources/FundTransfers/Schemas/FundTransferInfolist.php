@@ -7,6 +7,7 @@ namespace App\Filament\Resources\FundTransfers\Schemas;
 use App\Domain\Accounting\Models\FundTransfer;
 use App\Filament\Resources\JournalEntries\JournalEntryResource;
 use App\Filament\Support\Display;
+use App\Filament\Support\HistorySection;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -53,6 +54,7 @@ final class FundTransferInfolist
                     TextEntry::make('rejection_reason')->label(__('transfers.field.reason'))->visible(fn (FundTransfer $record): bool => $record->rejection_reason !== null),
                     TextEntry::make('reversal_reason')->label(__('transfers.field.reason'))->visible(fn (FundTransfer $record): bool => $record->reversal_reason !== null),
                 ]),
+            HistorySection::make(),
         ]);
     }
 }

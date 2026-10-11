@@ -6,10 +6,10 @@ namespace App\Domain\Notifications\Actions;
 
 use App\Domain\Notifications\Services\InAppNotifier;
 use App\Domain\Reporting\ApprovalQueue;
+use App\Filament\Pages\Dashboard;
 use App\Filament\Support\Display;
 use App\Models\User;
 use Carbon\CarbonImmutable;
-use Filament\Pages\Dashboard;
 use Illuminate\Support\Collection;
 
 /**

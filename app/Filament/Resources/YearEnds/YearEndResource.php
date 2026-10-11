@@ -10,6 +10,7 @@ use App\Filament\Resources\YearEnds\Pages\ListYearEnds;
 use App\Filament\Resources\YearEnds\Pages\ViewYearEnd;
 use App\Filament\Resources\YearEnds\RelationManagers\DividendLinesRelationManager;
 use App\Filament\Support\Display;
+use App\Filament\Support\HistorySection;
 use App\Support\Money\Money;
 use BackedEnum;
 use Filament\Actions\ViewAction;
@@ -90,6 +91,7 @@ final class YearEndResource extends Resource
                         ->state(fn (YearEnd $record): ?string => $record->accountant_approved_at === null ? null : Display::dateTime($record->accountant_approved_at))
                         ->placeholder(__('year_end.field.awaiting')),
                 ]),
+            HistorySection::make(),
         ]);
     }
 

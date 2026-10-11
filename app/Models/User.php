@@ -86,6 +86,17 @@ class User extends Authenticatable implements FilamentUser
         return $this->checkPermissionTo($permission->value, RolePermissions::GUARD);
     }
 
+    public function mayAny(Permission ...$permissions): bool
+    {
+        foreach ($permissions as $permission) {
+            if ($this->may($permission)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function isStaff(): bool
     {
         return $this->hasAnyRole(Role::staff());

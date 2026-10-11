@@ -4,32 +4,25 @@ declare(strict_types=1);
 
 namespace App\Filament\Widgets;
 
-use App\Domain\Accounting\Enums\ExpenseStatus;
 use App\Domain\Accounting\Enums\StatementLineStatus;
-use App\Domain\Accounting\Enums\TransferStatus;
-use App\Domain\Accounting\Models\Expense;
-use App\Domain\Accounting\Models\FundTransfer;
 use App\Domain\Accounting\Models\StatementLine;
 use App\Domain\Contributions\Enums\PaymentStatus;
 use App\Domain\Contributions\Models\Payment;
-use App\Domain\Exits\Enums\ExitStatus;
-use App\Domain\Exits\Models\MemberExit;
 use App\Domain\Governance\Enums\MeetingStatus;
 use App\Domain\Governance\Models\Meeting;
-use App\Domain\Investments\Enums\InvestmentStatus;
-use App\Domain\Investments\Models\Investment;
+use App\Domain\Reporting\ApprovalQueue;
+use App\Domain\Reporting\Data\PendingItem;
 use App\Domain\Settings\Actions\ApproveRatePlan;
-use App\Domain\Settings\Enums\RatePlanStatus;
-use App\Domain\Settings\Models\RatePlan;
-use App\Domain\YearEnd\Enums\YearEndStatus;
-use App\Domain\YearEnd\Models\YearEnd;
+use App\Domain\Settings\Models\SomitiProfile;
 use App\Enums\Permission;
 use App\Enums\Role;
 use App\Filament\Clusters\Settings\Resources\RatePlans\RatePlanResource;
 use App\Filament\Resources\Expenses\ExpenseResource;
 use App\Filament\Resources\FundTransfers\FundTransferResource;
 use App\Filament\Resources\Investments\InvestmentResource;
+use App\Filament\Resources\JournalDrafts\JournalDraftResource;
 use App\Filament\Resources\Meetings\MeetingResource;
+use App\Filament\Resources\MemberApplications\MemberApplicationResource;
 use App\Filament\Resources\MemberExits\MemberExitResource;
 use App\Filament\Resources\Payments\PaymentResource;
 use App\Filament\Resources\StatementImports\StatementImportResource;
@@ -40,12 +33,12 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 
 /**
- * "Waiting for you": the queues this user can act on, counted with the same policies that show the
- * buttons — so the cashier sees their own payments awaiting approval, the accountant what they can
- * approve, the president what needs the president, and so on.
+ * "Waiting for you": the queues this user can act on, counted from ApprovalQueue with the same
+ * policies that show the buttons — so the cashier sees their own payments awaiting approval, the
+ * accountant what they can approve or post, the president what needs the president, an approver in
+ * the registration chain the registrations at their step, and so on.
  */
 final class MyWorkWidget extends StatsOverviewWidget
 {
@@ -75,16 +68,20 @@ final class MyWorkWidget extends StatsOverviewWidget
             return [];
         }
 
+        $waiting = app(ApprovalQueue::class)->forUser($user)->countBy(fn (PendingItem $item): string => $item->queue())->all();
+
         $stats = array_values(array_filter([
-            $this->canApprove($user, Payment::query()->where('status', PaymentStatus::Pending), 'approve', 'payments_to_approve', Heroicon::OutlinedBanknotes, PaymentResource::getUrl()),
+            $this->queue($user, $waiting, 'payment.approve', 'payments_to_approve', Heroicon::OutlinedBanknotes, PaymentResource::getUrl()),
             $this->mine($user, Payment::query()->where('status', PaymentStatus::Pending), 'my_pending_payments', PaymentResource::getUrl()),
-            $this->canApprove($user, Expense::query()->where('status', ExpenseStatus::Pending), 'approve', 'expenses_to_approve', Heroicon::OutlinedReceiptPercent, ExpenseResource::getUrl()),
-            $this->canApprove($user, FundTransfer::query()->where('status', TransferStatus::Pending), 'approve', 'transfers_to_approve', Heroicon::OutlinedArrowsRightLeft, FundTransferResource::getUrl()),
-            $this->canApprove($user, Investment::query()->where('status', InvestmentStatus::Pending), 'approve', 'investments_to_approve', Heroicon::OutlinedArrowTrendingUp, InvestmentResource::getUrl()),
-            $this->canApprove($user, RatePlan::query()->where('status', RatePlanStatus::PendingApproval), 'approve', 'rate_plans_to_approve', Heroicon::OutlinedCurrencyBangladeshi, RatePlanResource::getUrl()),
-            $this->canApprove($user, YearEnd::query()->where('status', YearEndStatus::Draft), 'approve', 'year_ends_to_approve', Heroicon::OutlinedFlag, YearEndResource::getUrl()),
-            $this->canApprove($user, MemberExit::query()->where('status', ExitStatus::Requested), 'approve', 'exits_to_approve', Heroicon::OutlinedArrowRightStartOnRectangle, MemberExitResource::getUrl()),
-            $this->canApprove($user, MemberExit::query()->where('status', ExitStatus::Approved), 'pay', 'exits_to_pay', Heroicon::OutlinedBanknotes, MemberExitResource::getUrl()),
+            $this->queue($user, $waiting, 'registration.decide', 'registrations_to_decide', Heroicon::OutlinedUserPlus, MemberApplicationResource::getUrl()),
+            $this->queue($user, $waiting, 'expense.approve', 'expenses_to_approve', Heroicon::OutlinedReceiptPercent, ExpenseResource::getUrl()),
+            $this->queue($user, $waiting, 'transfer.approve', 'transfers_to_approve', Heroicon::OutlinedArrowsRightLeft, FundTransferResource::getUrl()),
+            $this->queue($user, $waiting, 'journal_draft.post', 'vouchers_to_post', Heroicon::OutlinedDocumentCheck, JournalDraftResource::getUrl()),
+            $this->queue($user, $waiting, 'investment.approve', 'investments_to_approve', Heroicon::OutlinedArrowTrendingUp, InvestmentResource::getUrl()),
+            $this->queue($user, $waiting, 'rate_plan.approve', 'rate_plans_to_approve', Heroicon::OutlinedCurrencyBangladeshi, RatePlanResource::getUrl()),
+            $this->queue($user, $waiting, 'year_end.approve', 'year_ends_to_approve', Heroicon::OutlinedFlag, YearEndResource::getUrl()),
+            $this->queue($user, $waiting, 'exit.approve', 'exits_to_approve', Heroicon::OutlinedArrowRightStartOnRectangle, MemberExitResource::getUrl()),
+            $this->queue($user, $waiting, 'exit.pay', 'exits_to_pay', Heroicon::OutlinedBanknotes, MemberExitResource::getUrl()),
             $this->unmatchedStatementLines($user),
             $this->upcomingMeetings($user),
         ]));
@@ -93,22 +90,17 @@ final class MyWorkWidget extends StatsOverviewWidget
     }
 
     /**
-     * @param  Builder<covariant Model>  $query
+     * A queue tile: shown to whoever works that queue, even at zero, so "nothing waiting" is visible.
+     *
+     * @param  array<string, int>  $waiting  queue => items this user can act on
      */
-    private function canApprove(User $user, Builder $query, string $ability, string $key, Heroicon $icon, string $url): ?Stat
+    private function queue(User $user, array $waiting, string $queue, string $key, Heroicon $icon, string $url): ?Stat
     {
-        $records = $query->limit(500)->get();
+        $count = $waiting[$queue] ?? 0;
 
-        // Shown to whoever could act on such a record at all (zero is still useful to them).
-        $relevant = $records->isNotEmpty()
-            ? $records->contains(fn (Model $record): bool => $user->can($ability, $record))
-            : $this->roleActsOn($user, $key);
-
-        if (! $relevant) {
+        if ($count === 0 && ! $this->worksQueue($user, $queue)) {
             return null;
         }
-
-        $count = $records->filter(fn (Model $record): bool => $user->can($ability, $record))->count();
 
         return Stat::make(__('dashboard.'.$key), Display::digits($count))
             ->icon($icon)
@@ -164,19 +156,21 @@ final class MyWorkWidget extends StatsOverviewWidget
     }
 
     /**
-     * Whether the user works this queue (their permissions), for showing an empty (zero) tile, for showing an empty (zero) tile.
+     * Whether the user works this queue (from their permissions), to show its tile at zero.
      */
-    private function roleActsOn(User $user, string $key): bool
+    private function worksQueue(User $user, string $queue): bool
     {
-        return match ($key) {
-            'payments_to_approve' => $user->may(Permission::PaymentsApprove),
-            'expenses_to_approve' => $user->may(Permission::ExpensesApprove),
-            'transfers_to_approve' => $user->may(Permission::TransfersApprove),
-            'investments_to_approve' => $user->may(Permission::InvestmentsApprove),
-            'exits_to_approve' => $user->may(Permission::ExitsApprove),
-            'rate_plans_to_approve' => $user->hasAnyOf(...ApproveRatePlan::REQUIRED_ROLES),
-            'year_ends_to_approve' => $user->hasAnyOf(Role::President, Role::Accountant),
-            'exits_to_pay' => $user->may(Permission::ExitsPay),
+        return match ($queue) {
+            'payment.approve' => $user->may(Permission::PaymentsApprove),
+            'expense.approve' => $user->may(Permission::ExpensesApprove),
+            'transfer.approve' => $user->may(Permission::TransfersApprove),
+            'investment.approve' => $user->may(Permission::InvestmentsApprove),
+            'journal_draft.post' => $user->may(Permission::JournalsManage),
+            'exit.approve' => $user->may(Permission::ExitsApprove),
+            'exit.pay' => $user->may(Permission::ExitsPay),
+            'rate_plan.approve' => $user->hasAnyOf(...ApproveRatePlan::REQUIRED_ROLES),
+            'year_end.approve' => $user->hasAnyOf(Role::President, Role::Accountant),
+            'registration.decide' => $user->hasAnyOf(...SomitiProfile::current()->registrationApprovalChain()),
             default => false,
         };
     }

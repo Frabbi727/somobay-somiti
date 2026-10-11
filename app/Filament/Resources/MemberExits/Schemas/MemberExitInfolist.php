@@ -10,6 +10,7 @@ use App\Domain\Exits\Models\MemberExit;
 use App\Domain\Exits\Models\MemberExitPayout;
 use App\Domain\Exits\Services\ExitCalculator;
 use App\Filament\Support\Display;
+use App\Filament\Support\HistorySection;
 use App\Support\Money\Bps;
 use App\Support\Money\Money;
 use Filament\Infolists\Components\RepeatableEntry;
@@ -69,6 +70,7 @@ final class MemberExitInfolist
                             TextEntry::make('amount_poisha')->hiddenLabel()->formatStateUsing(fn (MemberExitPayout $record): string => Display::money($record->amount_poisha)),
                         ]),
                 ]),
+            HistorySection::make(),
         ]);
     }
 
