@@ -162,7 +162,7 @@ return [
         'month_generated' => 'Dues already exist up to :latest, so a plan cannot start in :month. Choose a month after :latest; dues already made never change.',
         'not_editable' => 'Rate plan :code can no longer be edited. Duplicate it as a new version instead.',
         'month_fixed' => 'The effective month of :code cannot change. Duplicate it for another month.',
-        'not_pending' => 'Rate plan :code is not awaiting approval.',
+        'not_pending' => 'Rate plan :code is not waiting for approval — it may have been decided already. Refresh the page to see its current status.',
         'already_decided' => 'You have already decided on :code.',
         'not_approver' => 'Only the president or the secretary can approve rate plans.',
         'month_in_use' => 'Rate plan :code is already used by dues and cannot be replaced or cancelled.',

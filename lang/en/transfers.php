@@ -60,7 +60,7 @@ return [
         'charge_negative' => 'The charge cannot be negative.',
         'future_date' => 'The date cannot be in the future.',
         'idempotency_conflict' => 'This form was already submitted with different details. Reload and try again.',
-        'not_pending' => 'Transfer :number is no longer awaiting approval.',
+        'not_pending' => 'Transfer :number is no longer waiting for approval — someone may have already dealt with it. Refresh the page to see its current status.',
         'not_approved' => 'Only an approved transfer can be reversed (:number).',
     ],
 ];

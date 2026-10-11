@@ -37,15 +37,16 @@ final class ApiResponse
 
     /**
      * @param  array<string, list<string>>|null  $errors
+     * @param  array<string, string>|null  $meta  e.g. the error reference on a server error
      */
-    public static function error(string $message, int $status, ?array $errors = null): JsonResponse
+    public static function error(string $message, int $status, ?array $errors = null, ?array $meta = null): JsonResponse
     {
-        return self::make(false, $status, $message, null, $errors);
+        return self::make(false, $status, $message, null, $errors, $meta);
     }
 
     /**
      * @param  array<string, list<string>>|null  $errors
-     * @param  array<string, int>|null  $meta
+     * @param  array<string, int|string>|null  $meta
      */
     private static function make(bool $success, int $status, string $message, mixed $data, ?array $errors = null, ?array $meta = null): JsonResponse
     {

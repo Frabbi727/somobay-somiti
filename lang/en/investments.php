@@ -100,7 +100,7 @@ return [
         'future_date' => 'The date cannot be in the future.',
         'maturity' => 'The maturity date must be after the investment date.',
         'idempotency_conflict' => 'This form was already submitted with different details. Reload and try again.',
-        'not_pending' => 'Investment :number is no longer awaiting approval.',
+        'not_pending' => 'Investment :number is no longer waiting for approval — someone may have already dealt with it. Refresh the page to see its current status.',
     ],
     'income' => [
         'narration' => 'investment profit',

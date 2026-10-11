@@ -135,7 +135,7 @@ return [
         'month_generated' => 'Dues already exist up to :latest, so shares cannot change from :month.',
         'before_last_change' => 'The last share change was from :last; a new change must start in that month or later (not :month).',
         'no_rate_plan' => 'There is no approved rate plan for :month yet. Approve one first.',
-        'not_active' => 'Member :member is not active.',
+        'not_active' => 'Member :member is not active. Reactivate the member first if this is really needed.',
         'reason_required' => 'Give a reason of at least 5 characters.',
     ],
 ];

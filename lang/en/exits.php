@@ -76,7 +76,7 @@ return [
         'pending_payments' => 'The member has payments awaiting approval; approve or reject them first.',
         'shortfall' => 'The member still owes :amount more than they hold. Collect it before approving the exit.',
         'fee_exceeds' => 'The exit fee is more than the member’s balance (:amount).',
-        'not_approved' => 'This exit has not been approved.',
+        'not_approved' => 'This exit has not been approved yet. Refresh the page to see its current status.',
         'nominees' => 'The member has no nominees adding up to 100%; update the nominees first.',
     ],
 ];

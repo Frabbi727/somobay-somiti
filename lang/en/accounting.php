@@ -101,7 +101,7 @@ return [
     ],
     'errors' => [
         'year_end_required' => ':code has income or expenses, so it is closed with the year-end wizard (appropriation and dividend), not directly.',
-        'insufficient_funds' => ':account holds only :balance, so :amount cannot be paid from it.',
+        'insufficient_funds' => ':account holds only :balance, so :amount cannot be paid from it. Check the amount, or pay from another account that holds enough.',
         'code_format' => 'Account code must be four digits and cannot start with 0.',
         'code_prefix' => ':type account codes must start with :prefix.',
         'code_taken' => 'Account code :code is already used (possibly by a deleted account).',
@@ -111,7 +111,7 @@ return [
         'account_has_lines' => 'Account :code has postings and cannot be deleted. Deactivate it instead.',
         'fiscal_year_exists' => 'Fiscal year :code already exists.',
         'fiscal_year_gap' => 'Fiscal years must be consecutive. Open :next or :previous.',
-        'fiscal_year_closed' => 'Fiscal year :code is closed.',
+        'fiscal_year_closed' => 'Fiscal year :code is closed, so nothing can be posted in it. Use a date in the current fiscal year.',
         'missing_account' => 'System account :code is missing. Run the chart of accounts seeder.',
         'earlier_year_open' => 'Close fiscal year :code first.',
     ],

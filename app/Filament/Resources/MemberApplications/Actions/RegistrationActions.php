@@ -11,6 +11,7 @@ use App\Domain\Members\Registration\Enums\MemberApplicationStatus;
 use App\Domain\Members\Registration\Enums\RegistrationDecisionType;
 use App\Domain\Members\Registration\Models\MemberApplication;
 use App\Domain\Members\Services\ShareChanger;
+use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Filament\Concerns\ConfirmsWithTier;
 use App\Filament\Resources\Members\MemberResource;
 use App\Filament\Support\Display;
@@ -220,8 +221,12 @@ final class RegistrationActions
             $fee = app(ShareChanger::class)->planFor($month)->registration_fee_per_share_poisha->multipliedByInt($count);
 
             return __('members.actions.registration_fee_summary', ['amount' => Display::money($fee)]);
+        } catch (DomainRuleViolation $violation) {
+            return $violation->getMessage();
         } catch (\Throwable $exception) {
-            return $exception->getMessage();
+            report($exception);
+
+            return __('errors.preview_unavailable');
         }
     }
 

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Api\ApiExceptionRenderer;
+use App\Http\Middleware\AssignErrorReference;
 use App\Http\Middleware\EnsureApplicantAccess;
 use App\Http\Middleware\EnsureMemberAccess;
 use App\Http\Middleware\RefuseApplicantTokens;
@@ -22,6 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Every request (web, panels, Livewire, api) gets its error reference before anything can fail.
+        $middleware->prepend(AssignErrorReference::class);
+
         // First in the api group, so sign-in (401), rate-limit (429) and routing errors are localised too.
         $middleware->api(prepend: [SetApiLocale::class]);
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Api;
 
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
+use App\Support\Errors\ErrorReference;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -45,9 +46,9 @@ final class ApiExceptionRenderer
                 404 => __('api.errors.not_found'),
                 405 => __('api.errors.method'),
                 429 => __('api.errors.throttled'),
-                default => __('api.errors.server'),
-            }, $e->getStatusCode()),
-            default => ApiResponse::error(__('api.errors.server'), 500),
+                default => __('api.errors.server', ['reference' => ErrorReference::current()]),
+            }, $e->getStatusCode(), meta: $e->getStatusCode() >= 500 ? ['reference' => ErrorReference::current()] : null),
+            default => ApiResponse::error(__('api.errors.server', ['reference' => ErrorReference::current()]), 500, meta: ['reference' => ErrorReference::current()]),
         };
     }
 }

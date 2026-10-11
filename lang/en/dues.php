@@ -56,7 +56,7 @@ return [
         'gap' => 'Generate :next first; months cannot be skipped (asked for :month).',
         'reason_required' => 'Give a reason of at least 5 characters.',
         'not_waivable' => 'Only an open late fee can be waived.',
-        'waive_paid' => 'This late fee is already (partly) paid; waiving paid fees arrives with collections.',
+        'waive_paid' => 'This late fee is already (partly) paid, so it cannot be waived.',
     ],
     'status' => [
         'open' => 'Open',

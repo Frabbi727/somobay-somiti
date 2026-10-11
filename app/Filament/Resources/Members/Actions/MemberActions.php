@@ -11,6 +11,7 @@ use App\Domain\Members\Actions\SetPortalPassword;
 use App\Domain\Members\Enums\ShareChangeType;
 use App\Domain\Members\Models\Member;
 use App\Domain\Members\Services\ShareChanger;
+use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Filament\Concerns\ConfirmsWithTier;
 use App\Filament\Support\Display;
 use App\Filament\Support\DomainActionRunner;
@@ -193,8 +194,11 @@ final class MemberActions
             try {
                 $fee = app(ShareChanger::class)->planFor($month)->registration_fee_per_share_poisha->multipliedByInt($delta);
                 $summary .= ' · '.__('members.actions.registration_fee_summary', ['amount' => Display::money($fee)]);
+            } catch (DomainRuleViolation $violation) {
+                $summary .= ' · '.$violation->getMessage();
             } catch (\Throwable $exception) {
-                $summary .= ' · '.$exception->getMessage();
+                report($exception);
+                $summary .= ' · '.__('errors.preview_unavailable');
             }
         }
 
