@@ -14,7 +14,7 @@ return [
         'bank' => 'Bank',
     ],
     'status' => [
-        'pending' => 'Pending',
+        'pending' => 'Awaiting approval',
         'approved' => 'Approved',
         'rejected' => 'Rejected',
         'cancelled' => 'Cancelled',

@@ -14,11 +14,11 @@ return [
         'bank' => 'ব্যাংক',
     ],
     'status' => [
-        'pending' => 'অপেক্ষমাণ',
+        'pending' => 'অনুমোদনের অপেক্ষায়',
         'approved' => 'অনুমোদিত',
         'rejected' => 'প্রত্যাখ্যাত',
-        'cancelled' => 'প্রত্যাহৃত',
-        'reversed' => 'বাতিলকৃত',
+        'cancelled' => 'প্রত্যাহার করা',
+        'reversed' => 'রিভার্স করা',
     ],
     'advance_kind' => [
         'payment_surplus' => 'পরিশোধ থেকে জমা',

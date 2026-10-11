@@ -175,6 +175,6 @@ it('shows the pending count on the menu and renders in Bangla', function (): voi
     expect(PaymentResource::getNavigationBadge())->toBe('2');
 
     app()->setLocale('bn');
-    $this->get(PaymentResource::getUrl('index'))->assertOk()->assertSee('অপেক্ষমাণ');
+    $this->get(PaymentResource::getUrl('index'))->assertOk()->assertSee(__('payments.status.pending'));
     $this->get(CollectPayment::getUrl())->assertOk()->assertSee('আদায় গ্রহণ');
 });

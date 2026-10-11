@@ -10,7 +10,7 @@ return [
         'submitted' => 'অনুমোদনের অপেক্ষায়',
         'returned' => 'সংশোধনের জন্য ফেরত',
         'approved' => 'অনুমোদিত',
-        'rejected' => 'বাতিল',
+        'rejected' => 'প্রত্যাখ্যাত',
     ],
     'decision' => [
         'approve' => 'অনুমোদিত',
