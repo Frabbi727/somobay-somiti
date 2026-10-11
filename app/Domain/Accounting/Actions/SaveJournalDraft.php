@@ -15,6 +15,7 @@ use Spatie\Activitylog\Support\CauserResolver;
 
 /**
  * Creates or updates a manual voucher draft. Drafts may be unbalanced; posting validates them.
+ * Whoever saves it last is recorded, because they may not post it themselves.
  */
 final class SaveJournalDraft
 {
@@ -50,7 +51,7 @@ final class SaveJournalDraft
                 throw DomainRuleViolation::because('journal.errors.draft_posted', ['id' => $locked->id]);
             }
 
-            $locked->fill($attributes)->save();
+            $locked->fill([...$attributes, 'updated_by' => $actor->id])->save();
 
             return $locked;
         }, attempts: 3));

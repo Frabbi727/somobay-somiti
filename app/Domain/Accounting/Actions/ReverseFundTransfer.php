@@ -41,6 +41,10 @@ final class ReverseFundTransfer
                 throw DomainRuleViolation::because('transfers.errors.not_approved', ['number' => $locked->transfer_no]);
             }
 
+            if ($locked->approved_by === $actor->id) {
+                throw DomainRuleViolation::because('transfers.errors.reverse_own_approval');
+            }
+
             Gate::forUser($actor)->authorize('reverse', $locked);
 
             // The money goes back out of the destination, which must still hold it.

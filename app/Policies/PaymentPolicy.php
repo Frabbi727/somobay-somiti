@@ -55,7 +55,9 @@ final class PaymentPolicy
 
     public function reverse(User $user, Payment $payment): bool
     {
-        return $payment->status === PaymentStatus::Approved && $user->may(Permission::PaymentsReverse);
+        return $payment->status === PaymentStatus::Approved
+            && $payment->approved_by !== $user->id
+            && $user->may(Permission::PaymentsReverse);
     }
 
     public function update(User $user, Payment $payment): bool

@@ -54,6 +54,7 @@ return [
         'reversed' => 'Expense reversed.',
     ],
     'errors' => [
+        'reverse_own_approval' => 'You approved this expense, so someone else must reverse it. Ask another committee member who is allowed to reverse it.',
         'expense_account' => 'Choose an active expense category.',
         'amount_positive' => 'The amount must be more than zero.',
         'description_required' => 'Write what the money was spent on.',

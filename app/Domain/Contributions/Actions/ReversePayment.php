@@ -44,6 +44,11 @@ final class ReversePayment
 
         return $this->causer->withCauser($actor, fn (): Payment => DB::transaction(function () use ($actor, $payment, $reason): Payment {
             $locked = Payment::query()->whereKey($payment->getKey())->lockForUpdate()->firstOrFail();
+
+            if ($locked->approved_by === $actor->id) {
+                throw DomainRuleViolation::because('payments.errors.reverse_own_approval');
+            }
+
             Gate::forUser($actor)->authorize('reverse', $locked);
 
             if ($locked->status !== PaymentStatus::Approved || $locked->journal_entry_id === null) {

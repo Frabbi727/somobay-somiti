@@ -54,6 +54,7 @@ return [
         'reversed' => 'Transfer reversed.',
     ],
     'errors' => [
+        'reverse_own_approval' => 'You approved this transfer, so someone else must reverse it. Ask another committee member who is allowed to reverse it.',
         'same_account' => 'Choose two different accounts.',
         'amount_positive' => 'The amount must be more than zero.',
         'charge_negative' => 'The charge cannot be negative.',

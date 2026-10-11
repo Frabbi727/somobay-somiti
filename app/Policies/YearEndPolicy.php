@@ -13,6 +13,7 @@ use App\Models\User;
 
 /**
  * The accountant prepares; the president and an accountant approve (T3) before it posts (§1.3, W8).
+ * The accountant who signs is never the one who prepared it.
  */
 final class YearEndPolicy
 {
@@ -43,7 +44,8 @@ final class YearEndPolicy
 
         return $user->hasAnyOf(Role::Accountant)
             && $yearEnd->accountant_approved_by === null
-            && $yearEnd->president_approved_by !== $user->id;
+            && $yearEnd->president_approved_by !== $user->id
+            && $yearEnd->prepared_by !== $user->id;
     }
 
     public function update(User $user, YearEnd $yearEnd): bool

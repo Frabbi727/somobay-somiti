@@ -16,6 +16,7 @@ return [
         'password' => 'Password',
         'new_password' => 'New password',
         'new_password_help' => 'Leave empty to keep the current password.',
+        'own_roles_help' => 'You cannot change your own roles; another super admin has to.',
     ],
     'status' => [
         'active' => 'Active',
@@ -47,5 +48,6 @@ return [
         'password_short' => 'The password must be at least :min characters.',
         'last_super_admin' => 'At least one active super admin must remain.',
         'cannot_deactivate_self' => 'You cannot deactivate your own account.',
+        'own_roles' => 'You cannot change your own roles. Ask another super admin to do it.',
     ],
 ];

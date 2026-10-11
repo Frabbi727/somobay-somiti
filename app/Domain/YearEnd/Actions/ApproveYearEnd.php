@@ -37,6 +37,12 @@ final class ApproveYearEnd
     {
         return $this->causer->withCauser($actor, fn (): YearEnd => DB::transaction(function () use ($actor, $yearEnd): YearEnd {
             $locked = YearEnd::query()->whereKey($yearEnd->getKey())->lockForUpdate()->firstOrFail();
+            $presidentStep = $actor->hasAnyOf(Role::President) && $locked->president_approved_by === null;
+
+            if (! $presidentStep && $locked->prepared_by === $actor->id) {
+                throw DomainRuleViolation::because('year_end.errors.preparer_cannot_approve');
+            }
+
             Gate::forUser($actor)->authorize('approve', $locked);
 
             $fiscalYear = FiscalYear::query()->whereKey($locked->fiscal_year_id)->lockForUpdate()->firstOrFail();

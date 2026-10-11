@@ -74,6 +74,10 @@ final class DecideRegistration
                 throw DomainRuleViolation::because('registration.errors.already_decided');
             }
 
+            // The friendly messages above cover every case a user can reach; the policy is the
+            // single rule set (and adds the staff-only check).
+            Gate::forUser($actor)->authorize('decide', $locked);
+
             $step = (int) $locked->current_step;
 
             $locked->decisions()->create([

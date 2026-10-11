@@ -171,7 +171,7 @@ it('loads a saved draft back as taka text', function (): void {
 });
 
 it('posts a draft after the confirmation word is typed', function (): void {
-    $draft = makeDraft($this->accountant);
+    $draft = makeDraft(userWithRole(Role::Accountant));
 
     Livewire::test(EditJournalDraft::class, ['record' => $draft->getRouteKey()])
         ->callAction('post', data: ['confirm_text' => 'yes'])
@@ -189,8 +189,15 @@ it('posts a draft after the confirmation word is typed', function (): void {
         ->assertActionHidden(TestAction::make('edit')->table($draft->fresh()));
 });
 
+it('hides Post from whoever prepared the draft', function (): void {
+    $draft = makeDraft($this->accountant);
+
+    Livewire::test(ListJournalDrafts::class)
+        ->assertActionHidden(TestAction::make('post')->table($draft));
+});
+
 it('reports why an unbalanced draft cannot be posted', function (): void {
-    $draft = makeDraft($this->accountant, credit: '4000');
+    $draft = makeDraft(userWithRole(Role::Accountant), credit: '4000');
 
     Livewire::test(ListJournalDrafts::class)
         ->callAction(TestAction::make('post')->table($draft), data: ['confirm_text' => 'CONFIRM'])

@@ -26,6 +26,7 @@ final class UpdateStaffUser
             Gate::forUser($actor)->authorize('update', $locked);
 
             $this->rules->assertValid($data, $locked);
+            $this->rules->assertNotChangingOwnRoles($actor, $locked, $data);
 
             if ($locked->hasAnyOf(Role::SuperAdmin) && ! in_array(Role::SuperAdmin, $data->roles, true)) {
                 $this->rules->assertSuperAdminRemains($locked);

@@ -31,9 +31,15 @@ final class JournalDraftPolicy
         return ! $draft->isPosted() && ! $draft->trashed() && $user->may(Permission::JournalsManage);
     }
 
+    /**
+     * Maker-checker: someone other than whoever prepared or last edited the voucher posts it.
+     */
     public function post(User $user, JournalDraft $draft): bool
     {
-        return ! $draft->isPosted() && ! $draft->trashed() && $user->may(Permission::JournalsManage);
+        return ! $draft->isPosted()
+            && ! $draft->trashed()
+            && ! $draft->isAuthoredBy($user)
+            && $user->may(Permission::JournalsManage);
     }
 
     public function delete(User $user, JournalDraft $draft): bool

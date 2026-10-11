@@ -71,6 +71,7 @@ return [
         'other_funds' => 'Other funds (bylaws)',
     ],
     'errors' => [
+        'preparer_cannot_approve' => 'You prepared this year-end, so another accountant must approve it.',
         'already_settled' => 'This dividend has already been paid or credited.',
         'future_date' => 'The date cannot be in the future.',
         'periods_open' => 'Lock every month except the last before closing the year. Still open: :months.',

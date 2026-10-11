@@ -9,6 +9,7 @@ use App\Domain\Contributions\Actions\CancelPayment;
 use App\Domain\Contributions\Actions\RecordPayment;
 use App\Domain\Contributions\Actions\RefundAdvance;
 use App\Domain\Contributions\Actions\RejectPayment;
+use App\Domain\Contributions\Actions\ReversePayment;
 use App\Domain\Contributions\Data\PaymentData;
 use App\Domain\Contributions\Enums\PaymentMethod;
 use App\Domain\Contributions\Enums\PaymentStatus;
@@ -170,3 +171,18 @@ it('blocks edits to allocations and advance entries in the database', function (
 
     DB::statement('UPDATE advance_ledger_entries SET delta_poisha = delta_poisha + 1');
 })->throws(QueryException::class, 'append-only');
+
+it('is reversed by someone other than whoever approved it', function (): void {
+    $payment = app(ApprovePayment::class)($this->accountant, app(RecordPayment::class)($this->cashier, paymentData($this->member->id, '200')));
+
+    expect($this->accountant->can('reverse', $payment))->toBeFalse()
+        ->and(paymentRuleKey(fn () => app(ReversePayment::class)($this->accountant, $payment, 'Counted twice')))->toBe('payments.errors.reverse_own_approval')
+        ->and($payment->fresh()?->status)->toBe(PaymentStatus::Approved);
+
+    $reversed = app(ReversePayment::class)(userWithRole(Role::President), $payment, 'Counted twice');
+
+    expect($reversed->status)->toBe(PaymentStatus::Reversed);
+    assertBooksTieOut();
+
+    DB::statement('UPDATE payments SET reversed_by = approved_by WHERE id = ?', [$payment->id]);
+})->throws(QueryException::class, 'payments_reverser_differs');

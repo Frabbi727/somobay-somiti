@@ -37,6 +37,10 @@ final class ReverseExpense
                 throw DomainRuleViolation::because('expenses.errors.not_approved', ['number' => $locked->expense_no]);
             }
 
+            if ($locked->approved_by === $actor->id) {
+                throw DomainRuleViolation::because('expenses.errors.reverse_own_approval');
+            }
+
             Gate::forUser($actor)->authorize('reverse', $locked);
 
             $reversal = ($this->reverseJournal)(

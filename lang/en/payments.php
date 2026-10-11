@@ -107,6 +107,7 @@ return [
         'empty' => 'No member holds an advance.',
     ],
     'errors' => [
+        'reverse_own_approval' => 'You approved this payment, so someone else must reverse it. Ask another committee member who is allowed to reverse it.',
         'member_submission' => 'Members can report only bKash or Nagad payments.',
         'member_unavailable' => 'This member cannot receive payments.',
         'amount_positive' => 'The amount must be more than zero.',

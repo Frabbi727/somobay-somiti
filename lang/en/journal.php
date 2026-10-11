@@ -80,6 +80,7 @@ return [
         'posted' => 'Posted as :voucher',
     ],
     'errors' => [
+        'post_own_draft' => 'You prepared or last edited this voucher, so someone else must check and post it.',
         'register_account' => 'Account :code is kept by its register (advances, investments…). Use that screen instead of a manual voucher.',
         'narration_required' => 'A narration is required.',
         'too_few_lines' => 'A voucher needs at least two lines.',

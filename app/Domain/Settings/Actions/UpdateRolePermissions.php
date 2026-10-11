@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Settings\Actions;
 
+use App\Domain\Settings\Models\SomitiProfile;
 use App\Domain\Settings\Services\RolePermissions;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Enums\Permission;
@@ -18,8 +19,9 @@ use Spatie\Permission\PermissionRegistrar;
 
 /**
  * The president changes which role holds which permission. The auditor can never be given a
- * permission that changes something, and every permission stays with at least one role so no
- * part of the work can get stuck. Returns the changes made.
+ * permission that changes something, the super admin never one that approves or posts money, and
+ * every permission stays with at least one role so no part of the work can get stuck. Returns the
+ * changes made.
  */
 final class UpdateRolePermissions
 {
@@ -56,7 +58,10 @@ final class UpdateRolePermissions
                     $wanted = (bool) ($grid[$permission->value][$role->value] ?? false);
 
                     if ($wanted && $permission->isLockedFor($role)) {
-                        throw DomainRuleViolation::because('permissions.errors.auditor_read_only', ['permission' => $permission->getLabel()]);
+                        throw DomainRuleViolation::because(
+                            $role === Role::SuperAdmin ? 'permissions.errors.super_admin_no_checker' : 'permissions.errors.auditor_read_only',
+                            ['permission' => $permission->getLabel()],
+                        );
                     }
 
                     $holders += $wanted ? 1 : 0;
@@ -74,6 +79,8 @@ final class UpdateRolePermissions
             if ($changes === []) {
                 throw DomainRuleViolation::because('permissions.errors.nothing_changed');
             }
+
+            $this->assertRegistrationsCanFinish($grid);
 
             $models = PermissionModel::query()->where('guard_name', RolePermissions::GUARD)->get()->keyBy('name');
 
@@ -101,5 +108,25 @@ final class UpdateRolePermissions
 
             return $changes;
         }, attempts: 3));
+    }
+
+    /**
+     * The last role in the registration approval chain creates the member, so it must keep
+     * "add members" — otherwise every registration would get stuck at the final step.
+     *
+     * @param  array<string, array<string, bool>>  $grid
+     */
+    private function assertRegistrationsCanFinish(array $grid): void
+    {
+        $chain = SomitiProfile::query()->find(SomitiProfile::ID)?->registrationApprovalChain()
+            ?? array_map(fn (string $role): Role => Role::from($role), SomitiProfile::DEFAULT_REGISTRATION_CHAIN);
+        $last = array_last($chain);
+
+        if ($last !== null && ! ($grid[Permission::MembersCreate->value][$last->value] ?? false)) {
+            throw DomainRuleViolation::because('permissions.errors.chain_needs_create', [
+                'role' => $last->getLabel(),
+                'permission' => Permission::MembersCreate->getLabel(),
+            ]);
+        }
     }
 }

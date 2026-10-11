@@ -12,8 +12,9 @@ use Filament\Support\Contracts\HasLabel;
  *
  * Some rules are never a tick-box and stay in code: maker-checker (nobody approves their own entry),
  * the signatures a rate plan and a year-end need, the president's approval above the large-amount
- * thresholds, user management (super admin), these permissions themselves (president), and the
- * auditor staying read-only (isWrite() permissions can never be given to the auditor).
+ * thresholds, user management (super admin), these permissions themselves (president), the
+ * auditor staying read-only (isWrite() permissions can never be given to the auditor), and the
+ * super admin never approving, reversing or posting money (isChecker() permissions, §1.3).
  */
 enum Permission: string implements HasLabel
 {
@@ -150,11 +151,41 @@ enum Permission: string implements HasLabel
     }
 
     /**
-     * Whether the role may ever hold it: the auditor stays read-only.
+     * Whether it approves, reverses, posts or pays out money — work the super admin, who manages
+     * the accounts of everyone else, must never do (SOMITI_SPEC.md §1.3).
+     */
+    public function isChecker(): bool
+    {
+        return in_array($this, [
+            self::PaymentsApprove, self::PaymentsReverse, self::DuesWaive, self::AdvanceRefund,
+            self::ExpensesApprove, self::ExpensesReverse, self::TransfersApprove, self::TransfersReverse,
+            self::JournalsManage, self::JournalsReverse,
+            self::InvestmentsApprove, self::InvestmentsIncome, self::InvestmentsWriteDown, self::InvestmentsClose,
+            self::YearEndPrepare, self::DividendsSettle,
+            self::ExitsApprove, self::ExitsPay, self::RatePlansCancel,
+        ], true);
+    }
+
+    /**
+     * Whether the role may ever hold it: the auditor stays read-only and the super admin never
+     * approves, reverses or posts money.
      */
     public function isLockedFor(Role $role): bool
     {
-        return $role === Role::Member || ($role === Role::Auditor && $this->isWrite());
+        return $this->lockReason($role) !== null;
+    }
+
+    /**
+     * Translation key explaining why the role can never hold it, or null when it may.
+     */
+    public function lockReason(Role $role): ?string
+    {
+        return match (true) {
+            $role === Role::Member => 'permissions.member_locked',
+            $role === Role::Auditor && $this->isWrite() => 'permissions.auditor_locked',
+            $role === Role::SuperAdmin && $this->isChecker() => 'permissions.super_admin_locked',
+            default => null,
+        };
     }
 
     /**

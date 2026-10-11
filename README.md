@@ -60,7 +60,7 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 # somobay-somiti
 
 
-
+ 
 cd ~/shomiti.techrealify.com
 git pull --rebase origin production 
 composer install --no-dev --optimize-autoloader 

@@ -78,16 +78,26 @@ it('lets only the super admin manage staff accounts', function (): void {
 })->throws(AuthorizationException::class);
 
 it('always keeps one active super admin', function (): void {
-    expect(staffRuleKey(fn () => app(UpdateStaffUser::class)($this->admin, $this->admin, staffData(['email' => $this->admin->email, 'roles' => ['accountant'], 'password' => null]))))
-        ->toBe('users.errors.last_super_admin');
-
     $other = userWithRole(Role::SuperAdmin);
 
     expect(staffRuleKey(fn () => app(SetStaffUserActive::class)($this->admin, $this->admin, false)))->toBe('users.errors.cannot_deactivate_self');
 
-    app(SetStaffUserActive::class)($this->admin, $other, false);
-    expect(staffRuleKey(fn () => app(UpdateStaffUser::class)($this->admin, $this->admin, staffData(['email' => $this->admin->email, 'roles' => ['accountant'], 'password' => null]))))
-        ->toBe('users.errors.last_super_admin');
+    // The other super admin may take the role away, because this one stays.
+    app(UpdateStaffUser::class)($this->admin, $other, staffData(['email' => $other->email, 'roles' => ['accountant'], 'password' => null]));
+
+    expect($other->fresh()?->hasAnyOf(Role::SuperAdmin))->toBeFalse();
+});
+
+it('never lets a user change their own roles', function (): void {
+    $data = staffData(['email' => $this->admin->email, 'roles' => ['super_admin', 'president'], 'password' => null]);
+
+    expect(staffRuleKey(fn () => app(UpdateStaffUser::class)($this->admin, $this->admin, $data)))->toBe('users.errors.own_roles')
+        ->and($this->admin->fresh()?->hasAnyOf(Role::President))->toBeFalse();
+
+    // Their own name may still change.
+    $renamed = app(UpdateStaffUser::class)($this->admin, $this->admin, staffData(['name' => 'New name', 'email' => $this->admin->email, 'roles' => ['super_admin'], 'password' => null]));
+
+    expect($renamed->name)->toBe('New name');
 });
 
 it('locks a deactivated user out of the panel until reactivated', function (): void {

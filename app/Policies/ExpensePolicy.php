@@ -58,7 +58,9 @@ final class ExpensePolicy
 
     public function reverse(User $user, Expense $expense): bool
     {
-        return $expense->status === ExpenseStatus::Approved && $user->may(Permission::ExpensesReverse);
+        return $expense->status === ExpenseStatus::Approved
+            && $expense->approved_by !== $user->id
+            && $user->may(Permission::ExpensesReverse);
     }
 
     public function update(User $user, Expense $expense): bool

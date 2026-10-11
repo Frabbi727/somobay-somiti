@@ -24,7 +24,7 @@
                                 @foreach ($roles as $role)
                                     <td class="px-2 py-2 text-center">
                                         @if ($permission->isLockedFor($role))
-                                            <span title="{{ __('permissions.auditor_locked') }}" class="text-gray-400">—</span>
+                                            <span title="{{ __($permission->lockReason($role)) }}" class="text-gray-400">—</span>
                                         @else
                                             <input
                                                 type="checkbox"

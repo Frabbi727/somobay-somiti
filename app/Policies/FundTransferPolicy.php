@@ -50,7 +50,9 @@ final class FundTransferPolicy
 
     public function reverse(User $user, FundTransfer $transfer): bool
     {
-        return $transfer->status === TransferStatus::Approved && $user->may(Permission::TransfersReverse);
+        return $transfer->status === TransferStatus::Approved
+            && $transfer->approved_by !== $user->id
+            && $user->may(Permission::TransfersReverse);
     }
 
     public function update(User $user, FundTransfer $transfer): bool

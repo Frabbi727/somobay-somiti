@@ -26,6 +26,7 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property string $narration
  * @property list<array{account_id: int, member_id: int|null, debit_poisha: int, credit_poisha: int, memo: string|null}> $lines
  * @property int $created_by
+ * @property int|null $updated_by
  * @property int|null $journal_entry_id
  * @property-read User $creator
  * @property-read JournalEntry|null $journalEntry
@@ -51,6 +52,14 @@ final class JournalDraft extends Model
     public function journalEntry(): BelongsTo
     {
         return $this->belongsTo(JournalEntry::class);
+    }
+
+    /**
+     * Whether the user prepared or last edited it: they may not post it themselves.
+     */
+    public function isAuthoredBy(User $user): bool
+    {
+        return $this->created_by === $user->id || $this->updated_by === $user->id;
     }
 
     public function isPosted(): bool

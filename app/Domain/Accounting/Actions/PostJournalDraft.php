@@ -17,7 +17,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 /**
- * Turns a draft into a numbered, immutable journal entry.
+ * Turns a draft into a numbered, immutable journal entry. A second person posts it: never whoever
+ * prepared or last edited the draft (backed by the journal_drafts_poster_differs trigger).
  */
 final class PostJournalDraft
 {
@@ -28,14 +29,18 @@ final class PostJournalDraft
 
     public function __invoke(User $actor, JournalDraft $draft): JournalEntry
     {
-        Gate::forUser($actor)->authorize('post', $draft);
-
         return DB::transaction(function () use ($actor, $draft): JournalEntry {
             $locked = JournalDraft::query()->whereKey($draft->getKey())->lockForUpdate()->firstOrFail();
 
             if ($locked->isPosted()) {
                 throw DomainRuleViolation::because('journal.errors.draft_posted', ['id' => $locked->id]);
             }
+
+            if ($locked->isAuthoredBy($actor)) {
+                throw DomainRuleViolation::because('journal.errors.post_own_draft');
+            }
+
+            Gate::forUser($actor)->authorize('post', $locked);
 
             $data = new JournalDraftData(
                 type: $locked->voucher_type,

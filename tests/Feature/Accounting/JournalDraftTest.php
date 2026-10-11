@@ -14,10 +14,13 @@ use App\Enums\Role;
 use App\Support\Money\Money;
 use Database\Seeders\ChartOfAccountsSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 
 beforeEach(function (): void {
     $this->seed(ChartOfAccountsSeeder::class);
     $this->accountant = userWithRole(Role::Accountant);
+    $this->checker = userWithRole(Role::President);
     app(OpenFiscalYear::class)($this->accountant, 2026);
 });
 
@@ -45,10 +48,10 @@ it('saves an unbalanced draft and posts it once balanced', function (): void {
 
     expect($draft->totalDebit()->poisha)->toBe(500000)
         ->and($draft->totalCredit()->poisha)->toBe(400000)
-        ->and(fn () => app(PostJournalDraft::class)($this->accountant, $draft))->toThrow(DomainRuleViolation::class);
+        ->and(fn () => app(PostJournalDraft::class)($this->checker, $draft))->toThrow(DomainRuleViolation::class);
 
     $draft = $save($this->accountant, $draft, draftData([['1111', '5000', null], ['1101', null, '5000']], 'CV'));
-    $entry = app(PostJournalDraft::class)($this->accountant, $draft);
+    $entry = app(PostJournalDraft::class)($this->checker, $draft);
 
     expect($entry->voucher_no)->toBe('CV-2026-27-000001')
         ->and($entry->source_type)->toBe($draft->getMorphClass())
@@ -58,10 +61,10 @@ it('saves an unbalanced draft and posts it once balanced', function (): void {
 
 it('locks a draft once posted', function (): void {
     $draft = app(SaveJournalDraft::class)($this->accountant, null, draftData([['1111', '10', null], ['1101', null, '10']]));
-    app(PostJournalDraft::class)($this->accountant, $draft);
+    app(PostJournalDraft::class)($this->checker, $draft);
     $draft->refresh();
 
-    expect(fn () => app(PostJournalDraft::class)($this->accountant, $draft))->toThrow(AuthorizationException::class)
+    expect(fn () => app(PostJournalDraft::class)($this->checker, $draft))->toThrow(DomainRuleViolation::class)
         ->and(fn () => app(SaveJournalDraft::class)($this->accountant, $draft, draftData([['1111', '1', null], ['1101', null, '1']])))->toThrow(AuthorizationException::class)
         ->and(fn () => app(DeleteJournalDraft::class)($this->accountant, $draft))->toThrow(DomainRuleViolation::class)
         ->and(JournalEntry::query()->count())->toBe(1);
@@ -99,3 +102,50 @@ it('ignores empty repeater rows and blank amounts', function (): void {
         ['account_id' => account('1101')->id, 'member_id' => null, 'debit_poisha' => 1250, 'credit_poisha' => 0, 'memo' => null],
     ]);
 });
+
+it('is posted by someone other than whoever prepared or last edited it', function (): void {
+    $draft = app(SaveJournalDraft::class)($this->accountant, null, draftData([['1111', '10', null], ['1101', null, '10']]));
+
+    expect($this->accountant->can('post', $draft))->toBeFalse()
+        ->and(fn () => app(PostJournalDraft::class)($this->accountant, $draft))
+        ->toThrow(DomainRuleViolation::class, __('journal.errors.post_own_draft'));
+
+    // The president edits it, so now the accountant checks and the president may not post.
+    $draft = app(SaveJournalDraft::class)($this->checker, $draft, draftData([['1111', '20', null], ['1101', null, '20']]));
+
+    expect($this->checker->can('post', $draft))->toBeFalse()
+        ->and(fn () => app(PostJournalDraft::class)($this->checker, $draft))
+        ->toThrow(DomainRuleViolation::class, __('journal.errors.post_own_draft'));
+
+    $third = userWithRole(Role::Accountant);
+    $entry = app(PostJournalDraft::class)($third, $draft);
+
+    expect($entry->posted_by)->toBe($third->id)
+        ->and(JournalEntry::query()->count())->toBe(1);
+});
+
+it('refuses a self-posted draft in the database too', function (): void {
+    $draft = app(SaveJournalDraft::class)($this->accountant, null, draftData([['1111', '10', null], ['1101', null, '10']]));
+    $period = DB::table('periods')->orderBy('id')->first();
+
+    DB::transaction(function () use ($draft, $period): void {
+        $entryId = (int) DB::table('journal_entries')->insertGetId([
+            'fiscal_year_id' => $period->fiscal_year_id,
+            'period_id' => $period->id,
+            'voucher_type' => 'JV',
+            'voucher_no' => 'JV-TEST-SELF',
+            'entry_date' => '2026-07-20',
+            'narration' => 'self posted',
+            'posted_by' => $this->accountant->id,
+            'posted_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('journal_lines')->insert([
+            ['journal_entry_id' => $entryId, 'line_no' => 1, 'account_id' => account('1111')->id, 'debit_poisha' => 1000, 'credit_poisha' => 0],
+            ['journal_entry_id' => $entryId, 'line_no' => 2, 'account_id' => account('1101')->id, 'debit_poisha' => 0, 'credit_poisha' => 1000],
+        ]);
+
+        DB::table('journal_drafts')->where('id', $draft->id)->update(['journal_entry_id' => $entryId]);
+    });
+})->throws(QueryException::class, 'must be posted by someone other than its author');

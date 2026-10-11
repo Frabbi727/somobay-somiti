@@ -160,7 +160,10 @@ it('reverses an approved expense through the expense, not the voucher screen', f
     expect($this->accountant->can('reverse', $voucher))->toBeFalse();
     expect(fn () => app(ReverseJournal::class)($this->accountant, $voucher, 'Wrong voucher'))->toThrow(AuthorizationException::class);
 
-    $reversed = app(ReverseExpense::class)($this->accountant, $expense, 'Shop refunded the money');
+    expect(expenseRule(fn () => app(ReverseExpense::class)($this->accountant, $expense, 'Shop refunded the money')))->toBe('expenses.errors.reverse_own_approval')
+        ->and($this->accountant->can('reverse', $expense))->toBeFalse();
+
+    $reversed = app(ReverseExpense::class)(userWithRole(Role::President), $expense, 'Shop refunded the money');
 
     expect($reversed->status)->toBe(ExpenseStatus::Reversed)
         ->and($reversed->reversal_journal_entry_id)->not->toBeNull()

@@ -143,6 +143,18 @@ it('needs two different approvers: the president and an accountant', function ()
         ->and(fn () => app(ApproveYearEnd::class)(userWithRole(Role::Secretary), $draft))->toThrow(AuthorizationException::class);
 });
 
+it('does not let the accountant who prepared it sign as the accountant', function (): void {
+    lockAllButLast($this->fy);
+    $draft = prepare($this->fy);
+    app(ApproveYearEnd::class)($this->president, $draft);
+    $preparer = User::query()->findOrFail($draft->prepared_by);
+
+    expect($preparer->can('approve', $draft->fresh()))->toBeFalse()
+        ->and(workflowRule(fn () => app(ApproveYearEnd::class)($preparer, $draft)))->toBe('year_end.errors.preparer_cannot_approve');
+
+    DB::statement('UPDATE year_ends SET accountant_approved_by = prepared_by WHERE id = ?', [$draft->id]);
+})->throws(QueryException::class, 'year_ends_preparer_not_accountant_approver');
+
 it('needs a passed year-end resolution where configured', function (): void {
     config(['somiti.require_resolution_for' => ['year_end']]);
     lockAllButLast($this->fy);

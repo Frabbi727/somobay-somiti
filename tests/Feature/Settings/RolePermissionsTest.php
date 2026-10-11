@@ -6,7 +6,9 @@ use App\Domain\Audit\Models\AuditEntry;
 use App\Domain\Contributions\Actions\RecordPayment;
 use App\Domain\Contributions\Data\PaymentData;
 use App\Domain\Members\Models\Member;
+use App\Domain\Members\Registration\Actions\UpdateRegistrationApprovalChain;
 use App\Domain\Settings\Actions\UpdateRolePermissions;
+use App\Domain\Settings\Models\SomitiProfile;
 use App\Domain\Settings\Services\RolePermissions;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Enums\Permission;
@@ -127,4 +129,34 @@ it('shows the grid read-only to the super admin and auditor and hides it from ot
     Livewire::test(RolePermissionsPage::class)->assertActionHidden('savePermissions')->assertSee(__('permissions.read_only'));
 
     $this->actingAs(userWithRole(Role::Cashier))->get(RolePermissionsPage::getUrl())->assertForbidden();
+});
+
+it('never gives the super admin a permission that approves, reverses or posts money', function (Permission $permission): void {
+    expect($permission->isLockedFor(Role::SuperAdmin))->toBeTrue();
+
+    try {
+        app(UpdateRolePermissions::class)($this->president, gridWith($permission, Role::SuperAdmin, true));
+        $this->fail('The super admin was given '.$permission->value);
+    } catch (DomainRuleViolation $violation) {
+        expect($violation->translationKey)->toBe('permissions.errors.super_admin_no_checker');
+    }
+})->with(fn (): array => array_values(array_filter(Permission::cases(), fn (Permission $permission): bool => $permission->isChecker())));
+
+it('still lets the super admin hold the permissions that do not move money', function (): void {
+    expect(Permission::AccountsManage->isLockedFor(Role::SuperAdmin))->toBeFalse()
+        ->and(Permission::SmsTemplatesEdit->isLockedFor(Role::SuperAdmin))->toBeFalse();
+});
+
+it('keeps "add members" with the last registration approver', function (): void {
+    expect(fn () => app(UpdateRolePermissions::class)($this->president, gridWith(Permission::MembersCreate, Role::President, false)))
+        ->toThrow(DomainRuleViolation::class, __('permissions.errors.chain_needs_create', [
+            'role' => Role::President->getLabel(),
+            'permission' => Permission::MembersCreate->getLabel(),
+        ]));
+
+    // Once the secretary gives the final approval, the president's may be taken away.
+    SomitiProfile::query()->create(['id' => SomitiProfile::ID, 'name_bn' => 'সমিতি', 'name_en' => 'Somiti']);
+    app(UpdateRegistrationApprovalChain::class)(userWithRole(Role::SuperAdmin), [Role::President, Role::Secretary]);
+
+    expect(app(UpdateRolePermissions::class)($this->president, gridWith(Permission::MembersCreate, Role::President, false)))->toHaveCount(1);
 });

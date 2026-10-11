@@ -147,10 +147,15 @@ it('reverses a transfer only while the destination still holds the money', funct
     ])));
 
     expect(transferRule(fn () => app(ReverseFundTransfer::class)($this->accountant, $transfer, 'Deposit was recorded twice')))
+        ->toBe('transfers.errors.reverse_own_approval');
+
+    $reverser = userWithRole(Role::President);
+
+    expect(transferRule(fn () => app(ReverseFundTransfer::class)($reverser, $transfer, 'Deposit was recorded twice')))
         ->toBe('accounting.errors.insufficient_funds');
 
     app(PostJournal::class)($this->accountant, simpleEntry('1111', '3101', '14000', '2026-08-19'));
-    $reversed = app(ReverseFundTransfer::class)($this->accountant, $transfer, 'Deposit was recorded twice');
+    $reversed = app(ReverseFundTransfer::class)($reverser, $transfer, 'Deposit was recorded twice');
 
     expect($reversed->status)->toBe(TransferStatus::Reversed)
         ->and(glBalance('1101'))->toBe(-2000000);

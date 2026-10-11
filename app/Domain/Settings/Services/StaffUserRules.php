@@ -51,6 +51,24 @@ final class StaffUserRules
     }
 
     /**
+     * Nobody changes their own roles: otherwise the super admin could make themselves president
+     * and step around every two-person rule. Another super admin has to do it.
+     */
+    public function assertNotChangingOwnRoles(User $actor, User $target, StaffUserData $data): void
+    {
+        if (! $actor->is($target)) {
+            return;
+        }
+
+        $current = $target->getRoleNames()->sort()->values()->all();
+        $wanted = collect($data->roleNames())->sort()->values()->all();
+
+        if ($current !== $wanted) {
+            throw DomainRuleViolation::because('users.errors.own_roles');
+        }
+    }
+
+    /**
      * Somebody must always be able to manage users: at least one active super admin stays.
      */
     public function assertSuperAdminRemains(User $changing): void

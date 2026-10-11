@@ -40,6 +40,9 @@ final class UserForm
                     CheckboxList::make('roles')
                         ->label(__('users.field.roles'))
                         ->options(self::roleOptions())
+                        ->disabled(fn (?User $record): bool => $record !== null && $record->is(auth()->user()))
+                        ->dehydrated()
+                        ->helperText(fn (?User $record): ?string => $record !== null && $record->is(auth()->user()) ? (string) __('users.field.own_roles_help') : null)
                         ->required()
                         ->columns(3)
                         ->columnSpanFull(),
