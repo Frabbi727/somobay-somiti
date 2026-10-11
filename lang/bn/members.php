@@ -56,6 +56,7 @@ return [
         'continuation' => 'আগের লটের অবশিষ্ট',
     ],
     'share_change' => [
+        'exit' => 'প্রত্যাহারে শেষ',
         'increase' => 'বৃদ্ধি',
         'decrease' => 'হ্রাস',
     ],

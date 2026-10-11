@@ -36,6 +36,7 @@ return [
         'investment_postings' => 'বিনিয়োগ রেজিস্টার',
         'year_end_totals' => 'বার্ষিক সমাপনীর যোগফল',
         'exited_members_clear' => 'প্রত্যাহারকৃত সদস্যের হিসাব শূন্য',
+        'exited_members_hold_no_shares' => 'প্রত্যাহারকৃত সদস্যের কোনো শেয়ার নেই',
     ],
     'banner' => [
         'title' => 'হিসাব যাচাইয়ে সমস্যা পাওয়া গেছে।',

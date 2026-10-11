@@ -19,6 +19,12 @@ final class RatePlanRules
 
     public function assertValid(RatePlanData $data): void
     {
+        // A retroactive correction would need adjustment dues, which are not built yet, so the
+        // flag is refused rather than approved with no effect (decided 2026-10-11).
+        if ($data->isRetroactive) {
+            throw DomainRuleViolation::because('rates.errors.retroactive_unavailable');
+        }
+
         if (! $data->shareUnit->isPositive()) {
             throw DomainRuleViolation::because('rates.errors.share_unit_positive');
         }
@@ -48,14 +54,14 @@ final class RatePlanRules
     }
 
     /**
-     * BR-7: a plan may not start in a month that already has dues unless it is a
-     * retroactive correction (which the dues engine turns into adjustment dues).
+     * BR-7: a plan may not start in a month that already has dues. Retroactive corrections are
+     * not available, so this holds for older retroactive drafts too.
      */
     public function assertMonthOpen(RatePlan $plan): void
     {
         $latest = $this->generated->latest();
 
-        if ($latest !== null && $plan->effective_from->isSameOrBefore($latest) && ! $plan->is_retroactive) {
+        if ($latest !== null && $plan->effective_from->isSameOrBefore($latest)) {
             throw DomainRuleViolation::because('rates.errors.month_generated', [
                 'month' => (string) $plan->effective_from,
                 'latest' => (string) $latest,

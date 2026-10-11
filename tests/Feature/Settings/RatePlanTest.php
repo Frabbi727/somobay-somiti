@@ -211,7 +211,7 @@ it('resolves the plan for each month', function (string $month, ?string $expecte
     'far future' => ['2030-01', '600'],
 ]);
 
-it('rejects a plan for an already generated month unless it is a retroactive correction (BR-7)', function (): void {
+it('rejects a plan for an already generated month, and refuses retroactive corrections (BR-7)', function (): void {
     app()->instance(GeneratedMonths::class, new class implements GeneratedMonths
     {
         public function latest(): ?YearMonth
@@ -223,15 +223,13 @@ it('rejects a plan for an already generated month unless it is a retroactive cor
     $late = app(DraftRatePlan::class)($this->accountant, ratePlanData('2026-08', '600'));
     expect(ruleKey(fn () => app(SubmitRatePlan::class)($this->accountant, $late)))->toBe('rates.errors.month_generated');
 
-    $retro = app(DraftRatePlan::class)($this->accountant, ratePlanData('2026-08', '600', ['is_retroactive' => true]));
-    app(SubmitRatePlan::class)($this->accountant, $retro);
-    app(ApproveRatePlan::class)($this->president, $retro);
+    expect(ruleKey(fn () => app(DraftRatePlan::class)($this->accountant, ratePlanData('2026-08', '600', ['is_retroactive' => true]))))
+        ->toBe('rates.errors.retroactive_unavailable');
 
-    expect($retro->fresh()?->status)->toBe(RatePlanStatus::PendingApproval);
-
-    app(ApproveRatePlan::class)($this->secretary, $retro->fresh());
-
-    expect($retro->fresh()?->status)->toBe(RatePlanStatus::Approved);
+    // A retroactive draft saved before the flag was refused is held to the same month rule.
+    $old = app(DraftRatePlan::class)($this->accountant, ratePlanData('2026-08', '650'));
+    DB::table('rate_plans')->where('id', $old->id)->update(['is_retroactive' => true]);
+    expect(ruleKey(fn () => app(SubmitRatePlan::class)($this->accountant, $old->fresh())))->toBe('rates.errors.month_generated');
 
     $future = app(DraftRatePlan::class)($this->accountant, ratePlanData('2026-10', '600'));
     expect(app(SubmitRatePlan::class)($this->accountant, $future)->status)->toBe(RatePlanStatus::PendingApproval);

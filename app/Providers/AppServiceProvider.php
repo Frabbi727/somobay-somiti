@@ -23,6 +23,7 @@ use App\Domain\Integrity\Checks\ControlAccounts;
 use App\Domain\Integrity\Checks\DuePaidAmounts;
 use App\Domain\Integrity\Checks\DueSnapshots;
 use App\Domain\Integrity\Checks\ExitedMembersClear;
+use App\Domain\Integrity\Checks\ExitedMembersHoldNoShares;
 use App\Domain\Integrity\Checks\ExpensePostings;
 use App\Domain\Integrity\Checks\InvestmentPostings;
 use App\Domain\Integrity\Checks\JournalHashChain;
@@ -113,6 +114,7 @@ class AppServiceProvider extends ServiceProvider
             InvestmentPostings::class,
             YearEndTotals::class,
             ExitedMembersClear::class,
+            ExitedMembersHoldNoShares::class,
         ], 'somiti.integrity_checks');
         $this->app->when(InvariantChecker::class)->needs('$checks')->giveTagged('somiti.integrity_checks');
 

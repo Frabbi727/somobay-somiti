@@ -11,6 +11,7 @@ use App\Domain\Notifications\Jobs\SendSmsJob;
 use App\Domain\Notifications\Models\SmsMessage;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Logs a message and queues it. A dedupe key makes a message send at most once, so re-running a
@@ -36,8 +37,10 @@ final class SmsSender
             return null;
         }
 
+        // The insert runs in its own savepoint: on PostgreSQL a failed statement aborts the whole
+        // transaction, so a duplicate key must not take the caller's approval down with it.
         try {
-            $message = SmsMessage::query()->create([
+            $message = DB::transaction(fn (): SmsMessage => SmsMessage::query()->create([
                 'to' => $to,
                 'member_id' => $member?->id,
                 'template_key' => $templateKey,
@@ -47,7 +50,7 @@ final class SmsSender
                 'status' => SmsStatus::Queued,
                 'related_type' => $related?->getMorphClass(),
                 'related_id' => $related?->getKey(),
-            ]);
+            ]));
         } catch (UniqueConstraintViolationException) {
             return null;
         }

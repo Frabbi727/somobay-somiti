@@ -21,10 +21,17 @@ use App\Domain\Exits\Enums\ExitReason;
 use App\Domain\Exits\Enums\ExitStatus;
 use App\Domain\Exits\Models\MemberExit;
 use App\Domain\Exits\Services\ExitCalculator;
+use App\Domain\Integrity\Checks\ExitedMembersHoldNoShares;
+use App\Domain\Members\Actions\ChangeShares;
 use App\Domain\Members\Enums\MemberStatus;
+use App\Domain\Members\Enums\ShareChangeType;
 use App\Domain\Members\Models\Member;
+use App\Domain\Members\Models\ShareLot;
+use App\Domain\Members\Models\ShareTransaction;
+use App\Domain\Members\Services\ShareRegister;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Domain\YearEnd\Models\YearEnd;
+use App\Domain\YearEnd\Services\ShareMonths;
 use App\Enums\Role;
 use App\Filament\Resources\MemberExits\Pages\CreateMemberExit;
 use App\Filament\Resources\MemberExits\Pages\ListMemberExits;
@@ -35,6 +42,7 @@ use Carbon\CarbonImmutable;
 use Database\Seeders\ChartOfAccountsSeeder;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Facades\DB;
 
 /*
 | Phase 12 (W9, BR-22): exit request → freeze → settlement to 2301 → payout; the member's
@@ -117,6 +125,74 @@ it('settles savings less what is still owed, then pays it out and leaves every s
         ->and($approved->payouts()->sole()->amount_poisha->poisha)->toBe(94000);
 
     assertBooksTieOut();
+});
+
+/**
+ * A member who joined in July 2026, paid July, and leaves at the end of July; approved on 3 August.
+ */
+function approvedJulyExit(Member $member, Closure $approve): MemberExit
+{
+    generateMonth('2026-07');
+    travelTo('2026-07-05');
+    receivePayment($member, '610');
+    $exit = requestExit($member, '2026-07');
+    travelTo('2026-08-03');
+
+    return $approve($exit);
+}
+
+it('ends every share from the month after the exit month', function (): void {
+    $member = onboard(2, '2026-07');
+    $stays = onboard(1, '2026-07');
+
+    approvedJulyExit($member, fn (MemberExit $exit) => app(ApproveExit::class)($this->president, $exit));
+
+    expect($member->fresh()?->sharesIn(YearMonth::of(2026, 7)))->toBe(2)
+        ->and($member->fresh()?->sharesIn(YearMonth::of(2026, 8)))->toBe(0)
+        ->and(ShareLot::query()->where('member_id', $member->id)->whereNull('ended_from')->exists())->toBeFalse()
+        ->and(ShareTransaction::query()->where('member_id', $member->id)->latest('id')->first()?->type)->toBe(ShareChangeType::Exit)
+        ->and($stays->fresh()?->sharesIn(YearMonth::of(2026, 8)))->toBe(1)
+        ->and(app(ExitedMembersHoldNoShares::class)->run())->toBe([]);
+});
+
+it('leaves an exited member out of the dividend for the year they leave', function (): void {
+    $member = onboard(2, '2026-07');
+    $stays = onboard(1, '2026-07');
+
+    approvedJulyExit($member, fn (MemberExit $exit) => app(ApproveExit::class)($this->president, $exit));
+
+    expect(app(ShareMonths::class)->forYear(2026))->toBe([$stays->id => 12]);
+});
+
+it('refuses the exit while a share change is planned after the exit month', function (): void {
+    $member = onboard(1, '2026-07');
+    generateMonth('2026-07');
+    travelTo('2026-07-05');
+    receivePayment($member, '610');
+    app(ChangeShares::class)($this->secretary, $member, 2, YearMonth::of(2026, 9), 'Wants more');
+    $exit = requestExit($member, '2026-07');
+    travelTo('2026-08-03');
+
+    expect(exitRule(fn () => app(ApproveExit::class)($this->president, $exit)))->toBe('exits.errors.shares_after_exit')
+        ->and($exit->fresh()?->status)->toBe(ExitStatus::Requested);
+});
+
+it('repairs exits approved before exits ended shares, saving only with --apply', function (): void {
+    $member = onboard(1, '2026-07');
+    approvedJulyExit($member, fn (MemberExit $exit) => app(ApproveExit::class)($this->president, $exit));
+
+    // How an exit approved before the fix looks: the lot never ended.
+    DB::table('share_lots')->where('member_id', $member->id)->update(['ended_from' => null]);
+    app(ShareRegister::class)->rebuild($member);
+
+    expect(app(ExitedMembersHoldNoShares::class)->run())->toHaveCount(1);
+
+    $this->artisan('somiti:exits:end-share-lots')->expectsOutputToContain('Dry run')->assertSuccessful();
+    expect(app(ExitedMembersHoldNoShares::class)->run())->toHaveCount(1);
+
+    $this->artisan('somiti:exits:end-share-lots --apply')->expectsOutputToContain('Changes saved')->assertSuccessful();
+    expect(app(ExitedMembersHoldNoShares::class)->run())->toBe([])
+        ->and($member->fresh()?->sharesIn(YearMonth::of(2026, 8)))->toBe(0);
 });
 
 it('stops generating dues after the exit month once requested', function (): void {

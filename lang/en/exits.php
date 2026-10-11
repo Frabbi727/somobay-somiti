@@ -66,6 +66,7 @@ return [
         'payout' => 'Exit :number (:member): settlement paid',
     ],
     'errors' => [
+        'shares_after_exit' => 'This member has a share change planned for after :month. An exit ends all shares, so check the member’s share history first, then approve again.',
         'fee_negative' => 'The exit fee cannot be negative.',
         'future_month' => 'The exit month cannot be in the future.',
         'already_exited' => 'This member has already exited.',

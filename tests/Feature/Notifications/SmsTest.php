@@ -23,6 +23,7 @@ use Database\Seeders\SmsTemplateSeeder;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
@@ -166,4 +167,20 @@ it('edits a template with a before/after confirmation', function (): void {
         ->assertHasNoFormErrors();
 
     expect($template->fresh()?->body_bn)->toBe('স্বাগতম {name}!');
+});
+
+it('keeps the surrounding transaction usable when a duplicate message slips past the check', function (): void {
+    // Another request inserts the same message between the check and the insert.
+    SmsMessage::creating(function (SmsMessage $message): void {
+        DB::table('sms_messages')->insert([
+            'to' => $message->to, 'body' => 'raced', 'segments' => 1, 'status' => 'queued',
+            'dedupe_key' => $message->dedupe_key, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+    });
+
+    $result = DB::transaction(fn (): ?SmsMessage => app(SmsSender::class)->queue('01712345678', 'Hello', dedupeKey: 'race:1'));
+
+    // On PostgreSQL an aborted transaction would refuse this query.
+    expect($result)->toBeNull()
+        ->and(SmsMessage::query()->where('dedupe_key', 'race:1')->count())->toBe(0);
 });

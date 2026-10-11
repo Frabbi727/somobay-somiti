@@ -56,6 +56,7 @@ return [
         'continuation' => 'continues an earlier lot',
     ],
     'share_change' => [
+        'exit' => 'Ended on exit',
         'increase' => 'Increase',
         'decrease' => 'Decrease',
     ],

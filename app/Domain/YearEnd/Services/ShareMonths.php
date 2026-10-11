@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace App\Domain\YearEnd\Services;
 
 use App\Domain\Accounting\Services\FiscalCalendar;
+use App\Domain\Exits\Enums\ExitStatus;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Share-months (BR-21): for every month of the fiscal year, the shares each member held that
  * month (from the share timeline), summed. A member with 2 shares all year has 24.
+ *
+ * Members whose exit is approved are left out: their settlement is already final, so they share in
+ * no dividend for the year they leave or any later one (decided 2026-10-11).
  */
 final class ShareMonths
 {
@@ -23,6 +27,9 @@ final class ShareMonths
 
         $snapshots = DB::table('member_share_snapshots')
             ->where('effective_from', '<=', $last->toDateString())
+            ->whereNotIn('member_id', DB::table('member_exits')
+                ->whereIn('status', [ExitStatus::Approved->value, ExitStatus::Paid->value])
+                ->select('member_id'))
             ->orderBy('member_id')
             ->orderBy('effective_from')
             ->get(['member_id', 'effective_from', 'shares'])

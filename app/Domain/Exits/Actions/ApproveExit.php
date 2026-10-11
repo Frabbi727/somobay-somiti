@@ -24,6 +24,7 @@ use App\Domain\Governance\Enums\ResolutionSubject;
 use App\Domain\Governance\Services\RequiredResolutions;
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Models\Member;
+use App\Domain\Members\Services\ShareChanger;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Domain\YearEnd\Enums\DividendStatus;
 use App\Domain\YearEnd\Models\DividendLine;
@@ -44,6 +45,7 @@ use Spatie\Activitylog\Support\CauserResolver;
  *     owe (service charges, registration, late fees) — oldest first, with the usual income postings;
  *  3. the settlement JV moves the remaining advance and any unpaid dividends, less the exit fee (4131),
  *     to 2301 Exit Settlements Payable; the member becomes "exited".
+ *  4. every share ends from the month after the exit month, so no later dues or dividends count them.
  * If the member owes more than they hold, nothing is posted and the shortfall is reported.
  */
 final class ApproveExit
@@ -58,6 +60,7 @@ final class ApproveExit
         private readonly ApplyAdvance $applyAdvance,
         private readonly ExitCalculator $calculator,
         private readonly RequiredResolutions $resolutions,
+        private readonly ShareChanger $shares,
         private readonly CauserResolver $causer,
     ) {}
 
@@ -94,6 +97,7 @@ final class ApproveExit
             }
 
             $net = $this->settle($actor, $member, $locked, $today);
+            $this->shares->endAllForExit($actor, $member, $locked->exit_month, $locked->reason);
 
             $member->forceFill([
                 'status' => MemberStatus::Exited,

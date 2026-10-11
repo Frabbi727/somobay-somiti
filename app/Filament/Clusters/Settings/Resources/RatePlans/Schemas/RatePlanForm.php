@@ -19,7 +19,6 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
@@ -49,10 +48,6 @@ final class RatePlanForm
                             ->default(fn (): string => (string) YearMonth::current()->next())
                             ->disabled(fn (?RatePlan $record): bool => $record !== null)
                             ->dehydrated(),
-                        Toggle::make('is_retroactive')
-                            ->label(__('rates.plan.is_retroactive'))
-                            ->helperText(__('rates.plan.is_retroactive_help'))
-                            ->columnSpan(2),
                         MoneyInput::make('share_unit_poisha')
                             ->label(__('rates.plan.share_unit'))
                             ->required(),

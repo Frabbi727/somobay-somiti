@@ -36,6 +36,7 @@ return [
         'investment_postings' => 'Investment register',
         'year_end_totals' => 'Year-end totals',
         'exited_members_clear' => 'Exited members cleared',
+        'exited_members_hold_no_shares' => 'Exited members hold no shares',
     ],
     'banner' => [
         'title' => 'Integrity check failed.',

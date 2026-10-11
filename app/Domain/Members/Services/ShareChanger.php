@@ -94,6 +94,47 @@ final class ShareChanger
     }
 
     /**
+     * Ends every share from the month after the exit month, when an exit is approved: the member
+     * holds no shares from then on, so no dues are built and no dividend is shared for them.
+     * Returns how many shares ended.
+     */
+    public function endAllForExit(User $actor, Member $member, YearMonth $exitMonth, string $reason): int
+    {
+        $end = $exitMonth->next();
+
+        $lots = $this->register->activeLotsIn($member, $exitMonth);
+
+        // A share change already planned for after the exit month would keep shares alive.
+        $changeAfterExit = ShareLot::query()
+            ->where('member_id', $member->id)
+            ->where('effective_from', '>=', $end->toDateString())
+            ->exists()
+            || $lots->contains(fn (ShareLot $lot): bool => $lot->ended_from !== null && $lot->ended_from->isAfter($end));
+
+        if ($changeAfterExit) {
+            throw DomainRuleViolation::because('exits.errors.shares_after_exit', ['month' => (string) $exitMonth]);
+        }
+
+        $ended = 0;
+
+        foreach ($lots as $lot) {
+            if ($lot->ended_from !== null) {
+                continue;
+            }
+
+            $lot->ended_from = $end;
+            $lot->save();
+            $ended += $lot->shares;
+        }
+
+        if ($ended > 0) {
+            $this->record($actor, $member, ShareChangeType::Exit, $ended, $end, $reason);
+        }
+
+        return $ended;
+    }
+
+    /**
      * The month a new share change should start from by default: this month, or the month after
      * the last month that already has dues.
      */
