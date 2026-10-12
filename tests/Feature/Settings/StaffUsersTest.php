@@ -147,3 +147,10 @@ it('creates, edits and deactivates staff from the Users screen', function (): vo
 it('hides the Users screen from everyone but the super admin', function (): void {
     $this->actingAs(userWithRole(Role::President))->get(ListUsers::getUrl())->assertForbidden();
 });
+
+it('does not offer Deactivate on your own account', function (): void {
+    $this->actingAs($this->admin);
+
+    Livewire::test(EditUser::class, ['record' => $this->admin->getRouteKey()])->assertActionHidden('deactivate');
+    Livewire::test(EditUser::class, ['record' => userWithRole(Role::Cashier)->getRouteKey()])->assertActionVisible('deactivate');
+});

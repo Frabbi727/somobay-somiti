@@ -14,11 +14,28 @@ Manual testing with one login per role: `docs/LOCAL_TESTING.md`.
 
 | Check | Result |
 |---|---|
-| `composer test` | 1,028 tests, 60,302 assertions, all passing |
+| `composer test` | 1,029 tests, 60,292 assertions, all passing |
 | `composer analyse` | 0 errors |
 | `composer format:check` | passing |
 | `somiti:exits:end-share-lots` dry run on the local demo data | ran, nothing to fix |
-| Browser check (local demo, president) | dashboard sections and payment History render correctly; the rest of the role-by-role walkthrough below is still to be done by a person |
+| Browser walkthrough (local demo, 12 Oct 2026) | done for accountant, cashier, super admin, auditor and member — see below |
+
+## Browser walkthrough results (local demo, 12 October 2026)
+
+| Step | Result |
+|---|---|
+| Cashier records 3 payments (via the Actions) → accountants and president get "a payment is waiting" | ✓ — each in their own language (the president's account is English, the others Bangla) |
+| Accountant approves one, rejects one | ✓ — cashier's bell: approved / rejected; member: receipt SMS and rejection SMS with the reason |
+| Pending payment's History | ✓ — names the three people who can approve it |
+| Accountant approves a payment from the screen (typed confirmation) | ✓ |
+| Accountant opens the payment they approved | ✓ — no Reverse button |
+| Cashier dashboard | ✓ — Collect / Record expense / Defaulters, What you entered with outcomes, figures explained, no alerts |
+| Super admin edits own account | ✓ — roles locked with the explanation; **found and fixed:** Deactivate was offered on your own account |
+| Role permissions page | ✓ — super admin column locked with the reason on every approve/reverse/post permission |
+| Auditor dashboard | ✓ — Defaulters and Audit log only, nothing waiting, both alerts, no "What you entered" |
+| Member portal | ✓ — rejection alert with reason on top; note under the rejected payment; bell count |
+| Member signed in opening `/admin` | **found and fixed:** the 403 page's "start page" link looped back; it now offers the member portal and Sign out |
+| Phone width | not checked (the browser window could not be resized) — do this by hand |
 
 ## What the automated tests cover
 

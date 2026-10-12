@@ -7,6 +7,7 @@ How it works (`app/Domain/Notifications/Services`):
 - **Recipients are chosen by the same rules that show the buttons.** "People who can approve" means exactly the active staff the policy allows to approve *that* item — never "all admins". Someone who entered an item is never asked to approve it.
 - **SMS** goes only to members, only for the events listed, through editable templates (**Administration › SMS templates**). Each SMS has a unique key, so a retried action never texts twice. Failed SMS can be sent again from the SMS log.
 - **No financial detail goes to anyone who cannot see the record.**
+- **The queue worker must be running** (`php artisan queue:work`, kept alive on the server). Bell messages and SMS are both queued jobs: without the worker nothing reaches the bell or the phone, even though the action itself is saved.
 
 ## Staff (bell)
 

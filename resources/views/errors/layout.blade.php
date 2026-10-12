@@ -1,6 +1,10 @@
 @php
     $code = (string) ($code ?? 500);
     $reference = in_array($code, ['500', '503'], true) ? \App\Support\Errors\ErrorReference::current() : null;
+    // Signed in but in the wrong place (e.g. a member on the staff panel): offer a way out, since
+    // the start page would only lead back here.
+    $user = rescue(fn () => auth()->user(), null, false);
+    $isMember = $user instanceof \App\Models\User && ! $user->isStaff();
 @endphp
 <!DOCTYPE html>
 <html lang="bn">
@@ -22,7 +26,7 @@
         hr { border: 0; border-top: 1px solid var(--line); margin: 20px 0; }
         .reference { font-family: ui-monospace, monospace; background: var(--bg); border: 1px dashed var(--line); border-radius: 8px; padding: 8px 12px; color: var(--text); }
         .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
-        a.button { display: inline-block; padding: 8px 14px; border-radius: 8px; text-decoration: none; border: 1px solid var(--line); color: var(--text); }
+        a.button, button.button { display: inline-block; padding: 8px 14px; border-radius: 8px; text-decoration: none; border: 1px solid var(--line); color: var(--text); }
         a.button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
     </style>
 </head>
@@ -42,8 +46,18 @@
     @endforeach
 
     <div class="actions">
-        <a class="button primary" href="{{ url('/') }}">{{ __('errors.page.home', [], 'bn') }} · {{ __('errors.page.home', [], 'en') }}</a>
+        @if ($isMember)
+            <a class="button primary" href="{{ url('/portal') }}">{{ __('errors.page.portal', [], 'bn') }} · {{ __('errors.page.portal', [], 'en') }}</a>
+        @else
+            <a class="button primary" href="{{ url('/') }}">{{ __('errors.page.home', [], 'bn') }} · {{ __('errors.page.home', [], 'en') }}</a>
+        @endif
         <a class="button" href="javascript:history.back()">{{ __('errors.page.back', [], 'bn') }} · {{ __('errors.page.back', [], 'en') }}</a>
+        @if ($user !== null && rescue(fn () => csrf_token(), null, false) !== null)
+            <form method="POST" action="{{ route($isMember ? 'filament.member.auth.logout' : 'filament.admin.auth.logout') }}" style="margin:0">
+                @csrf
+                <button type="submit" class="button" style="cursor:pointer;background:none;font:inherit">{{ __('errors.page.sign_out', [], 'bn') }} · {{ __('errors.page.sign_out', [], 'en') }}</button>
+            </form>
+        @endif
     </div>
 </main>
 </body>

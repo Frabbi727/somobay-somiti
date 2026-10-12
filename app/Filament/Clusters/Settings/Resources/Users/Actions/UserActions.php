@@ -24,7 +24,8 @@ final class UserActions
             ->icon(Heroicon::OutlinedNoSymbol)
             ->color('danger')
             ->authorize('update')
-            ->visible(fn (User $record): bool => $record->isActive())
+            // Nobody can deactivate themselves, so the button is not offered on your own account.
+            ->visible(fn (User $record): bool => $record->isActive() && ! $record->is(auth()->user()))
             ->action(function (User $record): void {
                 DomainActionRunner::run(fn (User $actor): User => app(SetStaffUserActive::class)($actor, $record, false));
                 Notification::make()->title(__('users.notifications.deactivated', ['name' => $record->name]))->success()->send();

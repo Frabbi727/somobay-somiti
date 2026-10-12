@@ -29,6 +29,8 @@ return [
     'page' => [
         'reference' => 'Reference for support: :reference',
         'home' => 'Go to the start page',
+        'portal' => 'Open the member portal',
+        'sign_out' => 'Sign out',
         'back' => 'Go back',
         '403' => ['title' => 'You do not have permission', 'body' => 'This page is not part of your work in the somiti. If you think you should see it, contact your somiti administrator.'],
         '404' => ['title' => 'Page not found', 'body' => 'The page may have moved, or the link is wrong. Use the menu to find what you need.'],
