@@ -7,7 +7,7 @@ namespace App\Http\Requests\Api;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * Submitting the registration for approval; the key makes a retry harmless.
+ * Submitting the registration for approval; the key makes a retry harmless, the version is the rules the member read.
  */
 final class SubmitRegistrationRequest extends FormRequest
 {
@@ -18,6 +18,7 @@ final class SubmitRegistrationRequest extends FormRequest
     {
         return [
             'idempotency_key' => ['required', 'uuid'],
+            'terms_version' => ['required', 'integer', 'min:1'],
         ];
     }
 }

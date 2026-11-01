@@ -70,6 +70,7 @@ return [
         'nominees' => 'নমিনি',
         'shares' => 'শেয়ার',
         'review' => 'যাচাই',
+        'rules' => 'নিয়মাবলি',
     ],
     'actions' => [
         'record_documents' => 'প্রাপ্ত কাগজপত্র লিখে রাখুন',

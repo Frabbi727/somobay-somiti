@@ -70,6 +70,7 @@ return [
         'nominees' => 'Nominees',
         'shares' => 'Shares',
         'review' => 'Review',
+        'rules' => 'Rules',
     ],
     'actions' => [
         'record_documents' => 'Record documents received',

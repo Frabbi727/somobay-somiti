@@ -20,7 +20,6 @@ use App\Http\Resources\Api\RegistrationResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
@@ -68,7 +67,7 @@ final class RegistrationController
     public function submit(SubmitRegistrationRequest $request, SubmitRegistration $submit): JsonResponse
     {
         $key = (string) $request->string('idempotency_key');
-        $application = $submit(self::application($request), $key, TermsConsent::implicitForCurrent(ConsentChannel::App, Str::isUuid($key) ? $key : (string) Str::uuid(), $request->ip()));
+        $application = $submit(self::application($request), $key, new TermsConsent($request->integer('terms_version'), ConsentChannel::App, $key, $request->ip()));
 
         return ApiResponse::ok(RegistrationResource::make($application), __('registration.notifications.submitted'));
     }

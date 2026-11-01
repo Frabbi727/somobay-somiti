@@ -8,6 +8,7 @@ use App\Domain\Members\Data\NomineeData;
 use App\Domain\Members\Enums\Gender;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Support\Bangla\BanglaNumber;
+use BackedEnum;
 use InvalidArgumentException;
 
 /**
@@ -101,6 +102,8 @@ final readonly class RegistrationDraft
 
     private static function text(mixed $value): ?string
     {
+        $value = $value instanceof BackedEnum ? $value->value : $value;
+
         return is_scalar($value) && trim((string) $value) !== '' ? trim((string) $value) : null;
     }
 }

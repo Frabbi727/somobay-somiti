@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Member\Pages;
 
+use App\Domain\Geo\Services\GeoDirectory;
+use App\Domain\Members\Enums\Gender;
 use App\Domain\Members\Models\NomineeRelation;
 use App\Domain\Members\Registration\Actions\SaveRegistrationDraft;
 use App\Domain\Members\Registration\Actions\SubmitRegistration;
@@ -13,18 +15,20 @@ use App\Domain\Members\Registration\Models\MemberApplicationNominee;
 use App\Domain\Members\Registration\Services\RegistrationTimeline;
 use App\Domain\Members\Terms\Data\TermsConsent;
 use App\Domain\Members\Terms\Enums\ConsentChannel;
+use App\Domain\Members\Terms\Models\MembershipTerms;
 use App\Filament\Concerns\ConfirmsWithTier;
+use App\Filament\Forms\PersonFields;
 use App\Filament\Member\Concerns\ScopedToApplicant;
 use App\Filament\Support\ChangeSummary;
 use App\Filament\Support\DomainActionRunner;
 use App\Models\User;
 use App\Support\Money\Bps;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Pages\Page;
@@ -58,7 +62,7 @@ final class Registration extends Page
     private const array PERSONAL_FIELDS = ['name_bn', 'name_en', 'guardian_name', 'nid', 'date_of_birth'];
 
     /** @var list<string> */
-    private const array CONTACT_FIELDS = ['email', 'address'];
+    private const array CONTACT_FIELDS = ['email', 'gender', 'passport_no', 'present_upazila_id', 'present_union_id', 'present_address_line', 'permanent_same_as_present', 'permanent_upazila_id', 'permanent_union_id', 'permanent_address_line'];
 
     private const string NID_PATTERN = '/^([0-9০-৯]{10}|[0-9০-৯]{13}|[0-9০-৯]{17})$/u';
 
@@ -74,6 +78,10 @@ final class Registration extends Page
     /** One key per opening of the form: a double submit or a retry submits once. */
     #[Locked]
     public string $idempotencyKey = '';
+
+    /** The rules version shown on the last step when the form opened: that is what the member agrees to. */
+    #[Locked]
+    public int $termsVersion = 0;
 
     public function getTitle(): string
     {
@@ -91,16 +99,20 @@ final class Registration extends Page
         }
 
         $this->idempotencyKey = (string) Str::uuid();
+        $this->termsVersion = (int) MembershipTerms::current()->version;
         $nominees = $application->nominees->map(fn (MemberApplicationNominee $nominee): array => [
             'name' => $nominee->name,
             'relation_id' => $nominee->relation_id,
             'nid' => $nominee->nid,
             'mobile' => $nominee->mobile,
             'share_percent' => $nominee->share()->toPercentString(),
+            ...self::personState($nominee),
         ])->values()->all();
 
         $this->form->fill([
-            ...$application->only(['name_bn', 'name_en', 'guardian_name', 'nid', 'email', 'address', 'photo_path', 'requested_shares']),
+            ...$application->only(['name_bn', 'name_en', 'guardian_name', 'nid', 'email', 'photo_path', 'requested_shares']),
+            ...self::personState($application),
+            'terms_accepted' => false,
             'date_of_birth' => $application->date_of_birth?->toDateString(),
             'nominees' => $nominees === [] ? [['share_percent' => '100']] : $nominees,
         ]);
@@ -144,7 +156,7 @@ final class Registration extends Page
                     ->schema([
                         TextEntry::make('mobile')->label(__('members.member.mobile'))->state(fn (): string => self::application()->mobile),
                         TextInput::make('email')->label(__('members.member.email'))->email()->maxLength(255),
-                        Textarea::make('address')->label(__('members.member.address'))->rows(2)->maxLength(1000)->columnSpanFull(),
+                        ...PersonFields::make(),
                     ]),
                 Step::make(__('registration.steps.nominees'))
                     ->icon(Heroicon::OutlinedUsers)
@@ -154,12 +166,13 @@ final class Registration extends Page
                             ->hiddenLabel()
                             ->addActionLabel(__('members.nominee.add'))
                             ->minItems(1)
-                            ->columns(['default' => 1, 'md' => 5])
+                            ->columns(['default' => 1, 'md' => 2])
                             ->schema([
                                 TextInput::make('name')->label(__('members.nominee.name'))->required(),
                                 Select::make('relation_id')->label(__('members.nominee.relation'))->options(fn (): array => NomineeRelation::options())->required()->native(false),
                                 TextInput::make('nid')->label(__('members.nominee.nid'))->required()->regex(self::NID_PATTERN),
                                 TextInput::make('mobile')->label(__('members.nominee.mobile'))->tel(),
+                                ...PersonFields::make(),
                                 TextInput::make('share_percent')->label(__('members.nominee.share'))->suffix('%')->required()->live(onBlur: true),
                             ]),
                         TextEntry::make('nominee_total')
@@ -178,6 +191,20 @@ final class Registration extends Page
                         TextEntry::make('review')
                             ->hiddenLabel()
                             ->state(fn (): HtmlString => new HtmlString(ChangeSummary::view($this->summaryRows(), showOld: false)->render())),
+                    ]),
+                Step::make(__('registration.steps.rules'))
+                    ->icon(Heroicon::OutlinedDocumentText)
+                    ->schema([
+                        TextEntry::make('rules_text')
+                            ->label(__('terms.portal.rules_heading'))
+                            ->state(fn (): HtmlString => $this->termsText('rules')),
+                        TextEntry::make('declaration_text')
+                            ->label(__('terms.portal.declaration_heading'))
+                            ->state(fn (): HtmlString => $this->termsText('declaration')),
+                        Checkbox::make('terms_accepted')
+                            ->label(__('terms.portal.agree'))
+                            ->accepted()
+                            ->validationMessages(['accepted' => __('terms.portal.agree_required')]),
                     ]),
             ])->submitAction(new HtmlString(Blade::render('<x-filament::button type="submit">{{ $label }}</x-filament::button>', ['label' => __('registration.actions.submit')]))),
         ]);
@@ -205,7 +232,7 @@ final class Registration extends Page
                     }
 
                     $this->save($state);
-                    DomainActionRunner::run(fn (User $actor): MemberApplication => app(SubmitRegistration::class)(self::application(), $this->idempotencyKey, TermsConsent::implicitForCurrent(ConsentChannel::Portal, Str::isUuid($this->idempotencyKey) ? $this->idempotencyKey : (string) Str::uuid(), request()->ip())));
+                    DomainActionRunner::run(fn (User $actor): MemberApplication => app(SubmitRegistration::class)(self::application(), $this->idempotencyKey, new TermsConsent($this->termsVersion, ConsentChannel::Portal, Str::isUuid($this->idempotencyKey) ? $this->idempotencyKey : (string) Str::uuid(), request()->ip())));
                     $this->redirect(RegistrationStatus::getUrl());
                 }),
             heading: __('registration.actions.submit_heading'),
@@ -213,6 +240,57 @@ final class Registration extends Page
             description: __('registration.actions.submit_description'),
             showOld: false,
         );
+    }
+
+    /**
+     * The rules or the declaration of the version pinned at mount, escaped, line breaks kept.
+     */
+    private function termsText(string $part): HtmlString
+    {
+        $terms = MembershipTerms::query()->where('version', $this->termsVersion)->firstOrFail();
+        $text = (string) $terms->getAttribute($part.'_'.(app()->getLocale() === 'bn' ? 'bn' : 'en'));
+
+        return new HtmlString(nl2br(e($text)));
+    }
+
+    /**
+     * Gender, passport and both addresses as the form fields hold them.
+     *
+     * @return array<string, mixed>
+     */
+    private static function personState(MemberApplication|MemberApplicationNominee $person): array
+    {
+        return [
+            'gender' => $person->gender?->value,
+            'passport_no' => $person->passport_no,
+            'present_upazila_id' => $person->present_upazila_id,
+            'present_union_id' => $person->present_union_id,
+            'present_address_line' => $person->present_address_line,
+            'permanent_same_as_present' => false,
+            'permanent_upazila_id' => $person->permanent_upazila_id,
+            'permanent_union_id' => $person->permanent_union_id,
+            'permanent_address_line' => $person->permanent_address_line,
+        ];
+    }
+
+    /**
+     * One address on a line for the summary; empty while the upazila is not chosen.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private static function addressText(array $data, string $prefix): string
+    {
+        $upazila = $data[$prefix.'_upazila_id'] ?? null;
+
+        if (! is_numeric($upazila)) {
+            return '';
+        }
+
+        $union = $data[$prefix.'_union_id'] ?? null;
+        $place = app(GeoDirectory::class)->describe((int) $upazila, is_numeric($union) ? (int) $union : null);
+        $line = trim((string) ($data[$prefix.'_address_line'] ?? ''));
+
+        return $line === '' ? $place : $line.', '.$place;
     }
 
     /**
@@ -271,6 +349,10 @@ final class Registration extends Page
      */
     private function summaryRows(): array
     {
+        $data = $this->draftData();
+        $sameAddress = (bool) ($data['permanent_same_as_present'] ?? false);
+        $gender = Gender::tryFrom((string) ($data['gender'] ?? ''))?->getLabel();
+
         $nominees = collect((array) ($this->data['nominees'] ?? []))
             ->filter(fn (mixed $row): bool => is_array($row) && trim((string) ($row['name'] ?? '')) !== '')
             ->map(fn (array $row): string => sprintf('%s (%s%%)', $row['name'], $row['share_percent'] ?? '0'))
@@ -283,10 +365,19 @@ final class Registration extends Page
             'nid' => __('members.member.nid'),
             'date_of_birth' => __('members.member.date_of_birth'),
             'email' => __('members.member.email'),
-            'address' => __('members.member.address'),
+            'gender' => __('members.member.gender'),
+            'passport_no' => __('members.member.passport_no'),
+            'present_address' => __('members.address.present'),
+            'permanent_address' => __('members.address.permanent'),
             'requested_shares' => __('registration.field.requested_shares'),
             'nominees' => __('members.member.nominees_section'),
-        ], [], [...$this->draftData(), 'nominees' => $nominees]);
+        ], [], [
+            ...$data,
+            'gender' => $gender,
+            'present_address' => self::addressText($data, 'present'),
+            'permanent_address' => self::addressText($data, $sameAddress ? 'present' : 'permanent'),
+            'nominees' => $nominees,
+        ]);
     }
 
     private static function nomineeTotal(mixed $rows): Bps

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Api;
 
+use App\Domain\Geo\Services\GeoDirectory;
 use App\Domain\Members\Registration\Data\TimelineStep;
 use App\Domain\Members\Registration\Models\MemberApplication;
 use App\Domain\Members\Registration\Models\MemberApplicationNominee;
@@ -57,6 +58,7 @@ final class RegistrationResource
                 'address' => $application->address,
                 'photo_url' => $application->photo_path === null ? null : URL::temporarySignedRoute('api.registration.photo', now()->addHour(), ['application' => $application->id]),
                 'requested_shares' => $application->requested_shares,
+                ...self::person($application),
                 'nominees' => $application->nominees->map(fn (MemberApplicationNominee $nominee): array => [
                     'name' => $nominee->name,
                     'relation_id' => $nominee->relation_id,
@@ -64,8 +66,44 @@ final class RegistrationResource
                     'mobile' => $nominee->mobile,
                     'nid' => $nominee->nid,
                     'share_percent' => $nominee->share()->toPercentString(),
+                    ...self::person($nominee),
                 ])->values()->all(),
             ],
+        ];
+    }
+
+    /**
+     * Gender, passport and both addresses of a member or a nominee.
+     *
+     * @return array<string, mixed>
+     */
+    private static function person(MemberApplication|MemberApplicationNominee $person): array
+    {
+        return [
+            'gender' => ApiValue::enum($person->gender),
+            'passport_no' => $person->passport_no,
+            'present_address' => self::address($person->present_upazila_id, $person->present_union_id, $person->present_address_line),
+            'permanent_address' => self::address($person->permanent_upazila_id, $person->permanent_union_id, $person->permanent_address_line),
+        ];
+    }
+
+    /**
+     * @return array{upazila_id: int, union_id: int|null, division_id: int, district_id: int, address_line: string|null, place_name: string}|null
+     */
+    private static function address(?int $upazilaId, ?int $unionId, ?string $line): ?array
+    {
+        if ($upazilaId === null) {
+            return null;
+        }
+
+        $geo = app(GeoDirectory::class);
+
+        return [
+            'upazila_id' => $upazilaId,
+            'union_id' => $unionId,
+            ...$geo->chainFor($upazilaId),
+            'address_line' => $line,
+            'place_name' => $geo->describe($upazilaId, $unionId),
         ];
     }
 }

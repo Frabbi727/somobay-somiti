@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 use App\Domain\Members\Portal\MemberTokens;
 use App\Domain\Members\Registration\Actions\SubmitRegistration;
+use App\Domain\Members\Terms\Actions\PublishTerms;
+use App\Domain\Members\Terms\Actions\SaveTermsDraft;
+use App\Domain\Members\Terms\Models\MembershipTerms;
 use App\Enums\Role;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -14,6 +17,7 @@ beforeEach(function (): void {
     userWithRole(Role::Secretary);
     $this->application = invite('01811111111');
     $this->token = app(MemberTokens::class)->issue($this->application->user)['access_token'];
+    $this->terms = (int) MembershipTerms::current()->version;
     $this->withToken($this->token)->withHeader('Accept-Language', 'en');
 });
 
@@ -62,7 +66,7 @@ it('submits once per key and then waits for the secretary', function (): void {
     $this->putJson('/api/v1/registration', registrationInput())->assertOk();
     $key = (string) Str::uuid();
 
-    $this->postJson('/api/v1/registration/submit', ['idempotency_key' => $key])
+    $this->postJson('/api/v1/registration/submit', ['idempotency_key' => $key, 'terms_version' => $this->terms])
         ->assertOk()
         ->assertJsonPath('data.status.value', 'submitted')
         ->assertJsonPath('data.next_action', 'wait')
@@ -70,26 +74,26 @@ it('submits once per key and then waits for the secretary', function (): void {
         ->assertJsonPath('data.headline', 'Secretary approval pending')
         ->assertJsonPath('data.timeline.1.state', 'pending');
 
-    $this->postJson('/api/v1/registration/submit', ['idempotency_key' => $key])->assertOk()->assertJsonPath('data.status.value', 'submitted');
-    $this->postJson('/api/v1/registration/submit', ['idempotency_key' => (string) Str::uuid()])->assertStatus(422);
+    $this->postJson('/api/v1/registration/submit', ['idempotency_key' => $key, 'terms_version' => $this->terms])->assertOk()->assertJsonPath('data.status.value', 'submitted');
+    $this->postJson('/api/v1/registration/submit', ['idempotency_key' => (string) Str::uuid(), 'terms_version' => $this->terms])->assertStatus(422);
     $this->putJson('/api/v1/registration', ['name_bn' => 'x'])->assertStatus(422)->assertJsonPath('message', __('registration.errors.not_editable', [], 'en'));
-})->skip('Restored in Task 9: API accepts paper-form fields');
+});
 
 it('explains why a submit is refused', function (): void {
     $this->putJson('/api/v1/registration', registrationInput(['nominees' => [nominee(['share_percent' => '60'])]]))->assertOk();
 
-    $this->postJson('/api/v1/registration/submit', ['idempotency_key' => (string) Str::uuid()])
+    $this->postJson('/api/v1/registration/submit', ['idempotency_key' => (string) Str::uuid(), 'terms_version' => $this->terms])
         ->assertStatus(422)
         ->assertJsonPath('success', false)
         ->assertJsonPath('message', __('members.errors.nominee_total', ['total' => '60.00%'], 'en'));
-})->skip('Restored in Task 9: API accepts paper-form fields');
+});
 
 it('answers a reused key from another registration with 409', function (): void {
     $key = (string) Str::uuid();
     app(SubmitRegistration::class)(completeRegistration(invite('01822222222'), ['nid' => '1111111111']), $key, portalConsent());
     $this->putJson('/api/v1/registration', registrationInput())->assertOk();
 
-    $this->postJson('/api/v1/registration/submit', ['idempotency_key' => $key])->assertStatus(409);
+    $this->postJson('/api/v1/registration/submit', ['idempotency_key' => $key, 'terms_version' => $this->terms])->assertStatus(409);
 });
 
 it('keeps members out of the registration screens', function (): void {
@@ -134,12 +138,12 @@ it('serves the photo only through an untampered signed link for that registratio
 it('leaves no file behind when the photo is refused', function (): void {
     Storage::fake('local');
     $this->putJson('/api/v1/registration', registrationInput())->assertOk();
-    $this->postJson('/api/v1/registration/submit', ['idempotency_key' => (string) Str::uuid()])->assertOk();
+    $this->postJson('/api/v1/registration/submit', ['idempotency_key' => (string) Str::uuid(), 'terms_version' => $this->terms])->assertOk();
 
     $this->post('/api/v1/registration/photo', ['photo' => UploadedFile::fake()->image('me.jpg', 300, 300)], ['Accept' => 'application/json'])->assertStatus(422);
 
     expect(Storage::disk('local')->allFiles('member-photos'))->toBe([]);
-})->skip('Restored in Task 9: API accepts paper-form fields');
+});
 
 it('ignores a photo_path sent in the draft', function (): void {
     $this->putJson('/api/v1/registration', ['photo_path' => 'member-photos/x.jpg', 'name_bn' => 'করিম'])
@@ -147,4 +151,51 @@ it('ignores a photo_path sent in the draft', function (): void {
         ->assertJsonPath('data.data.photo_url', null);
 
     expect($this->application->fresh()?->photo_path)->toBeNull();
+});
+
+it('saves the paper-form fields and returns them with the place names', function (): void {
+    $this->putJson('/api/v1/registration', registrationInput(['permanent_same_as_present' => true, 'permanent_upazila_id' => null, 'passport_no' => 'ab 123456']))
+        ->assertOk()
+        ->assertJsonPath('data.data.gender.value', 'male')
+        ->assertJsonPath('data.data.passport_no', 'AB123456')
+        ->assertJsonPath('data.data.present_address.upazila_id', 495)
+        ->assertJsonPath('data.data.present_address.union_id', 4541)
+        ->assertJsonPath('data.data.present_address.address_line', 'House 12, Road 3')
+        ->assertJsonPath('data.data.permanent_address.upazila_id', 495)
+        ->assertJsonPath('data.data.nominees.0.gender.value', 'female')
+        ->assertJsonPath('data.data.nominees.0.present_address.upazila_id', 495)
+        ->assertJsonStructure(['data' => ['data' => ['present_address' => ['division_id', 'district_id', 'place_name']]]]);
+
+    expect($this->getJson('/api/v1/registration')->json('data.data.present_address.place_name'))->toContain('Gulshan');
+});
+
+it('returns null for what is not filled yet', function (): void {
+    $this->getJson('/api/v1/registration')
+        ->assertJsonPath('data.data.gender', null)
+        ->assertJsonPath('data.data.present_address', null)
+        ->assertJsonPath('data.data.permanent_address', null);
+});
+
+it('names the paper-form fields that are wrong', function (): void {
+    $this->putJson('/api/v1/registration', ['gender' => 'robot', 'passport_no' => str_repeat('A', 21), 'present_upazila_id' => 999999, 'permanent_union_id' => 999999, 'permanent_address_line' => str_repeat('a', 256), 'nominees' => [nominee(['gender' => 'x', 'present_upazila_id' => 999999])]])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['gender', 'passport_no', 'present_upazila_id', 'permanent_union_id', 'permanent_address_line', 'nominees.0.gender', 'nominees.0.present_upazila_id'], 'errors');
+});
+
+it('needs the rules version to submit and refuses a replaced one', function (): void {
+    $this->putJson('/api/v1/registration', registrationInput())->assertOk();
+
+    $this->postJson('/api/v1/registration/submit', ['idempotency_key' => (string) Str::uuid()])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['terms_version'], 'errors');
+
+    $president = userWithRole(Role::President);
+    app(SaveTermsDraft::class)($president, 'নিয়ম ২', '2. Rule', 'ঘোষণা ২', 'Declaration 2');
+    app(PublishTerms::class)($president, MembershipTerms::draft());
+
+    $this->postJson('/api/v1/registration/submit', ['idempotency_key' => (string) Str::uuid(), 'terms_version' => $this->terms])
+        ->assertStatus(422)
+        ->assertJsonPath('message', __('terms.errors.outdated', [], 'en'));
+
+    expect($this->application->fresh()?->status->value)->toBe('invited');
 });

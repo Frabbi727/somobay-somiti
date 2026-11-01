@@ -7,6 +7,9 @@ use App\Domain\Members\Registration\Actions\SaveRegistrationDraft;
 use App\Domain\Members\Registration\Data\RegistrationDraft;
 use App\Domain\Members\Registration\Enums\MemberApplicationStatus;
 use App\Domain\Members\Registration\Enums\RegistrationDecisionType;
+use App\Domain\Members\Terms\Actions\PublishTerms;
+use App\Domain\Members\Terms\Actions\SaveTermsDraft;
+use App\Domain\Members\Terms\Models\MembershipTerms;
 use App\Enums\Role;
 use App\Filament\Member\Pages\Auth\MemberLogin;
 use App\Filament\Member\Pages\Dashboard;
@@ -72,13 +75,39 @@ it('saves each wizard step and submits after the summary', function (): void {
     expect($this->application->fresh()?->name_en)->toBe('Karim Mia');
 
     Livewire::test(Registration::class)
-        ->fillForm([...registrationInput(), 'nominees' => [nominee()]])
+        ->fillForm([...registrationInput(), 'nominees' => [nominee()], 'terms_accepted' => true])
         ->callAction('submit')
-        ->assertHasNoActionErrors()
+        ->assertHasNoErrors()
         ->assertRedirect(RegistrationStatus::getUrl());
 
     expect($this->application->fresh()?->status)->toBe(MemberApplicationStatus::Submitted);
-})->skip('Restored in Task 9: portal wizard gains paper-form fields');
+});
+
+it('refuses submit without the tick', function (): void {
+    userWithRole(Role::Secretary);
+    $this->actingAs($this->application->user);
+
+    Livewire::test(Registration::class)
+        ->fillForm(registrationInput())
+        ->callAction('submit')
+        ->assertHasErrors(['data.terms_accepted']);
+
+    expect($this->application->fresh()?->status)->toBe(MemberApplicationStatus::Invited);
+});
+
+it('refuses a rules version replaced while the form was open', function (): void {
+    userWithRole(Role::Secretary);
+    $this->actingAs($this->application->user);
+
+    $page = Livewire::test(Registration::class)->fillForm([...registrationInput(), 'terms_accepted' => true]);
+    $president = userWithRole(Role::President);
+    app(SaveTermsDraft::class)($president, 'নিয়ম ২', '2. Rule', 'ঘোষণা ২', 'Declaration 2');
+    app(PublishTerms::class)($president, MembershipTerms::draft());
+
+    $page->callAction('submit')->assertNotified(__('terms.errors.outdated'));
+
+    expect($this->application->fresh()?->status)->toBe(MemberApplicationStatus::Invited);
+});
 
 it('saves the date of birth the date picker sends with a time', function (): void {
     $this->actingAs($this->application->user);
@@ -108,15 +137,15 @@ it('stores a photo uploaded in the form when the registration is submitted', fun
     $this->actingAs($this->application->user);
 
     Livewire::test(Registration::class)
-        ->fillForm([...registrationInput(), 'photo_path' => UploadedFile::fake()->image('me.jpg')])
+        ->fillForm([...registrationInput(), 'terms_accepted' => true, 'photo_path' => UploadedFile::fake()->image('me.jpg')])
         ->callAction('submit')
-        ->assertHasNoActionErrors();
+        ->assertHasNoErrors();
 
     $path = $this->application->fresh()?->photo_path;
 
     expect($path)->toStartWith('member-photos/');
     Storage::disk('local')->assertExists((string) $path);
-})->skip('Restored in Task 9: portal wizard gains paper-form fields');
+});
 
 it('never saves a photo path typed into the form state', function (): void {
     Storage::fake('local');

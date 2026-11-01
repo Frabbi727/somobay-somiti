@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api;
 
+use App\Domain\Members\Enums\Gender;
 use App\Support\Contact\MobileNumber;
 use App\Support\Money\Bps;
 use Closure;
@@ -33,10 +34,12 @@ final class SaveRegistrationRequest extends FormRequest
             'email' => ['sometimes', 'nullable', 'email', 'max:255'],
             'address' => ['sometimes', 'nullable', 'string', 'max:1000'],
             'requested_shares' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:1000'],
+            ...self::personRules(''),
             'nominees' => ['sometimes', 'array', 'max:10'],
             'nominees.*.name' => ['required', 'string', 'max:255'],
             'nominees.*.relation_id' => ['nullable', 'integer', Rule::exists('nominee_relations', 'id')->where('active', true)],
             'nominees.*.nid' => ['nullable', 'string', 'regex:'.self::NID],
+            ...self::personRules('nominees.*.'),
             'nominees.*.mobile' => ['nullable', 'string', function (string $attribute, mixed $value, Closure $fail): void {
                 if (is_string($value) && trim($value) !== '' && MobileNumber::normalize($value) === null) {
                     $fail(__('members.errors.mobile_format'));
@@ -50,5 +53,33 @@ final class SaveRegistrationRequest extends FormRequest
                 }
             }],
         ];
+    }
+
+    /**
+     * The paper form's personal block, the same keys for the member and for each nominee.
+     *
+     * @return array<string, list<mixed>>
+     */
+    private static function personRules(string $prefix): array
+    {
+        $rules = [
+            'gender' => ['nullable', Rule::enum(Gender::class)],
+            'passport_no' => ['nullable', 'string', 'max:20'],
+            'permanent_same_as_present' => ['nullable', 'boolean'],
+        ];
+
+        foreach (['present', 'permanent'] as $kind) {
+            $rules[$kind.'_upazila_id'] = ['nullable', 'integer', 'exists:geo_upazilas,id'];
+            $rules[$kind.'_union_id'] = ['nullable', 'integer', 'exists:geo_unions,id'];
+            $rules[$kind.'_address_line'] = ['nullable', 'string', 'max:255'];
+        }
+
+        $out = [];
+
+        foreach ($rules as $key => $rule) {
+            $out[$prefix.$key] = $prefix === '' ? ['sometimes', ...$rule] : $rule;
+        }
+
+        return $out;
     }
 }
