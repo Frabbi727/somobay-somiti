@@ -49,9 +49,10 @@ final class GeoCsvLoader
 
                 $batch[] = $record;
 
-                if (count($batch) === 500) {
+                if (count($batch) === 200) {
                     DB::table($table)->upsert($batch, ['id'], array_slice($columns, 1));
                     $batch = [];
+                    unset($record, $row);
                 }
             }
         } finally {

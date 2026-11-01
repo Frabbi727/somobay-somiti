@@ -8,6 +8,14 @@ use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
 abstract class TestCase extends BaseTestCase
 {
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+
+        // The Filament/Livewire tests leave cyclic garbage behind; freeing it keeps the whole suite under the 512M limit.
+        gc_collect_cycles();
+    }
+
     protected function setUp(): void
     {
         parent::setUp();

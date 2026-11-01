@@ -189,9 +189,6 @@ final class RegistrationActions
     }
 
     /**
-     * The member record created by the final approval.
-     */
-    /**
      * T1: the office ticks which paper documents arrived with an open application.
      */
     public static function recordDocuments(): Action
@@ -228,6 +225,9 @@ final class RegistrationActions
         );
     }
 
+    /**
+     * The member record created by the final approval.
+     */
     public static function openMember(): Action
     {
         return Action::make('openMember')
