@@ -6,7 +6,7 @@
 
 **Architecture:** A read-only `Geo` module loads Bangladesh divisions → districts → upazilas → unions from the CSVs once by migration and serves them to searchable chained Filament selects and to public API lookups. New member/nominee fields flow through the existing `MemberData` / `NomineeData` / `RegistrationDraft` DTOs and `MemberRules`. A `Members/Terms` sub-module stores published rule versions (immutable) and insert-only acceptances; a `TermsGate` service drives a portal middleware and an API middleware that block members until they accept the current version.
 
-**Tech Stack:** Laravel 12 / PHP 8.5, Filament 4, PostgreSQL, Pest, Larastan level 8, Pint.
+**Tech Stack:** Laravel 12 / PHP 8.5, Filament 4, PostgreSQL, Pest, Larastan level 8, Pint. Mobile: Flutter (GetX, Dio) in the sibling repo `somobay_somiti_mobile_app` (Tasks 12–15).
 
 **Spec:** `docs/superpowers/specs/2026-11-01-registration-matches-paper-design.md` (read it first). Source paper: `docs/manual-page/রয়েল ডিস্ট্রিক্ট মৈত্রী সমিতি (21 x 29.7 cm).pdf`.
 
@@ -184,8 +184,9 @@
 - Portal middleware: member with `needsAcceptance` → redirect to `AcceptRules::getUrl()` except on the AcceptRules route and `filament.member.auth.logout`; applicants untouched.
 - API: `GET /api/v1/terms/current` (group `ability:member,applicant`) → `{version, rules_bn, rules_en, declaration_bn, declaration_en, accepted: bool|null}`; `POST /api/v1/terms/accept` body `{version:int, idempotency_key:uuid}` (member group, **without** `terms`) → `AcceptTerms` channel `app`, ip = request ip.
 - `RequireCurrentTermsInApi` added as `terms` to the member route group (after `member`): when `needsAcceptance` → `ApiResponse::error(__('terms.errors.acceptance_required'), 403, null, ['code' => 'terms_acceptance_required', 'version' => (string) $current->version])`.
+- `GET /api/v1/auth/me` adds `terms_acceptance_required: bool` and `terms_version: int` (members; `false` for applicants) so the app can route at start-up without a failing call.
 
-- [ ] **Step 1: Failing tests** — `portal sends a member who has not accepted to the rules page`; `accepting in the portal lets the member through`; `api blocks member routes until accepted` (`GET dashboard/summary` → 403, `meta.code`); `api still allows terms, logout and me`; `api accept with a stale version is refused` (422 or 409 per existing DomainRuleViolation handler); `applicants are not gated` (registration endpoints work).
+- [ ] **Step 1: Failing tests** — `me reports whether the rules must be accepted`; `portal sends a member who has not accepted to the rules page`; `accepting in the portal lets the member through`; `api blocks member routes until accepted` (`GET dashboard/summary` → 403, `meta.code`); `api still allows terms, logout and me`; `api accept with a stale version is refused` (422 or 409 per existing DomainRuleViolation handler); `applicants are not gated` (registration endpoints work).
 - [ ] **Steps 2–4** (run `tests/Feature/Api tests/Feature/Portal` too — existing member API tests need their member to have accepted: add acceptance in the shared API test helper in `tests/Pest.php`). **Step 5: Commit** — "Terms: ask existing members to accept the current rules".
 
 ### Task 8: Shared address fields + admin member form + infolists
@@ -229,4 +230,61 @@
 - [ ] Manual browser walk: admin create member (Bangla + English search in each dropdown), portal registration end-to-end, existing member login → accept rules page.
 - [ ] Update `docs/` member manuals that describe the registration form (grep `docs` for "নিবন্ধন") with the new fields and the rules step.
 - [ ] Commit — "Docs: registration manual covers paper-form fields and rules".
-- [ ] Tell the user the Flutter app needs: geo dropdown screens, new fields, rules step on submit, handling `terms_acceptance_required` with `GET/POST terms/*`.
+
+---
+
+## Mobile app (Tasks 12–15)
+
+**Repo:** `/Users/fazlerabbi/Desktop/projects/TONMY SOFT/somobay_somiti_mobile_app` (Flutter, GetX, Dio, `json_serializable`; separate git repo). Start a new branch `feature/paper-form` from its current branch `self-registration`. Starts after backend Tasks 2, 7 and 9 (they fix the API contract).
+
+**Mobile constraints:** follow the module layout `lib/modules/<module>/{bindings,controller,model,repository,view}`; repositories return records `({Failure? failure, T? x})` via `ErrorHandler.handleException`; every string is a key in `lib/app/localization/translation_keys.dart` with text in **both** `bn_bd.dart` and `en_us.dart`; models are `@JsonSerializable` (regenerate with `dart run build_runner build --delete-conflicting-outputs`); tests use `test/support/fixtures.dart` JSON fixtures and `FakeApi`; the app never does money arithmetic (no change here). Verify each task with `flutter analyze` and `flutter test`.
+
+### Task 12: Geo repository and searchable picker
+
+**Files:**
+- Create: `lib/modules/registration/model/geo_place_model.dart` (`GeoPlaceModel {int id; String nameBn; String nameEn; String label(String languageCode)}`)
+- Create: `lib/modules/registration/repository/geo_repository.dart` — `IGeoRepository` with `divisions()`, `districts(int divisionId)`, `upazilas(int districtId)`, `unions(int upazilaId)`, each `Future<({Failure? failure, List<GeoPlaceModel> places})>`; in-memory cache per parent id (lists are small, so the whole child list is fetched once and searched locally).
+- Modify: `lib/core/constants/api_constants.dart` (`geoDivisions`, `geoDistricts`, `geoUpazilas`, `geoUnions`)
+- Create: `lib/core/widgets/app_searchable_picker.dart` — `AppSearchablePicker<T>` form field: tapping opens a bottom sheet with a search box and the list; `items`, `itemLabel`, `searchTerms(T) → List<String>` (both names), `onChanged`, `validator`, `enabled` (disabled until the parent is chosen), loading/error-with-retry states. Matching is case-insensitive "contains" on any search term; Bangla digits converted with `BanglaNumberUtil.toEnglish` where relevant.
+- Test: `test/modules/geo_repository_test.dart`, `test/widgets/app_searchable_picker_test.dart`; fixtures `geo_divisions.json`, `geo_districts_6.json`, `geo_upazilas_47.json`, `geo_unions_495.json`
+
+- [ ] **Step 1: Failing tests** — `parses places and caches by parent` (second call does not hit `FakeApi`); `picker filters by bangla and english` (type "গুলশান" and "gulsh" → Gulshan-1, Gulshan-2 shown; "xyz" → empty state); `picker is disabled without a parent`.
+- [ ] **Steps 2–4:** `flutter test test/modules/geo_repository_test.dart test/widgets/app_searchable_picker_test.dart` FAIL → implement → PASS; `flutter analyze` clean.
+- [ ] **Step 5: Commit** — "Geo: searchable division-to-union picker".
+
+### Task 13: Address and person fields in the registration wizard
+
+**Files:**
+- Create: `lib/modules/registration/controller/address_form_state.dart` — `AddressFormState` (Rxn ids `divisionId`, `districtId`, `upazilaId`, `unionId`; `lineController`; `unionsAvailable` RxBool); `selectDivision/District/Upazila/Union` clear all descendants; `Map<String, dynamic> toJson(String prefix)` → `{prefix}_upazila_id`, `{prefix}_union_id`, `{prefix}_address_line`; `fromModel(RegistrationAddressModel?)` fills the chain from the API's derived `division_id` / `district_id`; `copyFrom(AddressFormState other)`.
+- Create: `lib/modules/registration/view/widgets/address_fields.dart` — four `AppSearchablePicker`s + line field; union required only when `unionsAvailable`.
+- Modify: `registration_model.dart` — `RegistrationDataModel` + `RegistrationNomineeModel` gain `gender`, `passport_no`, `present_address`, `permanent_address` (new `RegistrationAddressModel {upazilaId, unionId, divisionId, districtId, line, placeName}` matching backend Task 9's `show`); regenerate `.g.dart`.
+- Modify: `nominee_form_row.dart` (gender, passport, two `AddressFormState`s, same-as-present flag), `nominee_card.dart`
+- Modify: `registration_form_controller.dart` — step 1 (contact) sends gender, passport, both addresses (+ same-as-present); `errorKeysShownOn` includes the new keys and `nominees.$i.<new fields>`; `nomineeFields` extended; old `address` field removed from the form.
+- Modify: `registration_form_page.dart` `_contact()`; `_review()` shows the new values (place names).
+- Modify: translations (gender labels, address labels, "same as present", passport, picker search hint/empty/retry).
+- Test: extend `test/modules/registration_form_controller_test.dart`, `test/modules/registration_form_page_test.dart`; update fixtures `registration_invited.json`, `registration_submitted.json`
+
+- [ ] **Step 1: Failing tests** — `contact step sends gender, passport and both addresses`; `same as present copies the present address`; `changing district clears upazila and union`; `nominee row sends its addresses`; `server errors for nominees.0.present_upazila_id show on the nominee card`; `loading a saved draft fills the whole address chain`.
+- [ ] **Steps 2–4.** **Step 5: Commit** — "Registration: paper-form fields with address pickers".
+
+### Task 14: Rules agreement in registration and the re-acceptance gate
+
+**Files:**
+- Create: `lib/modules/terms/{model/terms_model.dart, repository/terms_repository.dart, controller/accept_rules_controller.dart, view/accept_rules_page.dart, view/rules_page.dart, bindings/terms_binding.dart}` — `TermsModel {version, rulesBn, rulesEn, declarationBn, declarationEn, accepted}`; `ITermsRepository.current()` (`GET terms/current`), `accept(int version, String idempotencyKey)` (`POST terms/accept`).
+- Modify: `api_constants.dart` (`termsCurrent`, `termsAccept`), `app_routes.dart` / `app_pages.dart` (`/accept-rules`, `/rules`)
+- Modify: registration review step: shows the rules + declaration (collapsible) and a required "আমি পড়েছি ও সম্মত" checkbox; submit disabled until ticked; `IRegistrationRepository.submit(String idempotencyKey, int termsVersion)` sends `terms_version`. A 422/409 `terms.errors.outdated` reloads the rules and asks again.
+- Modify: `splash_controller.dart` — when `me` says `terms_acceptance_required`, route to `/accept-rules` instead of the member home (`me` model gains the two fields).
+- Create: `lib/core/network/interceptors/terms_interceptor.dart` — on 403 with `meta.code == 'terms_acceptance_required'` navigate once to `/accept-rules` (`Get.offAllNamed`), then pass the error on; register it in `api_client.dart` after `AuthInterceptor`.
+- Modify: `profile_page.dart` — "Rules I accepted" row → `/rules` (read-only, shows version and text in the current language).
+- Accept page: rules text, checkbox, Accept button (one idempotency key per page), success → member home; logout available.
+- Test: `test/modules/terms_repository_test.dart`, `test/modules/accept_rules_controller_test.dart`, extend `splash_controller_test.dart`, `registration_form_controller_test.dart`; fixtures `terms_current.json`, `error_403_terms_required.json`, `me_terms_required.json`
+
+- [ ] **Step 1: Failing tests** — `submit sends the rules version`; `submit is blocked until the rules are ticked`; `outdated version reloads the rules`; `splash opens accept-rules when me requires it`; `a 403 terms_acceptance_required opens accept-rules once`; `accepting returns to the member home`; `retrying accept reuses the key`.
+- [ ] **Steps 2–4.** **Step 5: Commit** — "Rules: agree at registration and accept new versions".
+
+### Task 15: Mobile docs and release check
+
+- [ ] Update `docs/MEMBER_API_SPECIFICATION.md` and `docs/MEMBER_API_MODELS.md` (geo endpoints, new registration fields, `terms/*`, `me` fields, the 403 code) and `docs/MEMBER_FEATURES.md`.
+- [ ] `flutter analyze` and `flutter test` all pass; run on a phone/emulator against the local backend: register with Bangla search, existing member login → accept rules → home.
+- [ ] Bump `pubspec.yaml` version (`1.0.2+4` → `1.1.0+5`) — the old app cannot submit registrations once the backend requires `terms_version`, so ship backend and app together.
+- [ ] Commit — "Docs: paper-form registration and rules in the app".

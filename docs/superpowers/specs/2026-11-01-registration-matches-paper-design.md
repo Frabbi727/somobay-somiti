@@ -17,7 +17,7 @@ The somiti uses a paper "সদস্য নিবন্ধন ফর্ম / �
 - Migration creates `geo_divisions`, `geo_districts`, `geo_upazilas`, `geo_unions` (id from CSV, parent FK, `name_en`, `name_bn`; lat/long/website dropped). Indexes on parent FK and names.
 - The same migration loads the CSVs (no header row; columns: divisions `id,name_en,name_bn,url`; districts `id,division_id,name_en,name_bn,lat,lon,url`; upazilas/unions `id,parent_id,name_en,name_bn,url`) so every environment, including production, has the data. Upsert by id → safe to rerun.
 - Read-only `Geo` models in `app/Domain/Shared` (or a new `app/Domain/Geo` — check §4 project structure first), no write UI.
-- A member address is stored as **`{prefix}_union_id` + `{prefix}_address_line`**; division/district/upazila are derived from the union (no redundant columns, no mismatch possible).
+- A member address is stored as **`{prefix}_upazila_id` + `{prefix}_union_id` + `{prefix}_address_line`**. Five upazilas in the data have no unions (e.g. Guimara, Dasar), so union is required only when the chosen upazila has unions and must belong to it. Division/district are derived from the upazila.
 
 ### 2. New fields
 | Table | New columns |
@@ -49,7 +49,7 @@ The somiti uses a paper "সদস্য নিবন্ধন ফর্ম / �
   - `MemberInfolist.php` / `MemberApplicationInfolist.php` (show the full place names)
 - Public, cached geo endpoints for the mobile app: `GET /api/v1/geo/divisions`, `/geo/districts?division_id=&q=`, `/geo/upazilas?district_id=&q=`, `/geo/unions?upazila_id=&q=` (bn+en names).
 - `RegistrationController` (`app/Http/Controllers/Api/Member`) + `RegistrationDraft` DTO + `SaveRegistrationDraft` accept the new fields and `terms_accepted`.
-- The Flutter app itself is outside this repo; it needs the matching screens (noted for the user).
+- The Flutter app (`../somobay_somiti_mobile_app`) is in scope: searchable address pickers, the new fields, the rules tick on submit, and an accept-rules screen reached from start-up (`auth/me` reports `terms_acceptance_required`) or from a 403 with `meta.code = terms_acceptance_required`.
 - All strings in `lang/bn` + `lang/en` (the bn/en parity test will catch misses).
 
 ## Critical files
