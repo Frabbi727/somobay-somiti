@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Domain\Members\Models;
 
 use App\Domain\Contributions\Models\Due;
+use App\Domain\Members\Enums\Gender;
 use App\Domain\Members\Enums\MemberStatus;
+use App\Domain\Members\Enums\RegistrationDocument;
 use App\Models\User;
 use App\Policies\MemberPolicy;
 use App\Support\Time\YearMonth;
@@ -13,11 +15,13 @@ use Carbon\CarbonImmutable;
 use Database\Factories\MemberFactory;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
+use Illuminate\Database\Eloquent\Casts\AsEnumCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
@@ -34,6 +38,15 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property string $mobile
  * @property string|null $email
  * @property string|null $address
+ * @property Gender|null $gender
+ * @property string|null $passport_no
+ * @property int|null $present_upazila_id
+ * @property int|null $present_union_id
+ * @property string|null $present_address_line
+ * @property int|null $permanent_upazila_id
+ * @property int|null $permanent_union_id
+ * @property string|null $permanent_address_line
+ * @property Collection<int, RegistrationDocument> $documents_received
  * @property string|null $photo_path
  * @property MemberStatus $status
  * @property CarbonImmutable $joined_on
@@ -136,6 +149,8 @@ final class Member extends Model
     {
         return [
             'status' => MemberStatus::class,
+            'gender' => Gender::class,
+            'documents_received' => AsEnumCollection::of(RegistrationDocument::class),
             'date_of_birth' => 'immutable_date',
             'joined_on' => 'immutable_date',
             'deactivated_at' => 'immutable_datetime',

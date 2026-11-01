@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Members\Registration\Models;
 
+use App\Domain\Members\Enums\Gender;
 use App\Domain\Members\Models\NomineeRelation;
 use App\Policies\MemberApplicationNomineePolicy;
 use App\Support\Money\Bps;
@@ -20,6 +21,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $relation_id
  * @property string|null $mobile
  * @property string|null $nid
+ * @property Gender|null $gender
+ * @property string|null $passport_no
+ * @property int|null $present_upazila_id
+ * @property int|null $present_union_id
+ * @property string|null $present_address_line
+ * @property int|null $permanent_upazila_id
+ * @property int|null $permanent_union_id
+ * @property string|null $permanent_address_line
  * @property int $share_bps
  * @property int $sort
  * @property-read NomineeRelation|null $nomineeRelation
@@ -54,6 +63,6 @@ final class MemberApplicationNominee extends Model
      */
     protected function casts(): array
     {
-        return ['relation_id' => 'integer', 'share_bps' => 'integer', 'sort' => 'integer'];
+        return ['gender' => Gender::class, 'relation_id' => 'integer', 'share_bps' => 'integer', 'sort' => 'integer'];
     }
 }

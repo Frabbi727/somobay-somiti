@@ -60,6 +60,17 @@ return [
         'increase' => 'বৃদ্ধি',
         'decrease' => 'হ্রাস',
     ],
+    'gender' => [
+        'male' => 'পুরুষ',
+        'female' => 'নারী',
+        'other' => 'অন্যান্য',
+    ],
+    'documents' => [
+        'nid' => 'জাতীয় পরিচয়পত্র (NID)',
+        'passport' => 'পাসপোর্ট',
+        'nominee_nid' => 'নমিনির জাতীয় পরিচয়পত্র (NID)',
+        'nominee_photo' => 'নমিনির ছবি',
+    ],
     'status' => [
         'active' => 'সক্রিয়',
         'inactive' => 'নিষ্ক্রিয়',

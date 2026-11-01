@@ -6,6 +6,8 @@ namespace App\Domain\Members\Registration\Models;
 
 use App\Domain\Members\Data\MemberData;
 use App\Domain\Members\Data\NomineeData;
+use App\Domain\Members\Enums\Gender;
+use App\Domain\Members\Enums\RegistrationDocument;
 use App\Domain\Members\Models\Member;
 use App\Domain\Members\Registration\Enums\MemberApplicationStatus;
 use App\Domain\Members\Registration\Enums\RegistrationNextAction;
@@ -17,6 +19,7 @@ use App\Support\Money\Bps;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\AsEnumCollection;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -39,6 +42,15 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property CarbonImmutable|null $date_of_birth
  * @property string|null $email
  * @property string|null $address
+ * @property Gender|null $gender
+ * @property string|null $passport_no
+ * @property int|null $present_upazila_id
+ * @property int|null $present_union_id
+ * @property string|null $present_address_line
+ * @property int|null $permanent_upazila_id
+ * @property int|null $permanent_union_id
+ * @property string|null $permanent_address_line
+ * @property \Illuminate\Support\Collection<int, RegistrationDocument> $documents_received
  * @property string|null $photo_path
  * @property int|null $requested_shares
  * @property list<string>|null $approval_chain
@@ -208,6 +220,8 @@ final class MemberApplication extends Model
     {
         return [
             'status' => MemberApplicationStatus::class,
+            'gender' => Gender::class,
+            'documents_received' => AsEnumCollection::of(RegistrationDocument::class),
             'date_of_birth' => 'immutable_date',
             'approval_chain' => 'array',
             'requested_shares' => 'integer',

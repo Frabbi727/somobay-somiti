@@ -60,6 +60,17 @@ return [
         'increase' => 'Increase',
         'decrease' => 'Decrease',
     ],
+    'gender' => [
+        'male' => 'Male',
+        'female' => 'Female',
+        'other' => 'Other',
+    ],
+    'documents' => [
+        'nid' => 'National ID (NID)',
+        'passport' => 'Passport',
+        'nominee_nid' => "Nominee's National ID (NID)",
+        'nominee_photo' => "Nominee's photo",
+    ],
     'status' => [
         'active' => 'Active',
         'inactive' => 'Inactive',
