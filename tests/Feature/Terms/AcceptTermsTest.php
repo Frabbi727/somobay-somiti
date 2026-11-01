@@ -86,11 +86,11 @@ it('records an office acceptance when the secretary creates a member', function 
 });
 
 it('says an existing member without acceptance needs to accept', function (): void {
-    expect(app(TermsGate::class)->needsAcceptance(onboard()))->toBeTrue();
+    expect(app(TermsGate::class)->needsAcceptance(onboardUnaccepted()))->toBeTrue();
 });
 
 it('makes everyone accept again after new rules are published', function (): void {
-    $member = onboard();
+    $member = onboardUnaccepted();
     $user = User::query()->findOrFail($member->user_id);
     app(AcceptTerms::class)($user, $member, new TermsConsent(1, ConsentChannel::Portal, (string) Str::uuid()));
 
@@ -102,7 +102,7 @@ it('makes everyone accept again after new rules are published', function (): voi
 });
 
 it('stores one row when accepting twice with the same key', function (): void {
-    $member = onboard();
+    $member = onboardUnaccepted();
     $user = User::query()->findOrFail($member->user_id);
     $consent = new TermsConsent(1, ConsentChannel::App, (string) Str::uuid(), '203.0.113.9');
 
@@ -118,7 +118,7 @@ it('stores one row when accepting twice with the same key', function (): void {
 });
 
 it('refuses a stale version and another person\'s acceptance', function (): void {
-    $member = onboard();
+    $member = onboardUnaccepted();
     $user = User::query()->findOrFail($member->user_id);
     publishNextTerms();
 
@@ -130,8 +130,8 @@ it('refuses a stale version and another person\'s acceptance', function (): void
 });
 
 it('refuses a key another member used', function (): void {
-    $first = onboard();
-    $second = onboard();
+    $first = onboardUnaccepted();
+    $second = onboardUnaccepted();
     $key = (string) Str::uuid();
     app(AcceptTerms::class)(User::query()->findOrFail($first->user_id), $first, new TermsConsent(1, ConsentChannel::Portal, $key));
 
@@ -141,7 +141,7 @@ it('refuses a key another member used', function (): void {
 });
 
 it('refuses a key used for an older version', function (): void {
-    $member = onboard();
+    $member = onboardUnaccepted();
     $user = User::query()->findOrFail($member->user_id);
     $key = (string) Str::uuid();
     app(AcceptTerms::class)($user, $member, new TermsConsent(1, ConsentChannel::Portal, $key));

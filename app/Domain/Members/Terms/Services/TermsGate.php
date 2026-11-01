@@ -31,6 +31,22 @@ final class TermsGate
     }
 
     /**
+     * The member's most recent acceptance of any version, with the text they agreed to.
+     */
+    public function latestAcceptance(Member $member): ?TermsAcceptance
+    {
+        return TermsAcceptance::query()
+            ->where(function (Builder $query) use ($member): void {
+                $query->where('member_id', $member->getKey())
+                    ->orWhereIn('application_id', MemberApplication::query()->select('id')->where('member_id', $member->getKey()));
+            })
+            ->with('terms')
+            ->latest('accepted_at')
+            ->latest('id')
+            ->first();
+    }
+
+    /**
      * @return Builder<TermsAcceptance>
      */
     private function currentAcceptances(Member $member): Builder

@@ -10,6 +10,8 @@ use App\Domain\Members\Portal\LoginCodes;
 use App\Domain\Members\Portal\MemberCredentials;
 use App\Domain\Members\Portal\MemberTokens;
 use App\Domain\Members\Portal\PortalAccounts;
+use App\Domain\Members\Terms\Models\MembershipTerms;
+use App\Domain\Members\Terms\Services\TermsGate;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Http\Api\ApiResponse;
 use App\Http\Api\ApiValue;
@@ -99,7 +101,7 @@ final class AuthController
         return ApiResponse::ok(null, __('api.auth.signed_out'));
     }
 
-    public function me(Request $request, AccountTypes $accounts, PortalAccounts $portal): JsonResponse
+    public function me(Request $request, AccountTypes $accounts, PortalAccounts $portal, TermsGate $terms): JsonResponse
     {
         /** @var User $user */
         $user = $request->user();
@@ -111,6 +113,8 @@ final class AuthController
             return ApiResponse::ok([
                 'account_type' => AccountType::Applicant->value,
                 'mobile' => $application->mobile,
+                'terms_acceptance_required' => false,
+                'terms_version' => MembershipTerms::current()->version,
                 'registration' => [
                     'status' => ApiValue::enum($application->status),
                     'next_action' => $application->nextAction()->value,
@@ -131,6 +135,8 @@ final class AuthController
             'member_no' => $member->member_no,
             'name' => self::memberName($member),
             'status' => ApiValue::enum($member->status),
+            'terms_acceptance_required' => $terms->needsAcceptance($member),
+            'terms_version' => MembershipTerms::current()->version,
         ]);
     }
 }

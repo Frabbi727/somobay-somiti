@@ -8,6 +8,7 @@ use App\Domain\Settings\Models\SomitiProfile;
 use App\Filament\Member\Pages\Auth\MemberLogin;
 use App\Filament\Member\Pages\Dashboard;
 use App\Http\Middleware\RedirectApplicantsToRegistration;
+use App\Http\Middleware\RequireCurrentTermsInPortal;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -65,6 +66,7 @@ final class MemberPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
                 RedirectApplicantsToRegistration::class,
+                RequireCurrentTermsInPortal::class,
             ]);
     }
 }

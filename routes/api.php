@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\Member\ProfileController;
 use App\Http\Controllers\Api\Member\RegistrationController;
 use App\Http\Controllers\Api\Member\SharesController;
 use App\Http\Controllers\Api\Member\StatementController;
+use App\Http\Controllers\Api\Member\TermsController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -44,6 +45,7 @@ Route::prefix('v1')->group(function (): void {
     Route::middleware(['auth:sanctum', 'ability:member,applicant', 'throttle:member-api'])->group(function (): void {
         Route::post('auth/logout', [AuthController::class, 'logout']);
         Route::get('auth/me', [AuthController::class, 'me']);
+        Route::get('terms/current', [TermsController::class, 'current']);
     });
 
     Route::get('registration/photo/{application}', [RegistrationController::class, 'photoFile'])
@@ -56,7 +58,12 @@ Route::prefix('v1')->group(function (): void {
         Route::post('registration/submit', [RegistrationController::class, 'submit']);
     });
 
+    // Reading and accepting the rules must work before the member has accepted them.
     Route::middleware(['auth:sanctum', 'refuse-applicant', 'abilities:member', 'member', 'throttle:member-api'])->group(function (): void {
+        Route::post('terms/accept', [TermsController::class, 'accept']);
+    });
+
+    Route::middleware(['auth:sanctum', 'refuse-applicant', 'abilities:member', 'member', 'terms', 'throttle:member-api'])->group(function (): void {
         Route::get('dashboard/summary', [DashboardController::class, 'summary']);
         Route::get('profile', [ProfileController::class, 'show']);
         Route::post('profile/change-password', [ProfileController::class, 'changePassword']);

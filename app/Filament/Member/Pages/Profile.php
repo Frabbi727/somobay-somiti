@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Member\Pages;
 
 use App\Domain\Members\Portal\ChangeOwnPassword;
+use App\Domain\Members\Terms\Services\TermsGate;
 use App\Filament\Concerns\ConfirmsWithTier;
 use App\Filament\Member\Concerns\ScopedToMember;
 use App\Filament\Support\DomainActionRunner;
@@ -65,7 +66,9 @@ final class Profile extends Page
      */
     protected function getViewData(): array
     {
-        return ['member' => self::member()->load('nominees')];
+        $member = self::member()->load('nominees');
+
+        return ['member' => $member, 'acceptance' => app(TermsGate::class)->latestAcceptance($member)];
     }
 
     public function changePasswordAction(): Action

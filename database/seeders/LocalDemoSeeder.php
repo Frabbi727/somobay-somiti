@@ -42,6 +42,9 @@ use App\Domain\Members\Data\MemberData;
 use App\Domain\Members\Models\Member;
 use App\Domain\Members\Models\NomineeRelation;
 use App\Domain\Members\Portal\PortalAccounts;
+use App\Domain\Members\Terms\Data\TermsConsent;
+use App\Domain\Members\Terms\Enums\ConsentChannel;
+use App\Domain\Members\Terms\Models\MembershipTerms;
 use App\Domain\Settings\Actions\ApproveRatePlan;
 use App\Domain\Settings\Actions\DraftRatePlan;
 use App\Domain\Settings\Actions\LinkRatePlanResolution;
@@ -182,7 +185,7 @@ final class LocalDemoSeeder extends Seeder
                 'nid' => '19900000000'.substr($mobile, -2),
                 'share_percent' => $nominee[2],
             ], $nominees),
-        ]), $shares, $from);
+        ]), $shares, $from, consent: new TermsConsent((int) MembershipTerms::current()->version, ConsentChannel::Office, (string) Str::uuid()));
 
         $portal = app(PortalAccounts::class)->forMember($member);
         $portal->forceFill(['password' => self::PASSWORD])->save();

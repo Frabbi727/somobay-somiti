@@ -237,14 +237,23 @@ function memberData(array $overrides = []): MemberData
 /**
  * Onboards a member through CreateMember as the secretary.
  */
-function onboard(int $shares = 1, string $from = '2026-07', array $overrides = []): Member
+function onboard(int $shares = 1, string $from = '2026-07', array $overrides = [], bool $acceptedTerms = true): Member
 {
     return app(CreateMember::class)(
         userWithRole(Role::Secretary),
         memberData($overrides),
         $shares,
         YearMonth::parse($from),
+        consent: $acceptedTerms ? new TermsConsent(MembershipTerms::current()->version, ConsentChannel::Office, (string) Str::uuid()) : null,
     );
+}
+
+/**
+ * A member who has never accepted the current rules (for the re-acceptance gate tests).
+ */
+function onboardUnaccepted(int $shares = 1, string $from = '2026-07', array $overrides = []): Member
+{
+    return onboard($shares, $from, $overrides, acceptedTerms: false);
 }
 
 /**

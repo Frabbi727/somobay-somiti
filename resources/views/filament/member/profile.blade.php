@@ -18,6 +18,19 @@
         @endforelse
     </x-filament::section>
 
+    @if ($acceptance)
+        @php($bn = app()->getLocale() === 'bn')
+        <x-filament::section icon="heroicon-o-document-check" :heading="__('terms.portal.profile_row', ['version' => Display::digits((string) $acceptance->terms->version), 'date' => Display::date($acceptance->accepted_at)])">
+            <details class="text-sm">
+                <summary class="cursor-pointer font-medium">{{ __('terms.portal.read_rules') }}</summary>
+                <div class="mt-3 space-y-4 whitespace-pre-line leading-relaxed">
+                    <div>{{ $bn ? $acceptance->terms->rules_bn : $acceptance->terms->rules_en }}</div>
+                    <div>{{ $bn ? $acceptance->terms->declaration_bn : $acceptance->terms->declaration_en }}</div>
+                </div>
+            </details>
+        </x-filament::section>
+    @endif
+
     <x-filament::section :heading="__('portal.profile.password')" :description="__('portal.profile.password_help')" icon="heroicon-o-key">
         <form wire:submit.prevent>
             {{ $this->form }}

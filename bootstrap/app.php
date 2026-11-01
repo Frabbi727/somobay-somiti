@@ -7,6 +7,7 @@ use App\Http\Middleware\AssignErrorReference;
 use App\Http\Middleware\EnsureApplicantAccess;
 use App\Http\Middleware\EnsureMemberAccess;
 use App\Http\Middleware\RefuseApplicantTokens;
+use App\Http\Middleware\RequireCurrentTermsInApi;
 use App\Http\Middleware\SetApiLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -35,6 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'member' => EnsureMemberAccess::class,
             'applicant' => EnsureApplicantAccess::class,
             'refuse-applicant' => RefuseApplicantTokens::class,
+            'terms' => RequireCurrentTermsInApi::class,
         ]);
 
         $middleware->redirectGuestsTo(fn (Request $request): string => $request->is('portal', 'portal/*')
