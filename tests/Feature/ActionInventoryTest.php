@@ -68,6 +68,9 @@ function expectedTiers(): array
         'create' => 'T2', 'save' => 'T2', 'toggleActive' => 'T2', 'submit' => 'T2', 'record' => 'T2',
         'changeShares' => 'T2', 'linkResolution' => 'T2', 'prepare' => 'T2', 'openNextFiscalYear' => 'T2', 'openPreviousFiscalYear' => 'T2',
         'invite' => 'T2',
+        'publish' => 'T3', 'newDraft' => 'T1',
+        // Saving the rules draft only touches the one editable draft.
+        'EditMembershipTerms form › save' => 'T1',
 
         // T1: low-risk, reversible.
         'restore' => 'T1', 'testRestore' => 'T1', 'duplicate' => 'T1', 'reactivate' => 'T1', 'lock' => 'T1', 'setPortalPassword' => 'T1', 'recordDocuments' => 'T1',
