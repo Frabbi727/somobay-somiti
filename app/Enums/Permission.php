@@ -84,6 +84,9 @@ enum Permission: string implements HasLabel
     case SomitiProfileEdit = 'somiti_profile.edit';
     case OpeningImport = 'opening.import';
 
+    // Somiti rules (terms).
+    case TermsPublish = 'terms.publish';
+
     /**
      * The roles that hold this permission until the president changes it.
      *
@@ -107,6 +110,7 @@ enum Permission: string implements HasLabel
             self::RatePlansDraft => [Role::SuperAdmin, Role::Secretary, Role::Accountant],
             self::RatePlansLinkResolution => [Role::SuperAdmin, Role::Secretary, Role::Accountant, Role::President],
             self::SmsTemplatesEdit => [Role::SuperAdmin, Role::Secretary],
+            self::TermsPublish => [Role::President, Role::Secretary],
             self::SomitiProfileEdit, self::OpeningImport => [Role::SuperAdmin, Role::President],
             default => [Role::Accountant, Role::President],
         };
@@ -195,7 +199,7 @@ enum Permission: string implements HasLabel
     {
         return match (true) {
             str_starts_with($this->value, 'view.') => 'view',
-            str_starts_with($this->value, 'members.') => 'members',
+            str_starts_with($this->value, 'members.'), str_starts_with($this->value, 'terms.') => 'members',
             in_array(explode('.', $this->value)[0], ['payments', 'dues', 'advance', 'expenses', 'transfers'], true) => 'collections',
             in_array(explode('.', $this->value)[0], ['accounts', 'journals', 'fiscal_years', 'periods', 'statements', 'integrity'], true) => 'accounting',
             in_array(explode('.', $this->value)[0], ['investments', 'year_end', 'dividends'], true) => 'investments',

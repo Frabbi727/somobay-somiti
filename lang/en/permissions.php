@@ -90,5 +90,6 @@ return [
         'sms_templates_edit' => 'Edit SMS templates',
         'somiti_profile_edit' => 'Edit the society profile (name, registration, logo)',
         'opening_import' => 'Import members and opening balances (go-live)',
+        'terms_publish' => 'Publish the somiti rules (new version of the terms)',
     ],
 ];
