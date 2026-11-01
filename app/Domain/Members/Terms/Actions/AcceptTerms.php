@@ -8,6 +8,7 @@ use App\Domain\Members\Models\Member;
 use App\Domain\Members\Terms\Data\TermsConsent;
 use App\Domain\Members\Terms\Models\TermsAcceptance;
 use App\Domain\Members\Terms\Services\TermsGate;
+use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -29,11 +30,17 @@ final class AcceptTerms
         Gate::forUser($actor)->authorize('accept', [TermsAcceptance::class, $member]);
 
         return $this->causer->withCauser($actor, fn (): TermsAcceptance => DB::transaction(function () use ($actor, $member, $consent): TermsAcceptance {
+            DB::select('SELECT pg_advisory_xact_lock(hashtext(?))', ['terms-accept:'.$consent->idempotencyKey]);
+
             Member::query()->whereKey($member->getKey())->lockForUpdate()->firstOrFail();
 
-            $byKey = TermsAcceptance::query()->where('idempotency_key', $consent->idempotencyKey)->first();
+            $byKey = TermsAcceptance::query()->where('idempotency_key', $consent->idempotencyKey)->with('terms')->first();
 
             if ($byKey !== null) {
+                if ($byKey->member_id !== $member->getKey() || $byKey->terms->version !== $consent->version) {
+                    throw DomainRuleViolation::because('terms.errors.idempotency_conflict');
+                }
+
                 return $byKey;
             }
 

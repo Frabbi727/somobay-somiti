@@ -16,5 +16,6 @@ return [
         'text_required' => 'The rules and the declaration must be filled in, in both Bangla and English.',
         'not_draft' => 'Only a draft can be published; this version is already published.',
         'outdated' => 'This version of the rules has been replaced. Please read the current rules and agree again.',
+        'idempotency_conflict' => 'This confirmation key was already used for another acceptance.',
     ],
 ];

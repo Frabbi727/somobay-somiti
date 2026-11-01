@@ -3,8 +3,10 @@
 declare(strict_types=1);
 
 use App\Domain\Members\Actions\CreateMember;
+use App\Domain\Members\Registration\Actions\DecideRegistration;
 use App\Domain\Members\Registration\Actions\SubmitRegistration;
 use App\Domain\Members\Registration\Enums\MemberApplicationStatus;
+use App\Domain\Members\Registration\Enums\RegistrationDecisionType;
 use App\Domain\Members\Terms\Actions\AcceptTerms;
 use App\Domain\Members\Terms\Actions\PublishTerms;
 use App\Domain\Members\Terms\Actions\SaveTermsDraft;
@@ -125,4 +127,51 @@ it('refuses a stale version and another person\'s acceptance', function (): void
 
     expect(fn () => app(AcceptTerms::class)(userWithRole(Role::Secretary), $member, new TermsConsent(2, ConsentChannel::Portal, (string) Str::uuid())))
         ->toThrow(AuthorizationException::class);
+});
+
+it('refuses a key another member used', function (): void {
+    $first = onboard();
+    $second = onboard();
+    $key = (string) Str::uuid();
+    app(AcceptTerms::class)(User::query()->findOrFail($first->user_id), $first, new TermsConsent(1, ConsentChannel::Portal, $key));
+
+    expect(memberRuleKey(fn () => app(AcceptTerms::class)(User::query()->findOrFail($second->user_id), $second, new TermsConsent(1, ConsentChannel::Portal, $key))))
+        ->toBe('terms.errors.idempotency_conflict')
+        ->and(TermsAcceptance::query()->count())->toBe(1);
+});
+
+it('refuses a key used for an older version', function (): void {
+    $member = onboard();
+    $user = User::query()->findOrFail($member->user_id);
+    $key = (string) Str::uuid();
+    app(AcceptTerms::class)($user, $member, new TermsConsent(1, ConsentChannel::Portal, $key));
+    publishNextTerms();
+
+    expect(memberRuleKey(fn () => app(AcceptTerms::class)($user, $member, new TermsConsent(2, ConsentChannel::Portal, $key))))
+        ->toBe('terms.errors.idempotency_conflict');
+});
+
+it('records acceptance of the new version when a returned registration is resubmitted after new rules', function (): void {
+    $application = submittedRegistration();
+    $application = app(DecideRegistration::class)(userWithRole($application->currentRole()), $application, RegistrationDecisionType::Return, 'Fix the photo please');
+    publishNextTerms();
+
+    app(SubmitRegistration::class)($application, (string) Str::uuid(), portalConsent());
+
+    expect(TermsAcceptance::query()->where('application_id', $application->id)->orderBy('id')->with('terms')->get()->map(fn ($a) => $a->terms->version)->all())
+        ->toBe([1, 2]);
+});
+
+it('still returns the registration on a same-key submit retry after new rules are published', function (): void {
+    $application = completeRegistration(invite());
+    $key = (string) Str::uuid();
+    $consent = portalConsent();
+    $first = app(SubmitRegistration::class)($application, $key, $consent);
+    publishNextTerms();
+
+    $again = app(SubmitRegistration::class)($application, $key, $consent);
+
+    expect($again->id)->toBe($first->id)
+        ->and($again->submission_no)->toBe(1)
+        ->and(TermsAcceptance::query()->count())->toBe(1);
 });
