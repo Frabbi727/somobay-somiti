@@ -45,6 +45,34 @@ final class GeoDirectory
         return $this->options(GeoUnion::query()->where('upazila_id', $upazilaId), $search);
     }
 
+    /**
+     * Both names of every place at a level, for API clients that pick the language themselves.
+     *
+     * @param  'division'|'district'|'upazila'|'union'  $level
+     * @return list<array{id: int, name_bn: string, name_en: string}>
+     */
+    public function places(string $level, ?int $parentId = null, ?string $search = null): array
+    {
+        $query = match ($level) {
+            'division' => GeoDivision::query(),
+            'district' => GeoDistrict::query()->where('division_id', $parentId),
+            'upazila' => GeoUpazila::query()->where('district_id', $parentId),
+            'union' => GeoUnion::query()->where('upazila_id', $parentId),
+        };
+
+        $places = [];
+
+        foreach ($this->searched($query, $search)->orderBy($this->column())->get(['id', 'name_en', 'name_bn']) as $place) {
+            $places[] = [
+                'id' => (int) $place->getKey(),
+                'name_bn' => (string) $place->getAttribute('name_bn'),
+                'name_en' => (string) $place->getAttribute('name_en'),
+            ];
+        }
+
+        return $places;
+    }
+
     public function upazilaHasUnions(int $upazilaId): bool
     {
         return GeoUnion::query()->where('upazila_id', $upazilaId)->exists();
@@ -93,6 +121,22 @@ final class GeoDirectory
      */
     private function options(Builder $query, ?string $search): array
     {
+        $column = $this->column();
+        $options = [];
+
+        foreach ($this->searched($query, $search)->orderBy($column)->get(['id', 'name_en', 'name_bn']) as $place) {
+            $options[(int) $place->getKey()] = $this->label($place);
+        }
+
+        return $options;
+    }
+
+    /**
+     * @param  Builder<covariant Model>  $query
+     * @return Builder<covariant Model>
+     */
+    private function searched(Builder $query, ?string $search): Builder
+    {
         $term = trim((string) $search);
 
         if ($term !== '') {
@@ -102,14 +146,7 @@ final class GeoDirectory
             });
         }
 
-        $column = $this->column();
-        $options = [];
-
-        foreach ($query->orderBy($column)->get(['id', 'name_en', 'name_bn']) as $place) {
-            $options[(int) $place->getKey()] = $this->label($place);
-        }
-
-        return $options;
+        return $query;
     }
 
     private function label(Model $place): string

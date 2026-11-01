@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Api\ApiResponse;
+use App\Http\Controllers\Api\GeoController;
 use App\Http\Controllers\Api\Member\AuthController;
 use App\Http\Controllers\Api\Member\ConfigController;
 use App\Http\Controllers\Api\Member\DashboardController;
@@ -25,6 +26,13 @@ Route::prefix('v1')->group(function (): void {
     Route::get('config/somiti-info', [ConfigController::class, 'somitiInfo']);
     Route::get('config/logo', [ConfigController::class, 'logo'])->middleware('signed')->name('api.logo');
     Route::get('config/nominee-relations', [ConfigController::class, 'nomineeRelations']);
+
+    Route::middleware('throttle:member-api')->prefix('geo')->group(function (): void {
+        Route::get('divisions', [GeoController::class, 'divisions']);
+        Route::get('districts', [GeoController::class, 'districts']);
+        Route::get('upazilas', [GeoController::class, 'upazilas']);
+        Route::get('unions', [GeoController::class, 'unions']);
+    });
 
     // Token-free by design: opened in the phone's browser, protected by the signature.
     Route::get('statement/pdf-signed', [StatementController::class, 'pdfSigned'])->middleware('signed')->name('api.statement.signed');
