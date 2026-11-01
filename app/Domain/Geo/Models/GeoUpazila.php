@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Geo\Models;
 
+use App\Policies\GeoUpazilaPolicy;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -16,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $name_en
  * @property string $name_bn
  */
+#[UsePolicy(GeoUpazilaPolicy::class)]
 final class GeoUpazila extends Model
 {
     public $timestamps = false;

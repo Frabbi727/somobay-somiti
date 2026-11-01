@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Geo\Models;
 
+use App\Policies\GeoDivisionPolicy;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -14,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $name_en
  * @property string $name_bn
  */
+#[UsePolicy(GeoDivisionPolicy::class)]
 final class GeoDivision extends Model
 {
     public $timestamps = false;

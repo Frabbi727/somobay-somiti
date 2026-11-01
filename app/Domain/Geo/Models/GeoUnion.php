@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Geo\Models;
 
+use App\Policies\GeoUnionPolicy;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -15,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $name_en
  * @property string $name_bn
  */
+#[UsePolicy(GeoUnionPolicy::class)]
 final class GeoUnion extends Model
 {
     public $timestamps = false;
