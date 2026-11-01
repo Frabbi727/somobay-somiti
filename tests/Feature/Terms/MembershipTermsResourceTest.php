@@ -5,6 +5,9 @@ declare(strict_types=1);
 use App\Domain\Members\Terms\Actions\SaveTermsDraft;
 use App\Domain\Members\Terms\Enums\TermsStatus;
 use App\Domain\Members\Terms\Models\MembershipTerms;
+use App\Domain\Settings\Actions\UpdateRolePermissions;
+use App\Domain\Settings\Services\RolePermissions;
+use App\Enums\Permission;
 use App\Enums\Role;
 use App\Filament\Clusters\Settings\Resources\MembershipTerms\Pages\EditMembershipTerms;
 use App\Filament\Clusters\Settings\Resources\MembershipTerms\Pages\ListMembershipTerms;
@@ -81,4 +84,16 @@ it('published version is read-only in the UI', function (): void {
         ->assertActionHidden('publish');
 
     Livewire::test(EditMembershipTerms::class, ['record' => $current->getKey()])->assertForbidden();
+});
+
+it('keeps the rules list from staff without members access', function (): void {
+    $president = userWithRole(Role::President);
+    $secretary = userWithRole(Role::Secretary);
+    $grid = app(RolePermissions::class)->grid();
+    $grid[Permission::ViewMembers->value][Role::Secretary->value] = false;
+    app(UpdateRolePermissions::class)($president, $grid);
+
+    $this->actingAs($secretary->fresh());
+
+    Livewire::test(ListMembershipTerms::class)->assertForbidden();
 });

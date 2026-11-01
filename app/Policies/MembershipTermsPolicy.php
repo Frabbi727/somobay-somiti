@@ -6,23 +6,24 @@ namespace App\Policies;
 
 use App\Domain\Members\Terms\Enums\TermsStatus;
 use App\Domain\Members\Terms\Models\MembershipTerms;
+use App\Enums\Area;
 use App\Enums\Permission;
 use App\Models\User;
 
 /**
- * Staff read every version; "publish the somiti rules" holders write the draft and publish it.
+ * Staff who see members read every version; "publish the somiti rules" holders write the draft and publish it.
  * A published version is never edited or deleted.
  */
 final class MembershipTermsPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isStaff();
+        return Area::Members->allows($user);
     }
 
     public function view(User $user, MembershipTerms $terms): bool
     {
-        return $user->isStaff();
+        return Area::Members->allows($user);
     }
 
     public function create(User $user): bool

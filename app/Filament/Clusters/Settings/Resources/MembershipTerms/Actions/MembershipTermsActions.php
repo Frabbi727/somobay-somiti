@@ -75,9 +75,9 @@ final class MembershipTermsActions
 
         return self::tier3(
             $action,
-            heading: fn (): string => __('terms.admin.publish_heading', ['version' => self::nextVersion()]),
+            heading: fn (): string => __('terms.admin.publish_heading', ['version' => Display::digits(self::nextVersion())]),
             expected: fn (): string => (string) self::nextVersion(),
-            submitLabel: fn (): string => __('terms.admin.publish_submit', ['version' => self::nextVersion()]),
+            submitLabel: fn (): string => __('terms.admin.publish_submit', ['version' => Display::digits(self::nextVersion())]),
             description: __('terms.admin.publish_warning'),
         );
     }
