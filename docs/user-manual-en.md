@@ -60,6 +60,7 @@ Open it and press **Reverse**, give a reason. Someone **other than the person wh
 ## 4. President
 
 - **Waiting for you** shows everything that needs you: payments, large expenses, investments, rate plans, year-ends, exits, registrations at your step.
+- **Rules drafts and publishing:** see "Society rules: view and publish a new version" in section 5; you can do this too.
 - **Rate plans:** open the plan, read the impact preview (how many members and how much it changes), then **Approve** or **Send back** with a comment. The secretary must approve too.
 - **Exits:** approve after the exit month has ended; the settlement is calculated for you.
 - **Role permissions** (Administration): tick which role may do what. Some rules cannot be changed (listed on the page). You get a bell message whenever roles or permissions change.
@@ -68,13 +69,36 @@ Open it and press **Reverse**, give a reason. Someone **other than the person wh
 ## 5. Secretary
 
 ### Add a member yourself
-**Members › New**: details, at least one nominee with NID, shares and the start month → confirm. The registration fee due is created.
+**Members › New**: laid out like the paper form. The registration fee due is created.
+
+1. **Personal details:** name, father's / husband's name, NID, date of birth, **Gender** (Male, Female, Other) and **Passport no.** (optional; 6–20 capital letters or digits).
+2. **Addresses:** **Present address** and **Permanent address**, each as Division › District › Upazila › Union, then **House / road / village**.
+   - Type in any list to search, in Bangla or English; the first few letters of a name are enough (for example "dhanm").
+   - Changing a higher list clears the ones below it; choose them again. Each list only offers places under the one above, so two upazilas with the same name never get mixed up.
+   - If an upazila has no unions, leave Union empty.
+   - If both addresses are the same, tick **Permanent address is the same as the present address**.
+3. **Shares and the start month.**
+4. **Documents received:** tick what you have in hand: National ID (NID), Passport, Nominee's National ID (NID), Nominee's photo. This is an office record; you can change it later from the member's edit page.
+5. **Nominees:** at least one, with NID. For each: name, relation, mobile, share, **Gender** and their own present and permanent addresses (same search lists and the same "same as" tick). Shares must total 100%.
+6. **Rules:** if the member has read the rules and signed the paper form, tick "The member has read and agreed to the somiti rules (version …)". **The member cannot be created without this tick.** The accepted version is kept on the member's profile.
+7. Confirm.
+
+When a new member is created, gender, both addresses (upazila, a union where the upazila has unions, and the house / road / village line) and the same details for each nominee are required. An existing member can still be edited and saved with these left empty.
 
 ### Let a member register themselves
 1. **Members › Registrations › Invite member**: enter their mobile and a password; give them the password.
 2. They fill the form in the app or portal and submit.
-3. When it reaches your step you get a bell message. Open it and **Approve**, **Send back** (they can correct and resubmit) or **Reject**.
+3. When it reaches your step you get a bell message. Open it to see the personal details (gender and passport no. included), both addresses, each nominee's details and addresses, and the version of the rules the member agreed to. Then **Approve**, **Send back** (they can correct and resubmit) or **Reject**.
+   - **Record documents received:** tick the documents the member has handed in (NID, passport, nominee's NID, nominee's photo). Only people who can create members (secretary and president) see this button, and only while the registration is open (invited, submitted or sent back). After approval, change the list from the member's edit page.
 4. The president gives the final approval and confirms the shares and start month.
+
+### Society rules: view and publish a new version
+**Administration › Somiti rules**:
+
+- **View:** super admin, auditor, president, secretary, cashier and accountant can see every version, the 24 articles, the declaration and how many members have agreed.
+- **New draft:** only the president and secretary. Press **New draft from current**; a draft is created as a copy of the published rules. Fill in the rules and declaration in both Bangla and English, then save. A draft can be edited as often as needed.
+- **Publish:** open the draft and press **Publish**, then type the new version number the box shows. A published version can never be edited or deleted; to correct it, make a new draft and publish again.
+- **Effect:** every member, including existing ones, must agree again (see section 8). Someone who was in the middle of registering sees the new text and agrees again when submitting.
 
 ### Other work
 Meetings and resolutions; exit requests (**Exits › New**); SMS texts (**Administration › SMS templates**); **SMS log** — press **Send again** on a failed message after the SMS balance is topped up.
@@ -93,7 +117,14 @@ Staff accounts (**Administration › Staff users**): create, edit, deactivate. Y
 - **Pay:** pay by bKash/Nagad as usual, then **Pay by bKash/Nagad** (portal menu) → enter the amount and TrxID → submit. It shows **"being checked by the office"** until approved; you do not need to pay again. You get a receipt SMS when approved.
 - **If a payment was not accepted** you get an SMS and see the reason on your home page and under **Receipts**. Check the details and pay again, or contact the office.
 - **Receipts / Statement / Dividends:** download receipts and your statement.
-- **Registering yourself:** fill every section, add at least one nominee with NID, submit. Follow each approval step under **Registration status**. If it is sent back, read the reason, correct and submit again.
+- **Registering yourself:** the steps are **Personal**, **Contact**, **Nominees**, **Shares**, **Review**, **Rules**.
+  - **Personal:** name, NID, date of birth, **Gender** and (optional) **Passport no.** (6–20 capital letters or digits).
+  - **Contact:** **Present address** and **Permanent address**: choose Division › District › Upazila › Union and type the **House / road / village**. Type the first letters in Bangla or English to search a list. Changing a higher list clears the ones below it. If both are the same, tick **Permanent address is the same as the present address**. If the upazila has no unions, leave Union empty.
+  - **Nominees:** at least one with NID; for each, gender and their own present and permanent addresses (same lists and tick). Shares must total 100%.
+  - **Review:** check everything once more.
+  - **Rules** (last step): read the 24 articles and the declaration, tick "I have read and agree to the somiti's rules and declaration", then press **Submit registration**. **You cannot submit without the tick.** Follow each approval step under **Registration status**. If it is sent back, read the reason, correct and submit again.
+- **When new rules are published:** after you sign in, the **Rules and declaration** page comes first (in the app, the same message before anything else opens). This applies to existing members too. Read the rules, tick the box and press **Agree and continue**; nothing else opens until you do (except signing out).
+- **Profile:** the row **Rules I accepted (version …, date)** shows which version you agreed to and when. **Read the rules** lets you read them again.
 
 ## 9. What the status words mean
 
