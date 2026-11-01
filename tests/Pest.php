@@ -186,7 +186,26 @@ function relationId(string $key): int
  */
 function nominee(array $overrides = []): array
 {
-    return ['name' => 'Karima', 'relation_id' => relationId('spouse'), 'nid' => '1234567890', 'share_percent' => '100', ...$overrides];
+    return [
+        'name' => 'Karima',
+        'relation_id' => relationId('spouse'),
+        'nid' => '1234567890',
+        'share_percent' => '100',
+        'gender' => 'female',
+        ...paperAddress('present'),
+        ...paperAddress('permanent'),
+        ...$overrides,
+    ];
+}
+
+/**
+ * A valid address in form shape for a prefix (present|permanent): Gulshan upazila with one of its unions.
+ *
+ * @return array<string, int|string>
+ */
+function paperAddress(string $prefix): array
+{
+    return [$prefix.'_upazila_id' => 495, $prefix.'_union_id' => 4541, $prefix.'_address_line' => 'House 12, Road 3'];
 }
 
 /**
@@ -204,6 +223,9 @@ function memberData(array $overrides = []): MemberData
         'name_en' => 'Rahim Uddin',
         'mobile' => sprintf('0171%07d', $counter),
         'joined_on' => '2026-07-01',
+        'gender' => 'male',
+        ...paperAddress('present'),
+        ...paperAddress('permanent'),
         'nominees' => [nominee()],
         ...$overrides,
     ]);
@@ -434,6 +456,9 @@ function registrationInput(array $overrides = []): array
         'date_of_birth' => '1990-01-15',
         'address' => 'Mirpur, Dhaka',
         'requested_shares' => 2,
+        'gender' => 'male',
+        ...paperAddress('present'),
+        ...paperAddress('permanent'),
         'nominees' => [nominee()],
         ...$overrides,
     ];

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Members\Services;
 
+use App\Domain\Geo\Services\AddressRules;
 use App\Domain\Members\Data\MemberData;
 use App\Domain\Members\Models\Member;
 use App\Domain\Members\Registration\Models\MemberApplication;
@@ -11,7 +12,7 @@ use App\Domain\Shared\Exceptions\DomainRuleViolation;
 
 final class MemberRules
 {
-    public function __construct(private readonly NomineeRules $nominees) {}
+    public function __construct(private readonly NomineeRules $nominees, private readonly AddressRules $addresses) {}
 
     public function assertValid(MemberData $data, ?Member $existing = null, ?int $ignoreApplicationId = null): void
     {
@@ -26,6 +27,19 @@ final class MemberRules
         if ($data->nid !== null && preg_match('/^(\d{10}|\d{13}|\d{17})$/', $data->nid) !== 1) {
             throw DomainRuleViolation::because('members.errors.nid_format');
         }
+
+        $isNew = $existing === null;
+
+        if ($isNew && $data->gender === null) {
+            throw DomainRuleViolation::because('members.errors.gender_required');
+        }
+
+        if ($data->passportNo !== null && preg_match('/^[A-Z0-9]{6,20}$/', $data->passportNo) !== 1) {
+            throw DomainRuleViolation::because('members.errors.passport_format');
+        }
+
+        $this->addresses->assertValid($data->presentAddress, $isNew, 'members.address.present');
+        $this->addresses->assertValid($data->permanentAddress, $isNew, 'members.address.permanent');
 
         $others = Member::withTrashed()->when($existing !== null, fn ($query) => $query->whereKeyNot($existing?->getKey()));
 
@@ -43,6 +57,6 @@ final class MemberRules
             throw DomainRuleViolation::because('members.errors.nid_taken');
         }
 
-        $this->nominees->assertValid($data->nominees);
+        $this->nominees->assertValid($data->nominees, $isNew);
     }
 }

@@ -60,6 +60,12 @@ return [
         'increase' => 'বৃদ্ধি',
         'decrease' => 'হ্রাস',
     ],
+    'address' => [
+        'present' => 'বর্তমান ঠিকানা',
+        'permanent' => 'স্থায়ী ঠিকানা',
+        'nominee_present' => 'নমিনি :name-এর বর্তমান ঠিকানা',
+        'nominee_permanent' => 'নমিনি :name-এর স্থায়ী ঠিকানা',
+    ],
     'gender' => [
         'male' => 'পুরুষ',
         'female' => 'নারী',
@@ -122,6 +128,13 @@ return [
         'edit' => 'সম্পর্ক সম্পাদনা',
     ],
     'errors' => [
+        'gender_required' => 'সদস্যের লিঙ্গ বেছে নিন।',
+        'passport_format' => 'পাসপোর্ট নম্বরে শুধু অক্ষর ও অঙ্ক থাকতে পারে (৬–২০টি)।',
+        'address_required' => ':whose আবশ্যক (উপজেলা ও ঠিকানার লাইন)।',
+        'address_union_required' => ':whose-এর ইউনিয়ন বেছে নিন।',
+        'address_union_mismatch' => ':whose-এর জন্য বাছাই করা ইউনিয়ন এই উপজেলায় নেই।',
+        'address_line_too_long' => ':whose-এর ঠিকানার লাইন সর্বোচ্চ ২৫৫ অক্ষরের হতে পারে।',
+        'nominee_gender_required' => 'নমিনি :name-এর লিঙ্গ বেছে নিন।',
         'relation_key_locked' => 'সম্পর্ক তৈরির পর কী বদলানো যায় না।',
         'relation_key_format' => 'কী-তে শুধু ছোট হাতের ইংরেজি অক্ষর ও _ থাকতে পারে (২–৩০টি)।',
         'relation_key_taken' => ':key কী আগেই ব্যবহৃত হয়েছে।',

@@ -163,8 +163,18 @@ final class LocalDemoSeeder extends Seeder
             'mobile' => $mobile,
             'joined_on' => $from->toDateString(),
             'address' => 'Mirpur, Dhaka',
+            'gender' => in_array($nameEn, ['Salma Begum'], true) ? 'female' : 'male',
+            'present_upazila_id' => 495,
+            'present_union_id' => 4541,
+            'present_address_line' => 'House 12, Road 3',
+            'permanent_same_as_present' => true,
             'nominees' => array_map(fn (array $nominee): array => [
                 'name' => $nominee[0],
+                'gender' => in_array($nominee[1], ['Wife', 'Mother'], true) ? 'female' : 'male',
+                'present_upazila_id' => 495,
+                'present_union_id' => 4541,
+                'present_address_line' => 'House 12, Road 3',
+                'permanent_same_as_present' => true,
                 'relation_id' => NomineeRelation::query()->where('key', match ($nominee[1]) {
                     'Wife', 'Husband' => 'spouse',
                     default => strtolower($nominee[1]),

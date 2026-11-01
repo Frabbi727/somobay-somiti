@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Members\Registration\Actions;
 
+use App\Domain\Geo\Data\PostalAddress;
+use App\Domain\Geo\Services\AddressRules;
 use App\Domain\Members\Models\NomineeRelation;
 use App\Domain\Members\Registration\Data\RegistrationDraft;
 use App\Domain\Members\Registration\Models\MemberApplication;
@@ -19,7 +21,7 @@ use Spatie\Activitylog\Support\CauserResolver;
  */
 final class SaveRegistrationDraft
 {
-    public function __construct(private readonly CauserResolver $causer) {}
+    public function __construct(private readonly CauserResolver $causer, private readonly AddressRules $addresses) {}
 
     public function __invoke(MemberApplication $application, RegistrationDraft $draft): MemberApplication
     {
@@ -61,6 +63,7 @@ final class SaveRegistrationDraft
                         'mobile' => $nominee->mobile,
                         'nid' => $nominee->nid,
                         'share_bps' => $nominee->share->value,
+                        ...$nominee->paperFormAttributes(),
                         'sort' => $index,
                     ]);
                 }
@@ -100,6 +103,20 @@ final class SaveRegistrationDraft
             }
         }
 
+        $passport = $attributes['passport_no'] ?? null;
+
+        if (is_string($passport) && preg_match('/^[A-Z0-9]{6,20}$/', $passport) !== 1) {
+            throw DomainRuleViolation::because('members.errors.passport_format');
+        }
+
+        foreach (['present', 'permanent'] as $prefix) {
+            $address = PostalAddress::fromForm($attributes, $prefix);
+
+            if ($address !== null && $address->upazilaId > 0) {
+                $this->addresses->assertFormat($address, 'members.address.'.$prefix);
+            }
+        }
+
         $photo = $attributes['photo_path'] ?? null;
 
         if (is_string($photo) && (! str_starts_with($photo, 'member-photos/') || str_contains($photo, '..'))) {
@@ -119,6 +136,16 @@ final class SaveRegistrationDraft
 
             if ($nominee->relationId !== null && ! NomineeRelation::isActive($nominee->relationId)) {
                 throw DomainRuleViolation::because('members.errors.nominee_relation', $replace);
+            }
+
+            foreach (['present' => $nominee->presentAddress, 'permanent' => $nominee->permanentAddress] as $prefix => $address) {
+                if ($address !== null && $address->upazilaId > 0) {
+                    $this->addresses->assertFormat($address, 'members.address.nominee_'.$prefix, $replace);
+                }
+            }
+
+            if ($nominee->passportNo !== null && preg_match('/^[A-Z0-9]{6,20}$/', $nominee->passportNo) !== 1) {
+                throw DomainRuleViolation::because('members.errors.passport_format');
             }
 
             if ($nominee->share->value > 10000) {

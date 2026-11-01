@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Members\Services;
 
+use App\Domain\Geo\Services\AddressRules;
 use App\Domain\Members\Data\NomineeData;
 use App\Domain\Members\Models\NomineeRelation;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
@@ -15,10 +16,13 @@ use App\Support\Money\Bps;
  */
 final class NomineeRules
 {
+    public function __construct(private readonly AddressRules $addresses) {}
+
     /**
      * @param  list<NomineeData>  $nominees
+     * @param  bool  $requireFullProfile  true for a new member: gender and both addresses are needed
      */
-    public function assertValid(array $nominees): void
+    public function assertValid(array $nominees, bool $requireFullProfile = true): void
     {
         if ($nominees === []) {
             throw DomainRuleViolation::because('members.errors.nominee_required');
@@ -46,6 +50,17 @@ final class NomineeRules
             if ($nominee->mobile !== null && preg_match('/^01[3-9]\d{8}$/', $nominee->mobile) !== 1) {
                 throw DomainRuleViolation::because('members.errors.nominee_mobile_format', ['name' => $nominee->name]);
             }
+
+            if ($requireFullProfile && $nominee->gender === null) {
+                throw DomainRuleViolation::because('members.errors.nominee_gender_required', ['name' => $nominee->name]);
+            }
+
+            if ($nominee->passportNo !== null && preg_match('/^[A-Z0-9]{6,20}$/', $nominee->passportNo) !== 1) {
+                throw DomainRuleViolation::because('members.errors.passport_format');
+            }
+
+            $this->addresses->assertValid($nominee->presentAddress, $requireFullProfile, 'members.address.nominee_present', ['name' => $nominee->name]);
+            $this->addresses->assertValid($nominee->permanentAddress, $requireFullProfile, 'members.address.nominee_permanent', ['name' => $nominee->name]);
 
             $total += $nominee->share->value;
         }

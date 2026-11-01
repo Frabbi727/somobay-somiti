@@ -60,6 +60,12 @@ return [
         'increase' => 'Increase',
         'decrease' => 'Decrease',
     ],
+    'address' => [
+        'present' => 'Present address',
+        'permanent' => 'Permanent address',
+        'nominee_present' => "Nominee :name's present address",
+        'nominee_permanent' => "Nominee :name's permanent address",
+    ],
     'gender' => [
         'male' => 'Male',
         'female' => 'Female',
@@ -122,6 +128,13 @@ return [
         'edit' => 'Edit relation',
     ],
     'errors' => [
+        'gender_required' => "Choose the member's gender.",
+        'passport_format' => 'The passport number may only have letters and digits (6–20).',
+        'address_required' => ':whose is required (upazila and address line).',
+        'address_union_required' => ':whose needs a union.',
+        'address_union_mismatch' => 'The union chosen for :whose is not in the chosen upazila.',
+        'address_line_too_long' => 'The address line of :whose may have at most 255 characters.',
+        'nominee_gender_required' => 'Choose the gender of nominee :name.',
         'relation_key_locked' => 'The key cannot change once the relation exists.',
         'relation_key_format' => 'The key may only have lower-case English letters and _ (2–30).',
         'relation_key_taken' => 'The key :key is already used.',

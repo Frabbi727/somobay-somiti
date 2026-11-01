@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Members\Registration\Models;
 
+use App\Domain\Geo\Data\PostalAddress;
 use App\Domain\Members\Data\MemberData;
 use App\Domain\Members\Data\NomineeData;
 use App\Domain\Members\Enums\Gender;
@@ -204,7 +205,16 @@ final class MemberApplication extends Model
                 mobile: $nominee->mobile,
                 nid: $nominee->nid,
                 relationId: $nominee->relation_id,
+                gender: $nominee->gender,
+                passportNo: $nominee->passport_no,
+                presentAddress: PostalAddress::fromAttributes($nominee, 'present'),
+                permanentAddress: PostalAddress::fromAttributes($nominee, 'permanent'),
             ))->all()),
+            gender: $this->gender,
+            passportNo: $this->passport_no,
+            presentAddress: PostalAddress::fromAttributes($this, 'present'),
+            permanentAddress: PostalAddress::fromAttributes($this, 'permanent'),
+            documentsReceived: array_values($this->documents_received->all()),
         );
     }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Members\Registration\Data;
 
 use App\Domain\Members\Data\NomineeData;
+use App\Domain\Members\Enums\Gender;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Support\Bangla\BanglaNumber;
 use InvalidArgumentException;
@@ -16,7 +17,7 @@ use InvalidArgumentException;
 final readonly class RegistrationDraft
 {
     /** @var list<string> */
-    public const array FIELDS = ['name_bn', 'name_en', 'guardian_name', 'nid', 'date_of_birth', 'email', 'address', 'photo_path', 'requested_shares'];
+    public const array FIELDS = ['name_bn', 'name_en', 'guardian_name', 'nid', 'date_of_birth', 'email', 'address', 'photo_path', 'requested_shares', 'gender', 'passport_no', 'present_upazila_id', 'present_union_id', 'present_address_line', 'permanent_upazila_id', 'permanent_union_id', 'permanent_address_line'];
 
     /**
      * @param  array<string, string|int|null>  $attributes  column => value, only for fields that were sent
@@ -31,6 +32,14 @@ final readonly class RegistrationDraft
     {
         $attributes = [];
 
+        if (filter_var($input['permanent_same_as_present'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+            foreach (['upazila_id', 'union_id', 'address_line'] as $part) {
+                if (array_key_exists('present_'.$part, $input)) {
+                    $input['permanent_'.$part] = $input['present_'.$part];
+                }
+            }
+        }
+
         foreach (self::FIELDS as $field) {
             if (! array_key_exists($field, $input)) {
                 continue;
@@ -39,7 +48,9 @@ final readonly class RegistrationDraft
             $text = self::text($input[$field]);
 
             $attributes[$field] = match ($field) {
-                'requested_shares' => self::wholeNumber($input[$field]),
+                'requested_shares', 'present_upazila_id', 'present_union_id', 'permanent_upazila_id', 'permanent_union_id' => self::wholeNumber($input[$field]),
+                'gender' => $text === null ? null : Gender::tryFrom($text)?->value,
+                'passport_no' => $text === null ? null : strtoupper((string) preg_replace('/\s+/', '', $text)),
                 'nid' => $text === null ? null : BanglaNumber::toAscii(preg_replace('/\s+/', '', $text) ?? $text),
                 default => $text,
             };

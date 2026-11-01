@@ -32,6 +32,7 @@ final class NomineeWriter
                 'mobile' => $nominee->mobile,
                 'nid' => $nominee->nid,
                 'share_bps' => $nominee->share->value,
+                ...$nominee->paperFormAttributes(),
                 'sort' => $index,
             ]);
         }
