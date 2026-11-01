@@ -86,7 +86,7 @@ it('explains why a submit is refused', function (): void {
 
 it('answers a reused key from another registration with 409', function (): void {
     $key = (string) Str::uuid();
-    app(SubmitRegistration::class)(completeRegistration(invite('01822222222'), ['nid' => '1111111111']), $key);
+    app(SubmitRegistration::class)(completeRegistration(invite('01822222222'), ['nid' => '1111111111']), $key, portalConsent());
     $this->putJson('/api/v1/registration', registrationInput())->assertOk();
 
     $this->postJson('/api/v1/registration/submit', ['idempotency_key' => $key])->assertStatus(409);

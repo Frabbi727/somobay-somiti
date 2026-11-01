@@ -8,6 +8,8 @@ use App\Domain\Members\Registration\Actions\SaveRegistrationDraft;
 use App\Domain\Members\Registration\Actions\SubmitRegistration;
 use App\Domain\Members\Registration\Data\RegistrationDraft;
 use App\Domain\Members\Registration\Models\MemberApplication;
+use App\Domain\Members\Terms\Data\TermsConsent;
+use App\Domain\Members\Terms\Enums\ConsentChannel;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Http\Api\ApiResponse;
 use App\Http\Controllers\Api\Member\Concerns\ResolvesApplication;
@@ -18,6 +20,7 @@ use App\Http\Resources\Api\RegistrationResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
@@ -64,7 +67,8 @@ final class RegistrationController
 
     public function submit(SubmitRegistrationRequest $request, SubmitRegistration $submit): JsonResponse
     {
-        $application = $submit(self::application($request), (string) $request->string('idempotency_key'));
+        $key = (string) $request->string('idempotency_key');
+        $application = $submit(self::application($request), $key, TermsConsent::implicitForCurrent(ConsentChannel::App, Str::isUuid($key) ? $key : (string) Str::uuid(), $request->ip()));
 
         return ApiResponse::ok(RegistrationResource::make($application), __('registration.notifications.submitted'));
     }

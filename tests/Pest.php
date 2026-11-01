@@ -29,6 +29,9 @@ use App\Domain\Members\Registration\Data\RegistrationDraft;
 use App\Domain\Members\Registration\Enums\MemberApplicationStatus;
 use App\Domain\Members\Registration\Enums\RegistrationDecisionType;
 use App\Domain\Members\Registration\Models\MemberApplication;
+use App\Domain\Members\Terms\Data\TermsConsent;
+use App\Domain\Members\Terms\Enums\ConsentChannel;
+use App\Domain\Members\Terms\Models\MembershipTerms;
 use App\Domain\Notifications\Contracts\SmsGateway;
 use App\Domain\Notifications\Data\SmsResult;
 use App\Domain\Settings\Actions\ApproveRatePlan;
@@ -475,11 +478,19 @@ function completeRegistration(MemberApplication $application, array $overrides =
 }
 
 /**
+ * A portal consent to the current rules, for tests that submit a registration directly.
+ */
+function portalConsent(?string $key = null): TermsConsent
+{
+    return new TermsConsent((int) MembershipTerms::current()->version, ConsentChannel::Portal, $key ?? (string) Str::uuid());
+}
+
+/**
  * An invited, completed and submitted registration (waiting for the first approver).
  */
 function submittedRegistration(string $mobile = '01811111111'): MemberApplication
 {
-    return app(SubmitRegistration::class)(completeRegistration(invite($mobile)), (string) Str::uuid());
+    return app(SubmitRegistration::class)(completeRegistration(invite($mobile)), (string) Str::uuid(), portalConsent());
 }
 
 /**
@@ -487,7 +498,7 @@ function submittedRegistration(string $mobile = '01811111111'): MemberApplicatio
  */
 function submittedRegistrationFrom(MemberApplication $application): MemberApplication
 {
-    return app(SubmitRegistration::class)(completeRegistration($application), (string) Str::uuid());
+    return app(SubmitRegistration::class)(completeRegistration($application), (string) Str::uuid(), portalConsent());
 }
 
 /**

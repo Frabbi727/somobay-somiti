@@ -15,7 +15,7 @@ it('submits a complete registration to the first step of the chain', function ()
     $secretary = userWithRole(Role::Secretary);
     $application = completeRegistration(invite());
 
-    $submitted = app(SubmitRegistration::class)($application, (string) Str::uuid());
+    $submitted = app(SubmitRegistration::class)($application, (string) Str::uuid(), portalConsent());
 
     expect($submitted->status)->toBe(MemberApplicationStatus::Submitted)
         ->and($submitted->approval_chain)->toBe(['secretary', 'president'])
@@ -32,9 +32,9 @@ it('answers a repeated submit with the same key without submitting twice', funct
     $application = completeRegistration(invite());
     $key = (string) Str::uuid();
 
-    app(SubmitRegistration::class)($application, $key);
+    app(SubmitRegistration::class)($application, $key, portalConsent());
     $notified = DatabaseNotification::query()->count();
-    $again = app(SubmitRegistration::class)($application, $key);
+    $again = app(SubmitRegistration::class)($application, $key, portalConsent());
 
     expect($again->submission_no)->toBe(1)
         ->and($notified)->toBeGreaterThan(0)
@@ -43,16 +43,16 @@ it('answers a repeated submit with the same key without submitting twice', funct
 
 it('refuses a key that another registration used', function (): void {
     $key = (string) Str::uuid();
-    app(SubmitRegistration::class)(completeRegistration(invite('01811111111')), $key);
+    app(SubmitRegistration::class)(completeRegistration(invite('01811111111')), $key, portalConsent());
 
-    expect(memberRuleKey(fn () => app(SubmitRegistration::class)(completeRegistration(invite('01822222222'), ['nid' => '9876543211']), $key)))
+    expect(memberRuleKey(fn () => app(SubmitRegistration::class)(completeRegistration(invite('01822222222'), ['nid' => '9876543211']), $key, portalConsent())))
         ->toBe('registration.errors.idempotency_conflict');
 });
 
 it('runs the member rules before submitting', function (array $overrides, string $key): void {
     $application = completeRegistration(invite(), $overrides);
 
-    expect(memberRuleKey(fn () => app(SubmitRegistration::class)($application, (string) Str::uuid())))->toBe($key)
+    expect(memberRuleKey(fn () => app(SubmitRegistration::class)($application, (string) Str::uuid(), portalConsent())))->toBe($key)
         ->and($application->fresh()?->status)->toBe(MemberApplicationStatus::Invited);
 })->with([
     'no english name' => [['name_en' => ''], 'members.errors.names_required'],
@@ -65,19 +65,19 @@ it('needs the requested share count', function (): void {
     $application = completeRegistration(invite());
     $application->forceFill(['requested_shares' => null])->save();
 
-    expect(memberRuleKey(fn () => app(SubmitRegistration::class)($application, (string) Str::uuid())))->toBe('registration.errors.shares_required');
+    expect(memberRuleKey(fn () => app(SubmitRegistration::class)($application, (string) Str::uuid(), portalConsent())))->toBe('registration.errors.shares_required');
 });
 
 it('refuses an NID that a member or another open registration has', function (): void {
     approvedPlan('2026-07', '500');
     onboard(1, '2026-07', ['nid' => '5555555555']);
 
-    expect(memberRuleKey(fn () => app(SubmitRegistration::class)(completeRegistration(invite('01811111111'), ['nid' => '5555555555']), (string) Str::uuid())))
+    expect(memberRuleKey(fn () => app(SubmitRegistration::class)(completeRegistration(invite('01811111111'), ['nid' => '5555555555']), (string) Str::uuid(), portalConsent())))
         ->toBe('members.errors.nid_taken');
 
     submittedRegistration('01822222222'); // default NID 9876543210
 
-    expect(memberRuleKey(fn () => app(SubmitRegistration::class)(completeRegistration(invite('01833333333')), (string) Str::uuid())))
+    expect(memberRuleKey(fn () => app(SubmitRegistration::class)(completeRegistration(invite('01833333333')), (string) Str::uuid(), portalConsent())))
         ->toBe('registration.errors.nid_taken');
 });
 

@@ -23,7 +23,7 @@ it('submits once when the same submit arrives four times at once', function (): 
     $key = (string) Str::uuid();
 
     $results = inParallel(4, function () use ($applicationId, $key): string {
-        $application = app(SubmitRegistration::class)(MemberApplication::query()->findOrFail($applicationId), $key);
+        $application = app(SubmitRegistration::class)(MemberApplication::query()->findOrFail($applicationId), $key, portalConsent());
 
         return 'submission '.$application->submission_no;
     });

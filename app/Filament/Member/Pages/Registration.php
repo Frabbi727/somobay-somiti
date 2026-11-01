@@ -11,6 +11,8 @@ use App\Domain\Members\Registration\Data\RegistrationDraft;
 use App\Domain\Members\Registration\Models\MemberApplication;
 use App\Domain\Members\Registration\Models\MemberApplicationNominee;
 use App\Domain\Members\Registration\Services\RegistrationTimeline;
+use App\Domain\Members\Terms\Data\TermsConsent;
+use App\Domain\Members\Terms\Enums\ConsentChannel;
 use App\Filament\Concerns\ConfirmsWithTier;
 use App\Filament\Member\Concerns\ScopedToApplicant;
 use App\Filament\Support\ChangeSummary;
@@ -203,7 +205,7 @@ final class Registration extends Page
                     }
 
                     $this->save($state);
-                    DomainActionRunner::run(fn (User $actor): MemberApplication => app(SubmitRegistration::class)(self::application(), $this->idempotencyKey));
+                    DomainActionRunner::run(fn (User $actor): MemberApplication => app(SubmitRegistration::class)(self::application(), $this->idempotencyKey, TermsConsent::implicitForCurrent(ConsentChannel::Portal, Str::isUuid($this->idempotencyKey) ? $this->idempotencyKey : (string) Str::uuid(), request()->ip())));
                     $this->redirect(RegistrationStatus::getUrl());
                 }),
             heading: __('registration.actions.submit_heading'),

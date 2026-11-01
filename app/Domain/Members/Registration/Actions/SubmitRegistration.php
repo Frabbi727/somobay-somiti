@@ -8,6 +8,9 @@ use App\Domain\Members\Registration\Enums\MemberApplicationStatus;
 use App\Domain\Members\Registration\Models\MemberApplication;
 use App\Domain\Members\Registration\Services\ApproverNotifier;
 use App\Domain\Members\Services\MemberRules;
+use App\Domain\Members\Terms\Data\TermsConsent;
+use App\Domain\Members\Terms\Models\TermsAcceptance;
+use App\Domain\Members\Terms\Services\TermsGate;
 use App\Domain\Settings\Models\SomitiProfile;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Enums\Role;
@@ -26,12 +29,13 @@ final class SubmitRegistration
     public function __construct(
         private readonly MemberRules $rules,
         private readonly ApproverNotifier $notifier,
+        private readonly TermsGate $terms,
         private readonly CauserResolver $causer,
     ) {}
 
-    public function __invoke(MemberApplication $application, string $idempotencyKey): MemberApplication
+    public function __invoke(MemberApplication $application, string $idempotencyKey, TermsConsent $consent): MemberApplication
     {
-        return $this->causer->withCauser($application->user, fn (): MemberApplication => DB::transaction(function () use ($application, $idempotencyKey): MemberApplication {
+        return $this->causer->withCauser($application->user, fn (): MemberApplication => DB::transaction(function () use ($application, $idempotencyKey, $consent): MemberApplication {
             DB::select('SELECT pg_advisory_xact_lock(hashtext(?))', ['registration-submit:'.$idempotencyKey]);
 
             if (MemberApplication::query()->where('submit_idempotency_key', $idempotencyKey)->whereKeyNot($application->getKey())->exists()) {
@@ -47,6 +51,8 @@ final class SubmitRegistration
             if (! $locked->status->isEditable()) {
                 throw DomainRuleViolation::because('registration.errors.not_editable');
             }
+
+            $terms = $this->terms->assertCurrent($consent->version);
 
             $locked->load('nominees');
             $this->rules->assertValid($locked->toMemberData(CarbonImmutable::now(YearMonth::TIMEZONE)), null, $locked->id);
@@ -80,6 +86,18 @@ final class SubmitRegistration
                 'decided_at' => null,
                 'submit_idempotency_key' => $idempotencyKey,
             ])->save();
+
+            // A returned registration that is sent again keeps the acceptance of this version it already has.
+            TermsAcceptance::query()->firstOrCreate([
+                'terms_id' => $terms->getKey(),
+                'application_id' => $locked->getKey(),
+            ], [
+                'user_id' => $locked->user_id,
+                'channel' => $consent->channel,
+                'ip' => $consent->ip,
+                'idempotency_key' => $consent->idempotencyKey,
+                'accepted_at' => CarbonImmutable::now(),
+            ]);
 
             activity('members')->performedOn($locked)->event('registration_submitted')->withProperties(['submission_no' => $locked->submission_no])->log('registration submitted');
 

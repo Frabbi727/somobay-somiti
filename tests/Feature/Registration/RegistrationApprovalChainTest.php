@@ -19,7 +19,7 @@ it('changes the order for new submissions and keeps it for submitted ones', func
     $before = submittedRegistration('01811111111');
 
     app(UpdateRegistrationApprovalChain::class)(userWithRole(Role::President), [Role::Secretary, Role::Cashier, Role::President]);
-    $after = app(SubmitRegistration::class)(completeRegistration(invite('01822222222'), ['nid' => '1111111111']), (string) Str::uuid());
+    $after = app(SubmitRegistration::class)(completeRegistration(invite('01822222222'), ['nid' => '1111111111']), (string) Str::uuid(), portalConsent());
 
     expect($before->fresh()?->approval_chain)->toBe(['secretary', 'president'])
         ->and($after->approval_chain)->toBe(['secretary', 'cashier', 'president']);

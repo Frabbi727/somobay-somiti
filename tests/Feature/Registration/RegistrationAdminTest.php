@@ -79,7 +79,7 @@ it('keeps showing every nominee after a decision', function (): void {
     $application = app(SubmitRegistration::class)(completeRegistration(invite(), ['nominees' => [
         nominee(['name' => 'Karima', 'share_percent' => '60']),
         nominee(['name' => 'Rahim', 'relation_id' => relationId('son'), 'nid' => '1234567891', 'share_percent' => '40']),
-    ]]), (string) Str::uuid());
+    ]]), (string) Str::uuid(), portalConsent());
     $this->actingAs(userWithRole(Role::Secretary));
 
     Livewire::test(ViewMemberApplication::class, ['record' => $application->getRouteKey()])
@@ -135,7 +135,7 @@ it('hides the decision buttons from the wrong role', function (): void {
 
 it('sends back and rejects with a reason', function (): void {
     $returned = submittedRegistration('01811111111');
-    $rejected = app(SubmitRegistration::class)(completeRegistration(invite('01822222222'), ['nid' => '1111111111']), (string) Str::uuid());
+    $rejected = app(SubmitRegistration::class)(completeRegistration(invite('01822222222'), ['nid' => '1111111111']), (string) Str::uuid(), portalConsent());
     $this->actingAs(userWithRole(Role::Secretary));
 
     Livewire::test(ViewMemberApplication::class, ['record' => $returned->getRouteKey()])

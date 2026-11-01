@@ -116,7 +116,7 @@ it('sends a registration back with a reason; the member fixes it and the chain s
         ->and(SmsMessage::query()->where('template_key', 'registration_returned')->sole()->body)->toContain('Photo is missing');
 
     app(SaveRegistrationDraft::class)($application, RegistrationDraft::fromInput(['address' => 'Uttara, Dhaka']));
-    $application = app(SubmitRegistration::class)($application, (string) Str::uuid());
+    $application = app(SubmitRegistration::class)($application, (string) Str::uuid(), portalConsent());
 
     expect($application->submission_no)->toBe(2)
         ->and($application->current_step)->toBe(0)

@@ -12,6 +12,9 @@ use App\Domain\Members\Portal\PortalAccounts;
 use App\Domain\Members\Services\MemberRules;
 use App\Domain\Members\Services\NomineeWriter;
 use App\Domain\Members\Services\ShareChanger;
+use App\Domain\Members\Terms\Data\TermsConsent;
+use App\Domain\Members\Terms\Models\TermsAcceptance;
+use App\Domain\Members\Terms\Services\TermsGate;
 use App\Models\User;
 use App\Support\Time\YearMonth;
 use Illuminate\Support\Facades\DB;
@@ -29,15 +32,16 @@ final class CreateMember
         private readonly ShareChanger $shares,
         private readonly NomineeWriter $nominees,
         private readonly PortalAccounts $portal,
+        private readonly TermsGate $terms,
         private readonly CauserResolver $causer,
     ) {}
 
-    public function __invoke(User $actor, MemberData $data, int $shares, YearMonth $effectiveFrom, ?User $portalUser = null): Member
+    public function __invoke(User $actor, MemberData $data, int $shares, YearMonth $effectiveFrom, ?User $portalUser = null, ?TermsConsent $consent = null): Member
     {
         Gate::forUser($actor)->authorize('create', Member::class);
         $this->rules->assertValid($data);
 
-        return $this->causer->withCauser($actor, fn (): Member => DB::transaction(function () use ($actor, $data, $shares, $effectiveFrom, $portalUser): Member {
+        return $this->causer->withCauser($actor, fn (): Member => DB::transaction(function () use ($actor, $data, $shares, $effectiveFrom, $portalUser, $consent): Member {
             $number = (int) DB::scalar("SELECT nextval('member_no_seq')");
 
             $member = Member::query()->create([
@@ -50,6 +54,18 @@ final class CreateMember
             $this->nominees->replace($member, $data->nominees);
             $this->shares->increase($actor, $member, $shares, $effectiveFrom, 'Joined');
             $this->portal->forMember($member, $portalUser);
+
+            if ($consent !== null) {
+                TermsAcceptance::query()->create([
+                    'terms_id' => $this->terms->assertCurrent($consent->version)->getKey(),
+                    'member_id' => $member->getKey(),
+                    'user_id' => $actor->id,
+                    'channel' => $consent->channel,
+                    'ip' => $consent->ip,
+                    'idempotency_key' => $consent->idempotencyKey,
+                    'accepted_at' => now(),
+                ]);
+            }
 
             event(new MemberJoined($member));
 
