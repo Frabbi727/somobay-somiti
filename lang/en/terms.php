@@ -12,6 +12,7 @@ return [
         'app' => 'Mobile app',
         'office' => 'Office (paper form)',
     ],
+    'office_confirm' => 'The member has read and agreed to the somiti rules (version :version)',
     'portal' => [
         'title' => 'Rules and declaration',
         'rules_heading' => 'Rules and declaration',

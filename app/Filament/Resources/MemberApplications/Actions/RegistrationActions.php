@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Filament\Resources\MemberApplications\Actions;
 
 use App\Domain\Members\Actions\SetPortalPassword;
+use App\Domain\Members\Enums\RegistrationDocument;
 use App\Domain\Members\Registration\Actions\DecideRegistration;
 use App\Domain\Members\Registration\Actions\InviteMember;
+use App\Domain\Members\Registration\Actions\RecordApplicationDocuments;
 use App\Domain\Members\Registration\Enums\MemberApplicationStatus;
 use App\Domain\Members\Registration\Enums\RegistrationDecisionType;
 use App\Domain\Members\Registration\Models\MemberApplication;
@@ -21,6 +23,7 @@ use App\Support\Contact\MobileNumber;
 use App\Support\Time\YearMonth;
 use Closure;
 use Filament\Actions\Action;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
@@ -188,6 +191,43 @@ final class RegistrationActions
     /**
      * The member record created by the final approval.
      */
+    /**
+     * T1: the office ticks which paper documents arrived with an open application.
+     */
+    public static function recordDocuments(): Action
+    {
+        $action = Action::make('recordDocuments')
+            ->label(__('registration.actions.record_documents'))
+            ->tooltip(__('registration.actions.record_documents'))
+            ->icon(Heroicon::OutlinedClipboardDocumentCheck)
+            ->color('gray')
+            ->visible(fn (MemberApplication $record): bool => $record->status->isOpen() && (bool) auth()->user()?->can('create', MemberApplication::class))
+            ->fillForm(fn (MemberApplication $record): array => [
+                'documents' => array_map(fn (RegistrationDocument $document): string => $document->value, array_values($record->documents_received->all())),
+            ])
+            ->schema([
+                CheckboxList::make('documents')
+                    ->label(__('members.member.documents_received'))
+                    ->options(RegistrationDocument::class)
+                    ->columns(2),
+            ])
+            ->action(function (MemberApplication $record, array $data): void {
+                $documents = array_values(array_filter(array_map(
+                    fn (mixed $value): ?RegistrationDocument => $value instanceof RegistrationDocument ? $value : (is_string($value) ? RegistrationDocument::tryFrom($value) : null),
+                    is_array($data['documents'] ?? null) ? $data['documents'] : [],
+                )));
+
+                DomainActionRunner::run(fn (User $actor): MemberApplication => app(RecordApplicationDocuments::class)($actor, $record, $documents));
+
+                Notification::make()->title(__('registration.notifications.documents_recorded'))->success()->send();
+            });
+
+        return self::tier1(
+            $action,
+            fn (MemberApplication $record): string => __('registration.actions.record_documents_heading', ['name' => $record->name_bn ?? $record->mobile]),
+        );
+    }
+
     public static function openMember(): Action
     {
         return Action::make('openMember')

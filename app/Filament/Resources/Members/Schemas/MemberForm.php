@@ -4,15 +4,21 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Members\Schemas;
 
+use App\Domain\Geo\Data\PostalAddress;
+use App\Domain\Members\Enums\RegistrationDocument;
 use App\Domain\Members\Models\Member;
 use App\Domain\Members\Models\Nominee;
 use App\Domain\Members\Models\NomineeRelation;
 use App\Domain\Members\Services\ShareChanger;
+use App\Domain\Members\Terms\Models\MembershipTerms;
+use App\Filament\Forms\PersonFields;
 use App\Support\Contact\MobileNumber;
 use App\Support\Money\Bps;
 use App\Support\Time\YearMonth;
 use Carbon\CarbonImmutable;
 use Closure;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
@@ -30,6 +36,7 @@ final class MemberForm
     public static function configure(Schema $schema): Schema
     {
         $creating = fn (?Member $record): bool => $record === null;
+        $isCreate = fn (string $operation): bool => $operation === 'create';
 
         return $schema
             ->components([
@@ -74,7 +81,12 @@ final class MemberForm
                                 }
                             }),
                         TextInput::make('email')->label(__('members.member.email'))->email(),
-                        Textarea::make('address')->label(__('members.member.address'))->rows(2),
+                        Textarea::make('address')
+                            ->label(__('members.member.old_address'))
+                            ->rows(2)
+                            ->visible(fn (string $operation, Get $get): bool => $operation !== 'create' && filled($get('address')))
+                            ->dehydratedWhenHidden(),
+                        ...PersonFields::make($isCreate),
                     ]),
                 Section::make(__('members.member.shares_section'))
                     ->columns(2)
@@ -94,6 +106,14 @@ final class MemberForm
                             ->regex('/^\d{4}-\d{2}$/')
                             ->default(fn (): string => (string) app(ShareChanger::class)->firstOpenMonth())
                             ->required($creating),
+                    ]),
+                Section::make(__('members.member.documents_section'))
+                    ->columnSpanFull()
+                    ->schema([
+                        CheckboxList::make('documents_received')
+                            ->label(__('members.member.documents_received'))
+                            ->options(RegistrationDocument::class)
+                            ->columns(2),
                     ]),
                 Section::make(__('members.member.nominees_section'))
                     ->columnSpanFull()
@@ -120,6 +140,7 @@ final class MemberForm
                                     ->label(__('members.nominee.nid'))
                                     ->required()
                                     ->regex('/^([0-9০-৯]{10}|[0-9০-৯]{13}|[0-9০-৯]{17})$/u'),
+                                ...PersonFields::make($isCreate),
                                 TextInput::make('mobile')
                                     ->label(__('members.nominee.mobile'))
                                     ->tel()
@@ -147,6 +168,17 @@ final class MemberForm
                             ->color(fn (Get $get): string => in_array(self::nomineeTotal($get('nominees'))->value, [0, 10_000], true) ? 'success' : 'danger')
                             ->visible(fn (Get $get): bool => is_array($get('nominees')) && $get('nominees') !== []),
                     ]),
+                Section::make(__('members.member.terms_section'))
+                    ->columnSpanFull()
+                    ->visible($creating)
+                    ->schema([
+                        Hidden::make('terms_version')->default(fn (): int => (int) MembershipTerms::current()->version),
+                        Checkbox::make('terms_accepted')
+                            ->label(fn (Get $get): string => __('terms.office_confirm', ['version' => $get('terms_version')]))
+                            ->accepted()
+                            ->required()
+                            ->dehydrated(false),
+                    ]),
             ]);
     }
 
@@ -166,6 +198,8 @@ final class MemberForm
             'mobile' => $member->mobile,
             'email' => $member->email,
             'address' => $member->address,
+            'documents_received' => array_map(fn (RegistrationDocument $document): string => $document->value, array_values($member->documents_received->all())),
+            ...self::personFrom($member),
             'nominees' => $member->nominees->map(fn (Nominee $nominee): array => [
                 'name' => $nominee->name,
                 'relation_id' => $nominee->relation_id ?? self::matchLegacyRelation($nominee->relation),
@@ -173,7 +207,31 @@ final class MemberForm
                 'nid' => $nominee->nid,
                 'mobile' => $nominee->mobile,
                 'share_percent' => Bps::of($nominee->share_bps)->toPercentString(),
+                ...self::personFrom($nominee),
             ])->values()->all(),
+        ];
+    }
+
+    /**
+     * Gender, passport and both addresses of a member or nominee in form shape.
+     *
+     * @return array<string, mixed>
+     */
+    private static function personFrom(Member|Nominee $person): array
+    {
+        $present = PostalAddress::fromAttributes($person, 'present');
+        $permanent = PostalAddress::fromAttributes($person, 'permanent');
+
+        return [
+            'gender' => $person->gender?->value,
+            'passport_no' => $person->passport_no,
+            'present_upazila_id' => $present?->upazilaId,
+            'present_union_id' => $present?->unionId,
+            'present_address_line' => $present?->line,
+            'permanent_same_as_present' => $present !== null && $present == $permanent,
+            'permanent_upazila_id' => $permanent?->upazilaId,
+            'permanent_union_id' => $permanent?->unionId,
+            'permanent_address_line' => $permanent?->line,
         ];
     }
 

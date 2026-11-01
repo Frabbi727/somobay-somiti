@@ -7,6 +7,9 @@ namespace App\Filament\Resources\Members\Pages;
 use App\Domain\Members\Actions\CreateMember as CreateMemberAction;
 use App\Domain\Members\Data\MemberData;
 use App\Domain\Members\Models\Member;
+use App\Domain\Members\Terms\Data\TermsConsent;
+use App\Domain\Members\Terms\Enums\ConsentChannel;
+use App\Domain\Members\Terms\Models\MembershipTerms;
 use App\Filament\Concerns\ConfirmsWithTier;
 use App\Filament\Resources\Members\MemberResource;
 use App\Filament\Resources\Members\Support\MemberPresenter;
@@ -17,6 +20,7 @@ use App\Support\Time\YearMonth;
 use Filament\Actions\Action;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 final class CreateMember extends CreateRecord
 {
@@ -56,6 +60,11 @@ final class CreateMember extends CreateRecord
             MemberData::fromForm($data),
             (int) ($data['shares'] ?? 0),
             YearMonth::parse((string) ($data['effective_from'] ?? '')),
+            consent: new TermsConsent(
+                is_numeric($data['terms_version'] ?? null) ? (int) $data['terms_version'] : (int) MembershipTerms::current()->version,
+                ConsentChannel::Office,
+                (string) Str::uuid(),
+            ),
         ));
     }
 

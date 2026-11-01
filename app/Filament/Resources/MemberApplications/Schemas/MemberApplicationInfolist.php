@@ -8,6 +8,7 @@ use App\Domain\Members\Registration\Enums\MemberApplicationStatus;
 use App\Domain\Members\Registration\Models\MemberApplication;
 use App\Domain\Members\Registration\Models\MemberApplicationNominee;
 use App\Domain\Members\Registration\Services\RegistrationTimeline;
+use App\Filament\Support\AddressDisplay;
 use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
@@ -44,7 +45,28 @@ final class MemberApplicationInfolist
                     TextEntry::make('mobile')->label(__('members.member.mobile')),
                     TextEntry::make('email')->label(__('members.member.email'))->placeholder('—'),
                     TextEntry::make('requested_shares')->label(__('registration.field.requested_shares'))->placeholder('—'),
-                    TextEntry::make('address')->label(__('members.member.address'))->placeholder('—')->columnSpanFull(),
+                    TextEntry::make('gender')->label(__('members.member.gender'))->badge()->placeholder('—'),
+                    TextEntry::make('passport_no')->label(__('members.member.passport_no'))->placeholder('—'),
+                    TextEntry::make('present_address')
+                        ->label(__('members.address.present'))
+                        ->state(fn (MemberApplication $record): ?string => AddressDisplay::of($record, 'present'))
+                        ->placeholder('—')
+                        ->columnSpanFull(),
+                    TextEntry::make('permanent_address')
+                        ->label(__('members.address.permanent'))
+                        ->state(fn (MemberApplication $record): ?string => AddressDisplay::of($record, 'permanent'))
+                        ->placeholder('—')
+                        ->columnSpanFull(),
+                    TextEntry::make('address')
+                        ->label(__('members.member.old_address'))
+                        ->visible(fn (MemberApplication $record): bool => filled($record->address) && AddressDisplay::of($record, 'present') === null)
+                        ->columnSpanFull(),
+                    TextEntry::make('documents_received')
+                        ->label(__('members.member.documents_received'))
+                        ->state(fn (MemberApplication $record): array => array_values($record->documents_received->all()))
+                        ->badge()
+                        ->placeholder('—')
+                        ->columnSpanFull(),
                 ]),
             Section::make(__('members.member.nominees_section'))
                 ->columnSpanFull()
@@ -57,6 +79,18 @@ final class MemberApplicationInfolist
                             TextEntry::make('relation_id')->label(__('members.nominee.relation'))->state(fn (MemberApplicationNominee $record): string => $record->nomineeRelation?->label() ?? '—'),
                             TextEntry::make('nid')->label(__('members.nominee.nid'))->placeholder('—'),
                             TextEntry::make('mobile')->label(__('members.nominee.mobile'))->placeholder('—'),
+                            TextEntry::make('gender')->label(__('members.member.gender'))->badge()->placeholder('—'),
+                            TextEntry::make('passport_no')->label(__('members.member.passport_no'))->placeholder('—'),
+                            TextEntry::make('present_address')
+                                ->label(__('members.address.present'))
+                                ->state(fn (MemberApplicationNominee $record): ?string => AddressDisplay::of($record, 'present'))
+                                ->placeholder('—')
+                                ->columnSpan(3),
+                            TextEntry::make('permanent_address')
+                                ->label(__('members.address.permanent'))
+                                ->state(fn (MemberApplicationNominee $record): ?string => AddressDisplay::of($record, 'permanent'))
+                                ->placeholder('—')
+                                ->columnSpan(2),
                             TextEntry::make('share_bps')->label(__('members.nominee.share'))->state(fn (MemberApplicationNominee $record): string => $record->share()->format(app()->getLocale())),
                         ]),
                 ]),

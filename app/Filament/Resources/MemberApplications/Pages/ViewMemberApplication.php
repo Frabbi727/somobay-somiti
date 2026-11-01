@@ -30,6 +30,7 @@ final class ViewMemberApplication extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            RegistrationActions::recordDocuments(),
             RegistrationActions::approve(),
             RegistrationActions::sendBack(),
             RegistrationActions::reject(),

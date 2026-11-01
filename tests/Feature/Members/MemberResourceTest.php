@@ -56,9 +56,13 @@ it('adds a member with shares, nominees and a photo', function (): void {
             'photo_path' => UploadedFile::fake()->image('rahim.jpg', 200, 200),
             'shares' => 2,
             'effective_from' => '2026-10',
+            'gender' => 'male',
+            ...paperAddress('present'),
+            ...paperAddress('permanent'),
+            'terms_accepted' => true,
             'nominees' => [
-                ['name' => 'Karim', 'relation_id' => relationId('son'), 'nid' => '1234567890', 'share_percent' => '50'],
-                ['name' => 'Salma', 'relation_id' => relationId('spouse'), 'nid' => '1234567891', 'share_percent' => '50'],
+                nominee(['name' => 'Karim', 'relation_id' => relationId('son'), 'nid' => '1234567890', 'share_percent' => '50']),
+                nominee(['name' => 'Salma', 'relation_id' => relationId('spouse'), 'nid' => '1234567891', 'share_percent' => '50']),
             ],
         ])
         ->assertSee(__('members.nominee.total', ['total' => '100.00%']))
@@ -75,7 +79,7 @@ it('adds a member with shares, nominees and a photo', function (): void {
         ->and($member->photo_path)->not->toBeNull()
         ->and(Storage::disk('local')->exists((string) $member->photo_path))->toBeTrue()
         ->and(Due::query()->where('member_id', $member->id)->sole()->amount_poisha->poisha)->toBe(20000);
-})->skip('Restored in Task 8: admin form gains paper-form fields');
+});
 
 it('rejects an invalid mobile before confirming', function (): void {
     $undo = Repeater::fake();
@@ -103,14 +107,14 @@ it('reports a missing rate plan as a notification', function (): void {
     $undo = Repeater::fake();
 
     Livewire::test(CreateMember::class)
-        ->fillForm(['name_bn' => 'ক', 'name_en' => 'K', 'mobile' => '01812345678', 'shares' => 1, 'effective_from' => '2026-06', 'nominees' => [nominee()]])
+        ->fillForm(['name_bn' => 'ক', 'name_en' => 'K', 'mobile' => '01812345678', 'shares' => 1, 'effective_from' => '2026-06', 'gender' => 'male', ...paperAddress('present'), ...paperAddress('permanent'), 'terms_accepted' => true, 'nominees' => [nominee()]])
         ->callAction(memberFormAction('create'))
         ->assertNotified(__('members.errors.no_rate_plan', ['month' => '2026-06']));
 
     $undo();
 
     expect(Member::query()->count())->toBe(0);
-})->skip('Restored in Task 8: admin form gains paper-form fields');
+});
 
 it('edits a member and their nominees', function (): void {
     $member = onboard(1, '2026-07', ['nominees' => [nominee(['name' => 'Karim', 'relation_id' => relationId('son')])]]);
@@ -148,6 +152,7 @@ it('shows untouched nominees as unchanged in the save summary and the relation l
     Livewire::test(CreateMember::class)
         ->fillForm([
             'name_bn' => 'ক', 'name_en' => 'K', 'mobile' => '01812345678', 'shares' => 1, 'effective_from' => '2026-10',
+            'gender' => 'male', ...paperAddress('present'), ...paperAddress('permanent'), 'terms_accepted' => true,
             'nominees' => [nominee(['name' => 'Salma', 'relation_id' => relationId('daughter')])],
         ])
         ->mountAction(memberFormAction('create'))

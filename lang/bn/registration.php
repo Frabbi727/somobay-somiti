@@ -72,6 +72,8 @@ return [
         'review' => 'যাচাই',
     ],
     'actions' => [
+        'record_documents' => 'প্রাপ্ত কাগজপত্র লিখে রাখুন',
+        'record_documents_heading' => ':name-এর প্রাপ্ত কাগজপত্র লিখে রাখবেন?',
         'open_member' => 'সদস্য দেখুন',
         'invite' => 'সদস্য আমন্ত্রণ',
         'invite_heading' => 'নতুন সদস্য আমন্ত্রণ',
@@ -94,6 +96,7 @@ return [
         'save_chain' => 'অনুমোদনের ক্রম সংরক্ষণ',
     ],
     'notifications' => [
+        'documents_recorded' => 'কাগজপত্র লেখা হয়েছে।',
         'invited' => ':mobile-এর লগইন তৈরি হয়েছে। সদস্যকে পাসওয়ার্ড জানিয়ে দিন।',
         'approved_step' => 'অনুমোদিত। এখন :role-এর অপেক্ষায়।',
         'approved_final' => ':name এখন সদস্য :member_no।',
@@ -120,6 +123,7 @@ return [
         'nominee_total' => 'মোট: :total',
     ],
     'errors' => [
+        'not_open' => 'এই নিবন্ধন বন্ধ হয়ে গেছে; আর কাগজপত্র লেখা যাবে না।',
         'date_of_birth_invalid' => 'সঠিক জন্ম তারিখ দিন (ভবিষ্যতের নয়)।',
         'email_invalid' => 'সঠিক ইমেইল ঠিকানা দিন।',
         'field_too_long' => 'একটি তথ্য বেশি লম্বা হয়েছে।',

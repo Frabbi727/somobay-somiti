@@ -72,6 +72,8 @@ return [
         'review' => 'Review',
     ],
     'actions' => [
+        'record_documents' => 'Record documents received',
+        'record_documents_heading' => 'Record the documents received for :name?',
         'open_member' => 'Open member',
         'invite' => 'Invite member',
         'invite_heading' => 'Invite a new member',
@@ -94,6 +96,7 @@ return [
         'save_chain' => 'Save approval order',
     ],
     'notifications' => [
+        'documents_recorded' => 'Documents recorded.',
         'invited' => 'Login created for :mobile. Tell the member the password.',
         'approved_step' => 'Approved. It now waits for :role.',
         'approved_final' => ':name is now member :member_no.',
@@ -120,6 +123,7 @@ return [
         'nominee_total' => 'Total: :total',
     ],
     'errors' => [
+        'not_open' => 'This registration is already closed; documents can no longer be recorded.',
         'date_of_birth_invalid' => 'Enter a valid date of birth (not in the future).',
         'email_invalid' => 'Enter a valid email address.',
         'field_too_long' => 'One of the details is too long.',
