@@ -62,6 +62,15 @@ return [
         'to_advance_plain' => ':amount held as advance',
         'save_heading' => 'Record :amount from :member?',
         'saved' => 'Payment of :amount recorded and sent for approval',
+        'clear_through' => 'Clear up to here',
+        'clear_through_note' => 'Payments always settle the oldest dues first. To pay a month, the member also clears every month before it: click an amount to fill it in.',
+    ],
+    'duplicate' => [
+        'title' => 'Possible duplicate payment',
+        'body' => 'This member already has a payment of the same amount on the same day. Check it is not the same money entered twice.',
+        'recorded_by' => 'recorded by :name at :time',
+        'confirm' => 'Warning: :count payment(s) of this amount from this member on this day already exist. Record anyway only if this is new money.',
+        'approve' => 'Warning: :count other payment(s) of this amount from this member on this day exist. Check this is not the same money twice.',
     ],
     'actions' => [
         'approve' => 'Approve',
