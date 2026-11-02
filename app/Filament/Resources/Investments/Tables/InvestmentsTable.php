@@ -28,9 +28,10 @@ final class InvestmentsTable
             ->modifyQueryUsing(fn (Builder $query): Builder => $query->withSum('ledger as book_value_poisha', 'delta_poisha'))
             ->defaultSort(fn (Builder $query): Builder => $query->orderByDesc('invested_on')->orderByDesc('id'))
             ->columns([
-                TextColumn::make('investment_no')->label(__('investments.field.number'))->searchable(['investment_no', 'institution', 'instrument_no']),
+                TextColumn::make('investment_no')->label(__('investments.field.number'))->searchable(['investment_no', 'name', 'institution', 'instrument_no']),
                 TextColumn::make('type')->label(__('investments.field.type'))->badge()->color('gray'),
-                TextColumn::make('institution')->label(__('investments.field.institution'))->limit(30),
+                TextColumn::make('name')->label(__('investments.field.name'))->state(fn (Investment $record): string => $record->displayName())->limit(30),
+                TextColumn::make('institution')->label(__('investments.field.institution'))->limit(30)->visibleFrom('lg'),
                 TextColumn::make('invested_on')
                     ->label(__('investments.field.invested_on'))
                     ->formatStateUsing(fn (Investment $record): string => Display::date($record->invested_on))

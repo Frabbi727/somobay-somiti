@@ -26,6 +26,7 @@ final readonly class InvestmentData
         public ?string $notes = null,
         public ?string $attachmentPath = null,
         public ?int $resolutionId = null,
+        public string $name = '',
     ) {}
 
     /**
@@ -57,6 +58,7 @@ final readonly class InvestmentData
             notes: $text('notes'),
             attachmentPath: $text('attachment_path'),
             resolutionId: is_numeric($data['resolution_id'] ?? null) ? (int) $data['resolution_id'] : null,
+            name: $text('name') ?? '',
         );
     }
 }

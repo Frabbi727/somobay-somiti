@@ -22,6 +22,8 @@ use Spatie\Activitylog\Support\CauserResolver;
  */
 final class RecordInvestment
 {
+    public const int MAX_NAME_LENGTH = 255;
+
     public function __construct(
         private readonly Accounts $accounts,
         private readonly CauserResolver $causer,
@@ -51,6 +53,7 @@ final class RecordInvestment
                 'investment_no' => sprintf('INV-%04d', $number),
                 'type' => $data->type,
                 'account_id' => $this->accounts->byCode($data->type->accountCode())->id,
+                'name' => $data->name,
                 'institution' => $data->institution,
                 'instrument_no' => $data->instrumentNo,
                 'principal_poisha' => $data->principal,
@@ -74,6 +77,14 @@ final class RecordInvestment
 
     private function assertValid(InvestmentData $data): void
     {
+        if ($data->name === '') {
+            throw DomainRuleViolation::because('investments.errors.name_required');
+        }
+
+        if (mb_strlen($data->name) > self::MAX_NAME_LENGTH) {
+            throw DomainRuleViolation::because('investments.errors.name_too_long');
+        }
+
         if (mb_strlen($data->institution) < 2) {
             throw DomainRuleViolation::because('investments.errors.institution_required');
         }

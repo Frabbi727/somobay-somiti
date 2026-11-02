@@ -38,7 +38,7 @@ beforeEach(function (): void {
     app(PostJournal::class)($this->accountant, simpleEntry('1111', '3101', '200000', '2026-07-05'));
 
     $this->fdr = app(ApproveInvestment::class)($this->president, app(RecordInvestment::class)($this->accountant, InvestmentData::fromForm([
-        'type' => 'fixed_deposit', 'institution' => 'Sonali Bank', 'instrument_no' => 'FDR-9',
+        'type' => 'fixed_deposit', 'name' => 'FDR at Sonali Bank', 'institution' => 'Sonali Bank', 'instrument_no' => 'FDR-9',
         'principal' => Money::ofTaka('100000'), 'funded_from' => 'bank', 'invested_on' => '2026-07-10', 'matures_on' => '2026-12-10',
     ])));
 });
@@ -120,7 +120,7 @@ it('writes an investment down by JV, never below zero, president only', function
 it('lists the register by kind and ties it to the 13xx accounts', function (): void {
     app(RecordInvestmentIncome::class)($this->accountant, $this->fdr, Money::ofTaka('3500'), Money::zero(), CarbonImmutable::parse('2026-10-10'), PaymentMethod::Bank);
     app(ApproveInvestment::class)($this->president, app(RecordInvestment::class)($this->accountant, InvestmentData::fromForm([
-        'type' => 'savings_certificate', 'institution' => 'Sanchayapatra', 'principal' => Money::ofTaka('20000'), 'funded_from' => 'bank', 'invested_on' => '2026-11-01',
+        'type' => 'savings_certificate', 'name' => 'Sanchayapatra 2026', 'institution' => 'Sanchayapatra', 'principal' => Money::ofTaka('20000'), 'funded_from' => 'bank', 'invested_on' => '2026-11-01',
     ])));
 
     $register = app(InvestmentRegister::class)->asOf(CarbonImmutable::parse('2026-12-20'));

@@ -58,7 +58,7 @@ final class InvestmentActions
             heading: fn (Investment $record): string => __('investments.actions.approve_heading', [
                 'number' => $record->investment_no,
                 'amount' => Display::money($record->principal_poisha),
-                'institution' => $record->institution,
+                'institution' => $record->displayName(),
             ]),
             expected: fn (Investment $record): string => $record->investment_no,
             submitLabel: fn (Investment $record): string => __('investments.actions.approve_submit', ['amount' => Display::money($record->principal_poisha)]),

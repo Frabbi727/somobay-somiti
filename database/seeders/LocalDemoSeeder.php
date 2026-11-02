@@ -296,7 +296,7 @@ final class LocalDemoSeeder extends Seeder
 
         if ($month->equals(YearMonth::of(2026, 1))) {
             $fdr = app(RecordInvestment::class)($this->user('accountant'), InvestmentData::fromForm([
-                'type' => 'fixed_deposit', 'institution' => 'Sonali Bank, Mirpur Branch', 'instrument_no' => 'FDR-2026-0117',
+                'type' => 'fixed_deposit', 'name' => 'FDR at Sonali Bank, Mirpur', 'institution' => 'Sonali Bank, Mirpur Branch', 'instrument_no' => 'FDR-2026-0117',
                 'principal' => Money::ofTaka('20000'), 'funded_from' => 'bank', 'invested_on' => $month->day(20)->toDateString(),
                 'matures_on' => '2027-01-20', 'expected_rate' => '8.5',
             ]));

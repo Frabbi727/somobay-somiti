@@ -14,7 +14,9 @@ use App\Domain\Investments\Actions\RecordInvestment;
 use App\Domain\Investments\Actions\RejectInvestment;
 use App\Domain\Investments\Data\InvestmentData;
 use App\Domain\Investments\Enums\InvestmentStatus;
+use App\Domain\Investments\Enums\InvestmentType;
 use App\Domain\Investments\Models\Investment;
+use App\Domain\Investments\Services\InvestmentRegister;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Enums\Role;
 use App\Filament\Resources\Investments\Pages\CreateInvestment;
@@ -55,6 +57,7 @@ function investmentData(array $overrides = []): InvestmentData
 {
     return InvestmentData::fromForm([
         'type' => 'fixed_deposit',
+        'name' => 'FDR at Sonali Bank',
         'institution' => 'Sonali Bank',
         'instrument_no' => 'FDR-1001',
         'principal' => Money::ofTaka('50000'),
@@ -103,7 +106,7 @@ it('keeps each 13xx account equal to its register', function (): void {
     $checks = collect(app(Reconciliation::class)->controlVsSubledger(CarbonImmutable::parse('2026-09-30')))
         ->filter(fn ($check): bool => str_starts_with($check->account->code, '13'));
 
-    expect($checks)->toHaveCount(6)
+    expect($checks)->toHaveCount(count(InvestmentType::cases()))
         ->and($checks->every(fn ($check): bool => $check->isReconciled()))->toBeTrue()
         ->and($checks->firstWhere(fn ($check): bool => $check->account->code === '1302')?->subledger->poisha)->toBe(1000000);
 });
@@ -185,7 +188,7 @@ it('records and approves an investment from the screens', function (): void {
 
     Livewire\Livewire::test(CreateInvestment::class)
         ->fillForm([
-            'type' => 'savings_certificate', 'institution' => 'Bangladesh Bank (Sanchayapatra)', 'instrument_no' => 'SC-77',
+            'type' => 'savings_certificate', 'name' => 'Sanchayapatra 2026', 'institution' => 'Bangladesh Bank (Sanchayapatra)', 'instrument_no' => 'SC-77',
             'principal' => '25,000', 'funded_from' => 'bank', 'invested_on' => '2026-09-14', 'matures_on' => '2031-09-14', 'expected_rate' => '11.28',
         ])
         ->callAction(TestAction::make('create')->schemaComponent('form-actions', 'content'))
@@ -203,3 +206,35 @@ it('records and approves an investment from the screens', function (): void {
 
     $this->get(ViewInvestment::getUrl(['record' => $investment]))->assertOk()->assertSee('SC-77');
 });
+
+it('invests in a shop under its own account and keeps its name', function (): void {
+    $shop = app(ApproveInvestment::class)($this->president, app(RecordInvestment::class)($this->accountant, investmentData([
+        'type' => 'shop',
+        'name' => 'Shop no. 12, New Market',
+        'institution' => 'Rahim Traders (seller)',
+        'instrument_no' => null,
+        'matures_on' => null,
+        'expected_rate' => null,
+    ])));
+
+    expect($shop->status)->toBe(InvestmentStatus::Active)
+        ->and($shop->name)->toBe('Shop no. 12, New Market')
+        ->and($shop->type)->toBe(InvestmentType::Shop)
+        ->and($shop->account->code)->toBe('1312')
+        ->and(glBalance('1312'))->toBe(-5_000_000)
+        ->and(collect(app(InvestmentRegister::class)->asOf(CarbonImmutable::parse('2026-09-15'))['groups'])->pluck('type')->all())->toBe([InvestmentType::Shop]);
+
+    assertBooksTieOut();
+});
+
+it('needs a name for a new investment', function (): void {
+    expect(investmentRule(fn () => app(RecordInvestment::class)($this->accountant, investmentData(['name' => '  ']))))->toBe('investments.errors.name_required')
+        ->and(investmentRule(fn () => app(RecordInvestment::class)($this->accountant, investmentData(['name' => str_repeat('a', 256)]))))->toBe('investments.errors.name_too_long');
+});
+
+it('gives every kind of investment its own asset account', function (InvestmentType $type): void {
+    $account = account($type->accountCode());
+
+    expect($account->is_control)->toBeTrue()
+        ->and(InvestmentType::fromAccountCode($type->accountCode()))->toBe($type);
+})->with(InvestmentType::cases());
