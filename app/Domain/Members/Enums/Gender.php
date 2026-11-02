@@ -13,7 +13,6 @@ enum Gender: string implements HasColor, HasIcon, HasLabel
 {
     case Male = 'male';
     case Female = 'female';
-    case Other = 'other';
 
     public function getLabel(): string
     {
@@ -25,7 +24,6 @@ enum Gender: string implements HasColor, HasIcon, HasLabel
         return match ($this) {
             self::Male => 'info',
             self::Female => 'warning',
-            self::Other => 'gray',
         };
     }
 
@@ -34,7 +32,6 @@ enum Gender: string implements HasColor, HasIcon, HasLabel
         return match ($this) {
             self::Male => Heroicon::OutlinedUser,
             self::Female => Heroicon::OutlinedUserCircle,
-            self::Other => Heroicon::OutlinedUsers,
         };
     }
 }

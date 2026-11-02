@@ -81,7 +81,6 @@ return [
     'gender' => [
         'male' => 'Male',
         'female' => 'Female',
-        'other' => 'Other',
     ],
     'documents' => [
         'nid' => 'National ID (NID)',

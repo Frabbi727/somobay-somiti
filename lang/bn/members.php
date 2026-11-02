@@ -81,7 +81,6 @@ return [
     'gender' => [
         'male' => 'পুরুষ',
         'female' => 'নারী',
-        'other' => 'অন্যান্য',
     ],
     'documents' => [
         'nid' => 'জাতীয় পরিচয়পত্র (NID)',
