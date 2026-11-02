@@ -18,7 +18,7 @@
             <tr>
                 <td>{{ Display::digits($row['investment']->investment_no) }}</td>
                 <td>{{ $row['investment']->type->getLabel() }}</td>
-                <td>{{ $row['investment']->institution }}@if ($row['investment']->instrument_no) · {{ $row['investment']->instrument_no }}@endif</td>
+                <td>{{ $row['investment']->displayName() }} · {{ $row['investment']->institution }}@if ($row['investment']->instrument_no) · {{ $row['investment']->instrument_no }}@endif</td>
                 <td>{{ Display::date($row['investment']->invested_on) }}</td>
                 <td>{{ $row['investment']->matures_on ? Display::date($row['investment']->matures_on) : '—' }}</td>
                 <td class="num">{{ Display::money($row['investment']->principal_poisha) }}</td>

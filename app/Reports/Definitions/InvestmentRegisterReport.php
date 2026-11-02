@@ -62,7 +62,7 @@ final class InvestmentRegisterReport implements Report
     public function excel(Workbook $book, array $data): void
     {
         $book->row([
-            __('investments.field.number'), __('investments.field.type'), __('investments.field.institution'), __('investments.field.instrument_no'),
+            __('investments.field.number'), __('investments.field.name'), __('investments.field.type'), __('investments.field.institution'), __('investments.field.instrument_no'),
             __('investments.field.invested_on'), __('investments.field.matures_on'), __('investments.field.principal'), __('investments.field.book_value'),
             __('investments.report.income'), __('investments.field.status'),
         ], bold: true);
@@ -70,13 +70,13 @@ final class InvestmentRegisterReport implements Report
         foreach ($data['rows'] as $row) {
             $investment = $row['investment'];
             $book->row([
-                $investment->investment_no, $investment->type->getLabel(), $investment->institution, $investment->instrument_no,
+                $investment->investment_no, $investment->name, $investment->type->getLabel(), $investment->institution, $investment->instrument_no,
                 $investment->invested_on->toDateString(), $investment->matures_on?->toDateString(), $investment->principal_poisha,
                 $row['book'], $row['income'], $investment->status->getLabel(),
             ]);
         }
 
-        $book->row([__('journal.line.total'), null, null, null, null, null, null, $data['total'], $data['income'], null], bold: true);
+        $book->row([__('journal.line.total'), null, null, null, null, null, null, null, $data['total'], $data['income'], null], bold: true);
         $book->blank();
         $book->row([__('investments.field.type'), __('investments.report.register_total'), __('investments.report.ledger_total')], bold: true);
 

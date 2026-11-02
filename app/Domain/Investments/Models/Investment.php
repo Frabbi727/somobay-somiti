@@ -23,13 +23,14 @@ use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
 /**
- * An investment of the somiti's funds (FDR, savings certificate, securities, …). Its book value is
+ * An investment of the somiti's funds (FDR, savings certificate, securities, land, a shop, a business, …). Its book value is
  * the sum of its ledger entries and ties to its 13xx account.
  *
  * @property int $id
  * @property string $investment_no
  * @property InvestmentType $type
  * @property int $account_id
+ * @property string|null $name
  * @property string $institution
  * @property string|null $instrument_no
  * @property Money $principal_poisha
@@ -117,6 +118,14 @@ final class Investment extends Model
     public function journalEntry(): BelongsTo
     {
         return $this->belongsTo(JournalEntry::class);
+    }
+
+    /**
+     * What people call it: its name, or the institution for investments recorded before names.
+     */
+    public function displayName(): string
+    {
+        return $this->name ?? $this->institution;
     }
 
     /**

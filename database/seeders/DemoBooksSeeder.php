@@ -107,6 +107,7 @@ final class DemoBooksSeeder extends Seeder
 
         $fixedDeposit = app(RecordInvestment::class)($accountant, InvestmentData::fromForm([
             'type' => InvestmentType::FixedDeposit,
+            'name' => 'FDR at Sonali Bank, Local Office',
             'institution' => 'Sonali Bank, Local Office',
             'instrument_no' => 'FDR-2026-0815',
             'principal' => Money::ofTaka('3000'),

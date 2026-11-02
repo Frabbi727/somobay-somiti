@@ -28,6 +28,7 @@ final class InvestmentInfolist
                     TextEntry::make('investment_no')->label(__('investments.field.number'))->weight('bold'),
                     TextEntry::make('status')->label(__('investments.field.status'))->badge(),
                     TextEntry::make('type')->label(__('investments.field.type'))->badge()->color('gray'),
+                    TextEntry::make('name')->label(__('investments.field.name'))->placeholder('—'),
                     TextEntry::make('institution')->label(__('investments.field.institution')),
                     TextEntry::make('instrument_no')->label(__('investments.field.instrument_no'))->placeholder('—'),
                     TextEntry::make('funded_from')->label(__('investments.field.funded_from'))->badge()->color('gray'),

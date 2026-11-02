@@ -32,6 +32,7 @@ final class InvestmentForm
                 ->columnSpanFull()
                 ->schema([
                     Hidden::make('idempotency_key')->default(fn (): string => (string) Str::uuid()),
+                    TextInput::make('name')->label(__('investments.field.name'))->required()->maxLength(255)->columnSpanFull(),
                     Select::make('type')->label(__('investments.field.type'))->options(InvestmentType::class)->default(InvestmentType::FixedDeposit->value)->required()->native(false),
                     TextInput::make('institution')->label(__('investments.field.institution'))->required()->minLength(2)->maxLength(255),
                     TextInput::make('instrument_no')->label(__('investments.field.instrument_no'))->maxLength(60),
@@ -76,6 +77,7 @@ final class InvestmentForm
     public static function summaryLabels(): array
     {
         return [
+            'name' => __('investments.field.name'),
             'type' => __('investments.field.type'),
             'institution' => __('investments.field.institution'),
             'principal' => __('investments.field.principal'),
@@ -96,6 +98,7 @@ final class InvestmentForm
         $principal = $data['principal'] ?? null;
 
         return [
+            'name' => $data['name'] ?? null,
             'type' => $type instanceof InvestmentType ? $type : InvestmentType::tryFrom((string) $type),
             'institution' => $data['institution'] ?? null,
             'principal' => is_string($principal) && $principal !== '' ? '৳ '.$principal : null,

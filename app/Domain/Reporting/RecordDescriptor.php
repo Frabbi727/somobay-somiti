@@ -82,7 +82,7 @@ final class RecordDescriptor
             $record instanceof Investment => [
                 'reference' => $record->investment_no,
                 'amount' => Display::money($record->principal_poisha),
-                'party' => $record->institution,
+                'party' => $record->displayName(),
                 'reason' => (string) ($record->rejection_reason ?? ''),
             ],
             $record instanceof RatePlan => [
