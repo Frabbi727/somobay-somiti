@@ -50,6 +50,7 @@ final class ChartOfAccountsSeeder extends Seeder
         '4121' => ['Late Fee Income', 'বিলম্ব ফি আয়', AccountType::Income, false, false],
         '4131' => ['Exit Fee Income', 'প্রত্যাহার ফি আয়', AccountType::Income, false, false],
         '4201' => ['Investment Profit', 'বিনিয়োগ মুনাফা', AccountType::Income, false, false],
+        '4211' => ['Gain on Sale of Investments', 'বিনিয়োগ বিক্রয়ে লাভ', AccountType::Income, false, false],
         '5101' => ['Office & Stationery', 'অফিস ও স্টেশনারি খরচ', AccountType::Expense, false, false],
         '5102' => ['Honorarium & Salaries', 'সম্মানী ও বেতন', AccountType::Expense, false, false],
         '5103' => ['Rent & Utilities', 'ভাড়া ও ইউটিলিটি', AccountType::Expense, false, false],
@@ -57,6 +58,7 @@ final class ChartOfAccountsSeeder extends Seeder
         '5105' => ['SMS & Communication', 'এসএমএস ও যোগাযোগ', AccountType::Expense, false, false],
         '5106' => ['Tax & Duty Deducted at Source', 'উৎসে কর্তিত কর ও শুল্ক', AccountType::Expense, false, false],
         '5201' => ['Impairment Loss on Investments', 'বিনিয়োগে অবচয় ক্ষতি', AccountType::Expense, false, false],
+        '5202' => ['Loss on Sale of Investments', 'বিনিয়োগ বিক্রয়ে ক্ষতি', AccountType::Expense, false, false],
         '5199' => ['Other Expenses', 'অন্যান্য খরচ', AccountType::Expense, false, false],
     ];
 

@@ -54,6 +54,24 @@ final class InvestmentInfolist
                         ->label(__('investments.field.matures_on'))
                         ->state(fn (Investment $record): ?string => $record->matures_on === null ? null : Display::date($record->matures_on))
                         ->placeholder('—'),
+                    TextEntry::make('closed_on')
+                        ->label(__('investments.field.date'))
+                        ->state(fn (Investment $record): ?string => $record->closed_on === null ? null : Display::date($record->closed_on))
+                        ->visible(fn (Investment $record): bool => $record->closed_on !== null),
+                    TextEntry::make('sale_price_poisha')
+                        ->label(__('investments.field.sale_price'))
+                        ->state(fn (Investment $record): ?string => $record->sale_price_poisha === null ? null : Display::money($record->sale_price_poisha))
+                        ->visible(fn (Investment $record): bool => $record->sale_price_poisha !== null),
+                    TextEntry::make('sale_expenses_poisha')
+                        ->label(__('investments.field.sale_expenses'))
+                        ->state(fn (Investment $record): ?string => $record->sale_expenses_poisha === null ? null : Display::money($record->sale_expenses_poisha))
+                        ->visible(fn (Investment $record): bool => $record->sale_price_poisha !== null),
+                    TextEntry::make('sale_gain_poisha')
+                        ->label(__('investments.field.sale_gain'))
+                        ->state(fn (Investment $record): ?string => $record->sale_gain_poisha === null ? null : Display::money($record->sale_gain_poisha))
+                        ->color(fn (Investment $record): string => $record->sale_gain_poisha?->isNegative() === true ? 'danger' : 'success')
+                        ->weight('bold')
+                        ->visible(fn (Investment $record): bool => $record->sale_gain_poisha !== null),
                     TextEntry::make('resolution.resolution_no')
                         ->label(__('investments.field.resolution'))
                         ->state(fn (Investment $record): ?string => $record->resolution?->displayName())

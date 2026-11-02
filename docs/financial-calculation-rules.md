@@ -22,7 +22,8 @@ How every amount in the app is calculated, as implemented. If anything here look
 | 3201 / 3202 / 3203 | Reserve / bad-debt / other funds | 3901 | Accumulated surplus |
 | 4101 | Registration fee income | 4111 | Service charge income |
 | 4121 | Late fee income | 4131 | Exit fee income |
-| 4201 | Investment profit | 5101–5199 | Expenses (5104 bank charges, 5106 tax at source, 5201 impairment) |
+| 4201 | Investment profit (rent, interest, dividends) | 5101–5199 | Expenses (5104 bank charges, 5106 tax at source) |
+| 4211 | Gain on sale of investments | 5201 / 5202 | Impairment loss / loss on sale of investments |
 
 ## Rate plans
 
@@ -69,7 +70,7 @@ Receipt voucher (RV): Dr Cash/Bank/bKash/Nagad; Cr 2101 (deposits), 4111 (servic
 
 ## Investments
 
-Approval: PV Dr 13xx, Cr source. Added investment (top-up, approved by a second person): PV Dr 13xx, Cr source on its own date, and a `top_up` register entry; total invested = first amount + approved top-ups, book value = that less write-downs. Income: RV Dr bank (net) + Dr 5106 (tax), Cr 4201. Write-down: JV Dr 5201, Cr 13xx. Closing: RV with any gain to 4201 or loss to 5201. Statutory limit warnings are recorded, not enforced.
+Approval: PV Dr 13xx, Cr source. Added investment (top-up, approved by a second person): PV Dr 13xx, Cr source on its own date, and a `top_up` register entry; total invested = first amount + approved top-ups, book value = that less write-downs. Income: RV Dr bank (net) + Dr 5106 (tax), Cr 4201. Write-down: JV Dr 5201, Cr 13xx. Closing / sale: RV for the sale price less selling expenses; against the book value the difference is a gain on sale (Cr 4211) or a loss on sale (Dr 5202), kept apart from rent and other profit (4201) and from write-downs (5201). The returned principal is never income. The sale price, expenses and gain/loss are stored on the investment and shown in the register beside rent and profit. Statutory limit warnings are recorded, not enforced.
 
 ## Member exit (BR-22 as built, `ExitCalculator`, `ApproveExit`)
 

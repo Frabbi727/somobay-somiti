@@ -52,6 +52,9 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property string|null $rejection_reason
  * @property int|null $journal_entry_id
  * @property CarbonImmutable|null $closed_on
+ * @property Money|null $sale_price_poisha
+ * @property Money|null $sale_expenses_poisha
+ * @property Money|null $sale_gain_poisha
  * @property-read Account $account
  * @property-read Resolution|null $resolution
  * @property-read User $recorder
@@ -167,6 +170,9 @@ final class Investment extends Model
             'status' => InvestmentStatus::class,
             'funded_from' => PaymentMethod::class,
             'principal_poisha' => MoneyCast::class,
+            'sale_price_poisha' => MoneyCast::class,
+            'sale_expenses_poisha' => MoneyCast::class,
+            'sale_gain_poisha' => MoneyCast::class,
             'invested_on' => 'immutable_date',
             'matures_on' => 'immutable_date',
             'closed_on' => 'immutable_date',

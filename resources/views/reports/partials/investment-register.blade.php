@@ -10,6 +10,7 @@
             <th class="num">{{ __('investments.field.total_invested') }}</th>
             <th class="num">{{ __('investments.field.book_value') }}</th>
             <th class="num">{{ __('investments.report.income') }}</th>
+            <th class="num">{{ __('investments.report.gain') }}</th>
             <th>{{ __('investments.field.status') }}</th>
         </tr>
     </thead>
@@ -24,10 +25,11 @@
                 <td class="num">{{ Display::money($row['invested']) }}</td>
                 <td class="num">{{ Display::money($row['book']) }}</td>
                 <td class="num">{{ Display::money($row['income']) }}</td>
+                <td class="num">{{ Display::money($row['gain']) }}</td>
                 <td>{{ $row['investment']->status->getLabel() }}</td>
             </tr>
         @empty
-            <tr><td colspan="9" class="muted">{{ __('investments.report.empty') }}</td></tr>
+            <tr><td colspan="10" class="muted">{{ __('investments.report.empty') }}</td></tr>
         @endforelse
     </tbody>
     <tfoot>
@@ -35,6 +37,7 @@
             <td colspan="6">{{ __('journal.line.total') }}</td>
             <td class="num">{{ Display::money($total) }}</td>
             <td class="num">{{ Display::money($income) }}</td>
+            <td class="num">{{ Display::money($gain) }}</td>
             <td></td>
         </tr>
     </tfoot>
