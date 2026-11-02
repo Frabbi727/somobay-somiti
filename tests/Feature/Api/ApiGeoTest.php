@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Geo\Models\GeoDistrict;
+use Illuminate\Support\Facades\Route;
 
 /*
 | The public place lookups behind the registration address dropdowns: both names per place,
@@ -34,4 +35,24 @@ it('requires the parent id', function (string $path): void {
 
 it('rejects a parent id that does not exist', function (): void {
     $this->getJson('/api/v1/geo/upazilas?district_id=999999')->assertStatus(422)->assertJsonStructure(['errors' => ['district_id']]);
+});
+
+it('caps the search term on the public lookups', function (): void {
+    $this->getJson('/api/v1/geo/divisions?q='.str_repeat('a', 101))->assertStatus(422)->assertJsonStructure(['errors' => ['q']]);
+    $this->getJson('/api/v1/geo/divisions?q='.str_repeat('a', 100))->assertOk();
+});
+
+it('gives the geo lookups their own per-IP limit, higher than the member api', function (): void {
+    foreach (range(1, 61) as $call) {
+        $this->getJson('/api/v1/geo/divisions')->assertOk();
+    }
+
+    expect(collect(Route::getRoutes()->getRoutes())->filter(fn ($route): bool => str_starts_with($route->uri(), 'api/v1/geo/'))
+        ->every(fn ($route): bool => in_array('throttle:geo', $route->gatherMiddleware(), true) && ! in_array('throttle:member-api', $route->gatherMiddleware(), true)))->toBeTrue();
+
+    foreach (range(62, 300) as $call) {
+        $this->getJson('/api/v1/geo/divisions');
+    }
+
+    $this->getJson('/api/v1/geo/divisions')->assertStatus(429);
 });

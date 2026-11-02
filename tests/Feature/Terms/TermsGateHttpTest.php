@@ -149,3 +149,16 @@ it('shows the accepted version on the profile', function (): void {
 
     Livewire::actingAs($this->user)->test(Profile::class)->assertSee(MembershipTerms::current()->rules_en);
 });
+
+it('portal logout works through the gate for a member who has not accepted', function (): void {
+    $this->actingAs($this->user)->post(route('filament.member.auth.logout'))->assertRedirect();
+
+    $this->assertGuest();
+});
+
+it('the rules page keeps its version and key out of the browser reach', function (): void {
+    $this->actingAs($this->user);
+
+    Livewire::test(AcceptRules::class)
+        ->set('version', 99);
+})->throws(Exception::class, 'Cannot update locked property: [version]');

@@ -17,6 +17,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
+use Livewire\Attributes\Locked;
 
 /**
  * Where a member who has not yet accepted the current rules is sent: read them, tick, agree.
@@ -38,9 +39,11 @@ final class AcceptRules extends Page
     public array $data = [];
 
     /** One key per page load, so a double click stores the acceptance once. */
+    #[Locked]
     public string $idempotencyKey = '';
 
     /** The version shown when the page opened: that is what the member agrees to. */
+    #[Locked]
     public int $version = 0;
 
     public function getTitle(): string

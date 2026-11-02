@@ -28,7 +28,7 @@ Route::prefix('v1')->group(function (): void {
     Route::get('config/logo', [ConfigController::class, 'logo'])->middleware('signed')->name('api.logo');
     Route::get('config/nominee-relations', [ConfigController::class, 'nomineeRelations']);
 
-    Route::middleware('throttle:member-api')->prefix('geo')->group(function (): void {
+    Route::middleware('throttle:geo')->prefix('geo')->group(function (): void {
         Route::get('divisions', [GeoController::class, 'divisions']);
         Route::get('districts', [GeoController::class, 'districts']);
         Route::get('upazilas', [GeoController::class, 'upazilas']);

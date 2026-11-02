@@ -97,3 +97,15 @@ it('keeps the rules list from staff without members access', function (): void {
 
     Livewire::test(ListMembershipTerms::class)->assertForbidden();
 });
+
+it('the edit page cannot publish, so unsaved edits are never published by accident', function (): void {
+    $this->actingAs(userWithRole(Role::President));
+    $draft = app(SaveTermsDraft::class)(userWithRole(Role::President), 'ক', 'Saved text', 'খ', 'b');
+
+    Livewire::test(EditMembershipTerms::class, ['record' => $draft->getKey()])
+        ->fillForm(['rules_en' => 'Typed but not saved'])
+        ->assertActionDoesNotExist('publish');
+
+    expect($draft->refresh()->status)->toBe(TermsStatus::Draft)
+        ->and($draft->rules_en)->toBe('Saved text');
+});

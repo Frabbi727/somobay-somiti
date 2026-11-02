@@ -161,6 +161,24 @@ it('shows untouched nominees as unchanged in the save summary and the relation l
     $undo();
 });
 
+it('shows an address-only or documents-only edit as changed rows in the save summary', function (): void {
+    $member = onboard(1, '2026-07', ['nominees' => [nominee(['name' => 'Karim', 'relation_id' => relationId('son')])]]);
+    $undo = Repeater::fake();
+
+    $page = Livewire::test(EditMember::class, ['record' => $member->getRouteKey()])
+        ->fillForm(['present_address_line' => 'Another road', 'gender' => 'female', 'documents_received' => ['nid']]);
+
+    $rows = ChangeSummary::rows(
+        MemberPresenter::summaryLabels(),
+        MemberPresenter::summaryValues(MemberPresenter::fromMember($member->load('nominees'))),
+        MemberPresenter::summaryValues(MemberPresenter::dataFromState($page->get('data'))),
+    );
+
+    expect(array_column($rows, 'label'))->toContain(__('members.address.present'), __('members.member.gender'), __('members.member.documents_received'));
+
+    $undo();
+});
+
 it('shows a legacy nominee relation as a hint and pre-selects a matching relation', function (): void {
     $member = onboard(1, '2026-07', ['nominees' => [
         nominee(['name' => 'Salma', 'share_percent' => '50']),

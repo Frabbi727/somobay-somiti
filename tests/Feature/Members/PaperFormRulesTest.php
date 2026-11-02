@@ -5,8 +5,10 @@ declare(strict_types=1);
 use App\Domain\Geo\Models\GeoUpazila;
 use App\Domain\Members\Actions\UpdateMember;
 use App\Domain\Members\Enums\Gender;
+use App\Domain\Members\Enums\RegistrationDocument;
 use App\Domain\Members\Models\Member;
 use App\Domain\Members\Registration\Actions\DecideRegistration;
+use App\Domain\Members\Registration\Actions\RecordApplicationDocuments;
 use App\Domain\Members\Registration\Enums\RegistrationDecisionType;
 use App\Domain\Members\Services\MemberRules;
 use App\Enums\Role;
@@ -78,14 +80,16 @@ it('copies the new fields to the member and nominees on approval', function (): 
     $application = submittedRegistration();
     $secretary = userWithRole(Role::Secretary);
     $president = userWithRole(Role::President);
+    app(RecordApplicationDocuments::class)($secretary, $application, [RegistrationDocument::Nid, RegistrationDocument::NomineePhoto]);
 
-    $application = app(DecideRegistration::class)($secretary, $application, RegistrationDecisionType::Approve);
+    $application = app(DecideRegistration::class)($secretary, $application->refresh(), RegistrationDecisionType::Approve);
     app(DecideRegistration::class)($president, $application, RegistrationDecisionType::Approve, null, 2, YearMonth::parse('2026-07'));
 
     $member = Member::query()->sole();
     $nominee = $member->nominees()->sole();
 
     expect($member->gender)->toBe(Gender::Male)
+        ->and($member->documents_received->all())->toBe([RegistrationDocument::Nid, RegistrationDocument::NomineePhoto])
         ->and($member->present_upazila_id)->toBe(495)
         ->and($member->present_union_id)->toBe(4541)
         ->and($member->permanent_address_line)->toBe('House 12, Road 3')

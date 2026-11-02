@@ -143,6 +143,8 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('member-login', fn (Request $request): Limit => Limit::perMinute(5)->by(MobileNumber::normalize((string) $request->input('mobile')).'|'.$request->ip()));
         RateLimiter::for('member-refresh', fn (Request $request): Limit => Limit::perMinute(10)->by((string) $request->ip()));
         RateLimiter::for('member-api', fn (Request $request): Limit => Limit::perMinute(60)->by((string) ($request->user()?->getAuthIdentifier() ?? $request->ip())));
+        // Public place lookups: one address form fires a burst of list calls, so this is higher and per IP.
+        RateLimiter::for('geo', fn (Request $request): Limit => Limit::perMinute(300)->by((string) $request->ip()));
 
         Event::listen(IntegrityCheckFailed::class, AlertIntegrityFailure::class);
         Event::listen(LocaleChanged::class, RememberUserLocale::class);

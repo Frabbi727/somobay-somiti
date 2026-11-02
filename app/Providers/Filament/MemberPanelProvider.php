@@ -67,6 +67,6 @@ final class MemberPanelProvider extends PanelProvider
                 Authenticate::class,
                 RedirectApplicantsToRegistration::class,
                 RequireCurrentTermsInPortal::class,
-            ]);
+            ], isPersistent: true);
     }
 }

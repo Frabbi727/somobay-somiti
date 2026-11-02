@@ -52,8 +52,8 @@ final class GeoController
 
     private function search(Request $request): ?string
     {
-        $term = $request->query('q');
+        $validated = $request->validate(['q' => ['nullable', 'string', 'max:100']]);
 
-        return is_string($term) ? $term : null;
+        return $validated['q'] ?? null;
     }
 }

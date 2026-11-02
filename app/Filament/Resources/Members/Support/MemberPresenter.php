@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Members\Support;
 
+use App\Domain\Geo\Data\PostalAddress;
+use App\Domain\Geo\Services\GeoDirectory;
 use App\Domain\Members\Data\MemberData;
 use App\Domain\Members\Data\NomineeData;
+use App\Domain\Members\Enums\RegistrationDocument;
 use App\Domain\Members\Models\Member;
 use App\Domain\Members\Models\Nominee;
 use App\Domain\Members\Models\NomineeRelation;
@@ -29,6 +32,11 @@ final class MemberPresenter
             'mobile' => __('members.member.mobile'),
             'email' => __('members.member.email'),
             'address' => __('members.member.address'),
+            'gender' => __('members.member.gender'),
+            'passport_no' => __('members.member.passport_no'),
+            'present_address' => __('members.address.present'),
+            'permanent_address' => __('members.address.permanent'),
+            'documents_received' => __('members.member.documents_received'),
             'joined_on' => __('members.member.joined_on'),
             ...($withShares ? [
                 'shares' => __('members.member.shares'),
@@ -56,6 +64,11 @@ final class MemberPresenter
             'mobile' => Display::digits($data->mobile),
             'email' => $data->email,
             'address' => $data->address,
+            'gender' => $data->gender?->getLabel(),
+            'passport_no' => $data->passportNo,
+            'present_address' => self::postal($data->presentAddress),
+            'permanent_address' => self::postal($data->permanentAddress),
+            'documents_received' => $data->documentsReceived === [] ? null : implode(', ', array_map(fn (RegistrationDocument $document): string => (string) $document->getLabel(), $data->documentsReceived)),
             'joined_on' => $data->joinedOn,
             'shares' => $shares === null ? null : Display::digits($shares),
             'effective_from' => $from,
@@ -76,6 +89,11 @@ final class MemberPresenter
             email: $member->email,
             address: $member->address,
             photoPath: $member->photo_path,
+            gender: $member->gender,
+            passportNo: $member->passport_no,
+            presentAddress: PostalAddress::fromAttributes($member, 'present'),
+            permanentAddress: PostalAddress::fromAttributes($member, 'permanent'),
+            documentsReceived: array_values($member->documents_received->all()),
             nominees: array_values($member->nominees->map(fn (Nominee $nominee): NomineeData => new NomineeData(
                 $nominee->name,
                 $nominee->relation,
@@ -97,6 +115,18 @@ final class MemberPresenter
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    private static function postal(?PostalAddress $address): ?string
+    {
+        if ($address === null) {
+            return null;
+        }
+
+        $place = $address->upazilaId > 0 ? app(GeoDirectory::class)->describe($address->upazilaId, $address->unionId) : '';
+        $text = trim(implode(', ', array_filter([$address->line, $place], fn (string $part): bool => $part !== '')));
+
+        return $text === '' ? null : $text;
     }
 
     /**

@@ -6,7 +6,6 @@ namespace App\Filament\Clusters\Settings\Resources\MembershipTerms\Pages;
 
 use App\Domain\Members\Terms\Actions\SaveTermsDraft;
 use App\Domain\Members\Terms\Models\MembershipTerms;
-use App\Filament\Clusters\Settings\Resources\MembershipTerms\Actions\MembershipTermsActions;
 use App\Filament\Clusters\Settings\Resources\MembershipTerms\MembershipTermsResource;
 use App\Filament\Concerns\ConfirmsWithTier;
 use App\Filament\Support\DomainActionRunner;
@@ -29,7 +28,6 @@ final class EditMembershipTerms extends EditRecord
     {
         return [
             ViewAction::make(),
-            MembershipTermsActions::publish(),
         ];
     }
 

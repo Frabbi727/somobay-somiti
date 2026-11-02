@@ -88,12 +88,16 @@ final class RegistrationResource
     }
 
     /**
-     * @return array{upazila_id: int, union_id: int|null, division_id: int, district_id: int, address_line: string|null, place_name: string}|null
+     * @return array{upazila_id: int|null, union_id: int|null, division_id: int|null, district_id: int|null, address_line: string|null, place_name: string|null}|null
      */
     private static function address(?int $upazilaId, ?int $unionId, ?string $line): ?array
     {
-        if ($upazilaId === null) {
+        if ($upazilaId === null && $line === null) {
             return null;
+        }
+
+        if ($upazilaId === null) {
+            return ['upazila_id' => null, 'union_id' => null, 'division_id' => null, 'district_id' => null, 'address_line' => $line, 'place_name' => null];
         }
 
         $geo = app(GeoDirectory::class);

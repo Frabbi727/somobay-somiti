@@ -176,6 +176,15 @@ it('returns null for what is not filled yet', function (): void {
         ->assertJsonPath('data.data.permanent_address', null);
 });
 
+it('returns an address line saved without an upazila, so a reload cannot erase it', function (): void {
+    $this->putJson('/api/v1/registration', ['present_address_line' => 'House 5'])->assertOk();
+
+    $this->getJson('/api/v1/registration')
+        ->assertJsonPath('data.data.present_address.address_line', 'House 5')
+        ->assertJsonPath('data.data.present_address.upazila_id', null)
+        ->assertJsonPath('data.data.present_address.place_name', null);
+});
+
 it('names the paper-form fields that are wrong', function (): void {
     $this->putJson('/api/v1/registration', ['gender' => 'robot', 'passport_no' => str_repeat('A', 21), 'present_upazila_id' => 999999, 'permanent_union_id' => 999999, 'permanent_address_line' => str_repeat('a', 256), 'nominees' => [nominee(['gender' => 'x', 'present_upazila_id' => 999999])]])
         ->assertStatus(422)
