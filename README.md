@@ -31,3 +31,16 @@ php artisan schedule:work         # dues, late fees, reminders, self-check, back
 ```bash
 composer test && composer analyse && composer format:check
 ```
+
+```bash
+cd /home/techreal/shomiti.techrealify.com
+git pull --rebase origin production
+php artisan down
+php artisan migrate --force
+php artisan optimize
+php artisan optimize:clear
+php artisan config:cache
+php artisan storage:link --force
+php artisan up
+php artisan queue:work
+```
