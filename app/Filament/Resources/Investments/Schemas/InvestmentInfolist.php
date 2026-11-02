@@ -6,18 +6,29 @@ namespace App\Filament\Resources\Investments\Schemas;
 
 use App\Domain\Investments\Models\Investment;
 use App\Domain\Investments\Models\InvestmentLedgerEntry;
+use App\Domain\Investments\Models\InvestmentReturnExpectation;
+use App\Domain\Investments\Services\ExpectedReturns;
 use App\Filament\Resources\JournalEntries\JournalEntryResource;
 use App\Filament\Support\Display;
 use App\Filament\Support\HistorySection;
 use App\Support\Money\Bps;
+use App\Support\Time\YearMonth;
+use Carbon\CarbonImmutable;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Storage;
+use WeakMap;
 
+/**
+ * @phpstan-import-type ReturnSummary from ExpectedReturns
+ */
 final class InvestmentInfolist
 {
+    /** @var WeakMap<Investment, ReturnSummary>|null */
+    private static ?WeakMap $summaries = null;
+
     public static function configure(Schema $schema): Schema
     {
         return $schema->components([
@@ -96,6 +107,43 @@ final class InvestmentInfolist
                         ->visible(fn (Investment $record): bool => $record->reversal_reason !== null),
                     TextEntry::make('rejection_reason')->label(__('investments.field.reason'))->visible(fn (Investment $record): bool => $record->rejection_reason !== null),
                 ]),
+            Section::make(__('investments.returns.title'))
+                ->description(__('investments.returns.tracking_only'))
+                ->columns(3)
+                ->columnSpanFull()
+                ->visible(fn (Investment $record): bool => $record->returnExpectations->isNotEmpty())
+                ->schema([
+                    TextEntry::make('returns_current')
+                        ->label(__('investments.returns.field.current'))
+                        ->state(fn (Investment $record): string => self::current(self::summary($record)['current'])),
+                    TextEntry::make('returns_expected')
+                        ->label(__('investments.returns.field.expected_to_date'))
+                        ->state(fn (Investment $record): string => Display::money(self::summary($record)['expected'])),
+                    TextEntry::make('returns_received')
+                        ->label(__('investments.returns.field.received'))
+                        ->state(fn (Investment $record): string => Display::money(self::summary($record)['received'])),
+                    TextEntry::make('returns_difference')
+                        ->label(__('investments.returns.field.difference'))
+                        ->state(fn (Investment $record): string => Display::money(self::summary($record)['difference']))
+                        ->color(fn (Investment $record): string => self::summary($record)['difference']->isNegative() ? 'danger' : 'success')
+                        ->weight('bold'),
+                    TextEntry::make('returns_last_received')
+                        ->label(__('investments.returns.field.last_received'))
+                        ->state(fn (Investment $record): string => Display::date(self::summary($record)['last_received_on'])),
+                    TextEntry::make('returns_next_due')
+                        ->label(__('investments.returns.field.next_due'))
+                        ->state(fn (Investment $record): string => ($next = self::summary($record)['next_due']) === null ? '—' : Display::date($next['due_on']).' · '.Display::money($next['amount'])),
+                    RepeatableEntry::make('returnExpectations')
+                        ->label(__('investments.returns.history'))
+                        ->columnSpanFull()
+                        ->columns(4)
+                        ->schema([
+                            TextEntry::make('starts_on')->hiddenLabel()->state(fn (InvestmentReturnExpectation $record): string => __('investments.returns.from', ['date' => Display::date($record->starts_on)])),
+                            TextEntry::make('frequency')->hiddenLabel()->badge(),
+                            TextEntry::make('amount_poisha')->hiddenLabel()->state(fn (InvestmentReturnExpectation $record): string => $record->amount_poisha->isZero() ? '—' : Display::money($record->amount_poisha)),
+                            TextEntry::make('notes')->hiddenLabel()->state(fn (InvestmentReturnExpectation $record): string => trim(($record->notes ?? '').' · '.($record->creator->name ?? ''), ' ·')),
+                        ]),
+                ]),
             Section::make(__('investments.register'))
                 ->columnSpanFull()
                 ->schema([
@@ -119,5 +167,24 @@ final class InvestmentInfolist
                 ]),
             HistorySection::make(),
         ]);
+    }
+
+    /**
+     * @return ReturnSummary
+     */
+    private static function summary(Investment $record): array
+    {
+        self::$summaries ??= new WeakMap;
+
+        return self::$summaries[$record] ??= app(ExpectedReturns::class)->summary($record, CarbonImmutable::now(YearMonth::TIMEZONE));
+    }
+
+    private static function current(?InvestmentReturnExpectation $row): string
+    {
+        if ($row === null) {
+            return '—';
+        }
+
+        return $row->amount_poisha->isZero() ? $row->frequency->getLabel() : Display::money($row->amount_poisha).' · '.$row->frequency->getLabel();
     }
 }
