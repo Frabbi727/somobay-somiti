@@ -39,6 +39,10 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property int|null $rejected_by
  * @property string|null $rejection_reason
  * @property int|null $journal_entry_id
+ * @property int|null $reversed_by
+ * @property CarbonImmutable|null $reversed_at
+ * @property string|null $reversal_reason
+ * @property int|null $reversal_journal_entry_id
  * @property CarbonImmutable $created_at
  * @property-read Investment $investment
  * @property-read Resolution|null $resolution
@@ -106,6 +110,7 @@ final class InvestmentTopUp extends Model
             'amount_poisha' => MoneyCast::class,
             'invested_on' => 'immutable_date',
             'approved_at' => 'immutable_datetime',
+            'reversed_at' => 'immutable_datetime',
             'created_at' => 'immutable_datetime',
         ];
     }

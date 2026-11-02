@@ -85,13 +85,13 @@ final class RecordDescriptor
                 'reference' => $record->investment_no,
                 'amount' => Display::money($record->principal_poisha),
                 'party' => $record->displayName(),
-                'reason' => (string) ($record->rejection_reason ?? ''),
+                'reason' => (string) ($record->rejection_reason ?? $record->reversal_reason ?? ''),
             ],
             $record instanceof InvestmentTopUp => [
                 'reference' => $record->investment->investment_no,
                 'amount' => Display::money($record->amount_poisha),
                 'party' => $record->investment->displayName(),
-                'reason' => (string) ($record->rejection_reason ?? ''),
+                'reason' => (string) ($record->rejection_reason ?? $record->reversal_reason ?? ''),
             ],
             $record instanceof RatePlan => [
                 'reference' => $record->code,

@@ -96,7 +96,7 @@ Note: refundable share capital (3101), listed in BR-22, is not part of the settl
 
 ## Corrections
 
-Posted vouchers never change. Corrections are **reversals** (a mirror voucher with a reason, linked to the original) or, for prices, a **new rate plan version**. Payments, expenses, transfers, vouchers and exit payouts can be reversed; investments, exit approvals, year-ends, dividend settlements and refunds have no reversal flow yet (known gap).
+Posted vouchers never change. Corrections are **reversals** (a mirror voucher with a reason, linked to the original) or, for prices, a **new rate plan version**. Payments, expenses, transfers, vouchers, investments, added investment amounts and exit payouts can be reversed; exit approvals, year-ends, dividend settlements and refunds have no reversal flow yet (known gap).
 
 ## Checks that prove the books add up
 

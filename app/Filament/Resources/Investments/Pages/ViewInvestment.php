@@ -39,6 +39,7 @@ final class ViewInvestment extends ViewRecord
             InvestmentActions::income(),
             InvestmentActions::impair(),
             InvestmentActions::close(),
+            InvestmentActions::reverse(),
         ];
     }
 }

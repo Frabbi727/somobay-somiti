@@ -77,6 +77,7 @@ return [
         'investments_income' => 'Record investment profit',
         'investments_write_down' => 'Write investments down',
         'investments_close' => 'Close or mature investments',
+        'investments_reverse' => 'Reverse approved investments and added amounts',
         'year_end_prepare' => 'Prepare the year-end',
         'dividends_settle' => 'Pay or credit dividends',
         'meetings_manage' => 'Schedule and run meetings',

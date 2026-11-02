@@ -90,6 +90,10 @@ final class InvestmentInfolist
                         ->placeholder('—'),
                     TextEntry::make('recorder.name')->label(__('investments.field.recorded_by')),
                     TextEntry::make('approver.name')->label(__('investments.field.approved_by'))->placeholder('—'),
+                    TextEntry::make('reversal_reason')
+                        ->label(__('investments.field.reason'))
+                        ->color('danger')
+                        ->visible(fn (Investment $record): bool => $record->reversal_reason !== null),
                     TextEntry::make('rejection_reason')->label(__('investments.field.reason'))->visible(fn (Investment $record): bool => $record->rejection_reason !== null),
                 ]),
             Section::make(__('investments.register'))

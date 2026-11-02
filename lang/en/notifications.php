@@ -40,11 +40,13 @@ return [
         'submitted' => ['title' => 'More money for an investment is waiting for your approval', 'body' => ':reference: :amount more for :party. Check it, then approve or reject it.'],
         'approved' => ['title' => 'Your added investment was approved', 'body' => ':reference (:amount more for :party) is approved and recorded in the books.'],
         'rejected' => ['title' => 'Your added investment was rejected', 'body' => ':reference (:amount) was rejected. Reason: :reason. Nothing was recorded.'],
+        'reversed' => ['title' => 'An added investment was reversed', 'body' => ':reference (:amount more for :party) was reversed. Reason: :reason.'],
     ],
     'investment' => [
         'submitted' => ['title' => 'An investment is waiting for your approval', 'body' => ':reference: :amount with :party. Check it, then approve or reject it.'],
         'approved' => ['title' => 'Your investment was approved', 'body' => ':reference (:amount with :party) is approved and recorded in the books.'],
         'rejected' => ['title' => 'Your investment was rejected', 'body' => ':reference (:amount) was rejected. Reason: :reason. Nothing was recorded.'],
+        'reversed' => ['title' => 'An investment was reversed', 'body' => ':reference (:amount with :party) was reversed. Reason: :reason.'],
     ],
 
     'rate_plan' => [

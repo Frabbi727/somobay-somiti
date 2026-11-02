@@ -66,6 +66,7 @@ final class TopUpsRelationManager extends RelationManager
                 InvestmentTopUpActions::approve(),
                 InvestmentTopUpActions::reject(),
                 InvestmentTopUpActions::cancel(),
+                InvestmentTopUpActions::reverse(),
             ]);
     }
 }

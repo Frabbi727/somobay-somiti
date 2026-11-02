@@ -44,7 +44,7 @@ It also lists any dividend lines already posted to members after they exited. **
 | # | Gap | Risk | Suggested next step |
 |---|---|---|---|
 | 1 | Single-person actions: advance refund below the limit, late-fee waiver, dividend settlement, exit payout, investment income/write-down/close, recording a resolution's outcome, closing a fiscal year | one person can move or forgive money | **Decision:** which need a second person |
-| 2 | No reversal flow for approved investments, exit approvals, year-end postings, dividend settlements, advance refunds | a mistake needs a manual workaround | design reversal actions one by one |
+| 2 | No reversal flow for exit approvals, year-end postings, dividend settlements, advance refunds | a mistake needs a manual workaround | design reversal actions one by one |
 | 5 | Retroactive rate corrections (BR-7 adjustment dues) not built | none now (refused) | **Decision:** whether needed |
 | 6 | Pro-rata dividend for the exit year | none now (decided: no dividend) | revisit only if bylaws require |
 | 7 | Refundable share capital (3101) not in the exit settlement (BR-22) | depends on bylaws | **Decision** |

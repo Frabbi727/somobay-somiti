@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Investments\Actions;
 
+use App\Domain\Accounting\Models\JournalEntry;
 use App\Domain\Contributions\Enums\PaymentMethod;
 use App\Domain\Governance\Enums\ResolutionStatus;
 use App\Domain\Governance\Enums\ResolutionSubject;
@@ -12,6 +13,7 @@ use App\Domain\Investments\Actions\ApproveInvestmentTopUp;
 use App\Domain\Investments\Actions\CancelInvestmentTopUp;
 use App\Domain\Investments\Actions\RecordInvestmentTopUp;
 use App\Domain\Investments\Actions\RejectInvestmentTopUp;
+use App\Domain\Investments\Actions\ReverseInvestmentTopUp;
 use App\Domain\Investments\Data\InvestmentTopUpData;
 use App\Domain\Investments\Models\Investment;
 use App\Domain\Investments\Models\InvestmentTopUp;
@@ -142,6 +144,36 @@ final class InvestmentTopUpActions
             ]),
             expected: fn (InvestmentTopUp $record): string => $record->investment->investment_no,
             submitLabel: __('investments.top_up.actions.reject'),
+            fields: [Textarea::make('reason')->label(__('investments.field.reason'))->required()->minLength(5)->rows(2)],
+        );
+    }
+
+    public static function reverse(): Action
+    {
+        $action = Action::make('reverseTopUp')
+            ->label(__('investments.top_up.actions.reverse'))
+            ->tooltip(__('investments.top_up.actions.reverse'))
+            ->icon(Heroicon::OutlinedArrowUturnLeft)
+            ->color('danger')
+            ->authorize('reverse')
+            ->action(function (InvestmentTopUp $record, array $data): void {
+                $topUp = DomainActionRunner::run(fn (User $actor): InvestmentTopUp => app(ReverseInvestmentTopUp::class)($actor, $record, (string) ($data['reason'] ?? '')));
+
+                Notification::make()
+                    ->title(__('investments.top_up.notifications.reversed', ['voucher' => Display::digits((string) JournalEntry::query()->whereKey($topUp->reversal_journal_entry_id)->value('voucher_no'))]))
+                    ->success()
+                    ->send();
+            });
+
+        return self::tier3(
+            $action,
+            heading: fn (InvestmentTopUp $record): string => __('investments.top_up.actions.reverse_heading', [
+                'number' => $record->investment->investment_no,
+                'amount' => Display::money($record->amount_poisha),
+            ]),
+            expected: fn (InvestmentTopUp $record): string => $record->investment->investment_no,
+            submitLabel: __('investments.top_up.actions.reverse'),
+            description: __('investments.actions.reverse_description'),
             fields: [Textarea::make('reason')->label(__('investments.field.reason'))->required()->minLength(5)->rows(2)],
         );
     }

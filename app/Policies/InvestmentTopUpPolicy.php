@@ -48,6 +48,13 @@ final class InvestmentTopUpPolicy
         return $topUp->status === InvestmentTopUpStatus::Pending && $topUp->recorded_by === $user->id;
     }
 
+    public function reverse(User $user, InvestmentTopUp $topUp): bool
+    {
+        return $topUp->status === InvestmentTopUpStatus::Approved
+            && $topUp->approved_by !== $user->id
+            && $user->may(Permission::InvestmentsReverse);
+    }
+
     public function update(User $user, InvestmentTopUp $topUp): bool
     {
         return false;

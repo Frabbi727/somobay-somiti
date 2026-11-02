@@ -16,6 +16,7 @@ enum InvestmentStatus: string implements HasColor, HasIcon, HasLabel
     case Rejected = 'rejected';
     case Cancelled = 'cancelled';
     case Closed = 'closed';
+    case Reversed = 'reversed';
 
     public function getLabel(): string
     {
@@ -27,7 +28,7 @@ enum InvestmentStatus: string implements HasColor, HasIcon, HasLabel
         return match ($this) {
             self::Pending => 'warning',
             self::Active => 'success',
-            self::Rejected => 'danger',
+            self::Rejected, self::Reversed => 'danger',
             self::Cancelled, self::Closed => 'gray',
         };
     }
@@ -40,6 +41,7 @@ enum InvestmentStatus: string implements HasColor, HasIcon, HasLabel
             self::Rejected => Heroicon::OutlinedNoSymbol,
             self::Cancelled => Heroicon::OutlinedXCircle,
             self::Closed => Heroicon::OutlinedLockClosed,
+            self::Reversed => Heroicon::OutlinedArrowUturnLeft,
         };
     }
 }
