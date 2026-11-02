@@ -74,7 +74,7 @@ final class ApproveExit
             Gate::forUser($actor)->authorize('approve', $locked);
 
             $this->resolutions->assertSatisfied(ResolutionSubject::Exit, $locked->resolution_id);
-            $this->resolutions->assertNotUsedElsewhere(ResolutionSubject::Exit, $locked->resolution_id, $locked->id);
+            $this->resolutions->assertNotUsedElsewhere(ResolutionSubject::Exit, $locked->resolution_id, $locked);
 
             if (! $locked->exit_month->isBefore(YearMonth::current())) {
                 throw DomainRuleViolation::because('exits.errors.month_not_over', ['month' => Display::yearMonth($locked->exit_month)]);
