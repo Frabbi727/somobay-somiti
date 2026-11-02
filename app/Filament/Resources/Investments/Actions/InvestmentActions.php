@@ -190,11 +190,12 @@ final class InvestmentActions
                 DomainActionRunner::run(fn (User $actor): Investment => app(CloseInvestment::class)(
                     $actor,
                     $record,
-                    self::money($data['capital_returned'] ?? null),
+                    self::money($data['sale_price'] ?? null),
                     CarbonImmutable::parse((string) ($data['date'] ?? 'today'), YearMonth::TIMEZONE),
                     self::method($data['received_into'] ?? null),
                     self::money($data['final_profit'] ?? null),
                     self::money($data['tax_deducted'] ?? null),
+                    self::money($data['sale_expenses'] ?? null),
                 ));
                 Notification::make()->title(__('investments.notifications.closed'))->success()->send();
             });
@@ -206,7 +207,8 @@ final class InvestmentActions
             submitLabel: __('investments.actions.close'),
             description: __('investments.actions.close_description'),
             fields: [
-                MoneyInput::make('capital_returned')->label(__('investments.field.capital_returned'))->default(fn (Investment $record): string => $record->bookValue()->toTakaString())->required(),
+                MoneyInput::make('sale_price')->label(__('investments.field.sale_price'))->default(fn (Investment $record): string => $record->bookValue()->toTakaString())->required(),
+                MoneyInput::make('sale_expenses')->label(__('investments.field.sale_expenses'))->helperText(__('investments.field.sale_expenses_help'))->default('0'),
                 MoneyInput::make('final_profit')->label(__('investments.field.final_profit'))->default('0'),
                 MoneyInput::make('tax_deducted')->label(__('investments.field.tax_deducted'))->default('0'),
                 DatePicker::make('date')->label(__('investments.field.date'))->default(fn (): string => CarbonImmutable::now(YearMonth::TIMEZONE)->toDateString())->native(false)->required(),

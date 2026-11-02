@@ -24,12 +24,18 @@ use Illuminate\Support\Facades\Gate;
 use Spatie\Activitylog\Support\CauserResolver;
 
 /**
- * Maturity, encashment or sale: the capital returned comes in by receipt voucher and the book
- * value leaves 13xx; a difference is a gain (Cr 4201) or a loss (Dr 5201). Final profit, if any,
- * is recorded with it as investment income.
+ * Maturity, encashment or sale. The sale price (or capital returned) less the selling expenses
+ * paid out of it comes in by receipt voucher and the book value leaves 13xx. The difference is the
+ * gain on sale (Cr 4211) or the loss on sale (Dr 5202), kept apart from rent and other profit
+ * (4201). Final profit, if any, is recorded with it as investment income. The sale price, the
+ * expenses and the gain or loss stay on the investment.
  */
 final class CloseInvestment
 {
+    public const string GAIN_ON_SALE = '4211';
+
+    public const string LOSS_ON_SALE = '5202';
+
     public function __construct(
         private readonly PostJournal $post,
         private readonly Accounts $accounts,
@@ -40,18 +46,25 @@ final class CloseInvestment
     public function __invoke(
         User $actor,
         Investment $investment,
-        Money $capitalReturned,
+        Money $salePrice,
         CarbonImmutable $on,
         PaymentMethod $into,
         ?Money $finalProfit = null,
         ?Money $taxDeducted = null,
+        ?Money $saleExpenses = null,
     ): Investment {
-        return $this->causer->withCauser($actor, fn (): Investment => DB::transaction(function () use ($actor, $investment, $capitalReturned, $on, $into, $finalProfit, $taxDeducted): Investment {
+        $saleExpenses ??= Money::zero();
+
+        return $this->causer->withCauser($actor, fn (): Investment => DB::transaction(function () use ($actor, $investment, $salePrice, $on, $into, $finalProfit, $taxDeducted, $saleExpenses): Investment {
             $locked = Investment::query()->whereKey($investment->getKey())->lockForUpdate()->firstOrFail();
             Gate::forUser($actor)->authorize('close', $locked);
 
-            if ($capitalReturned->isNegative()) {
+            if ($salePrice->isNegative()) {
                 throw DomainRuleViolation::because('investments.errors.capital_negative');
+            }
+
+            if ($saleExpenses->isNegative() || $saleExpenses->isGreaterThan($salePrice)) {
+                throw DomainRuleViolation::because('investments.errors.sale_expenses');
             }
 
             if ($on->isAfter(CarbonImmutable::now(YearMonth::TIMEZONE)->endOfDay()) || $on->isBefore($locked->invested_on)) {
@@ -59,27 +72,29 @@ final class CloseInvestment
             }
 
             $book = $locked->bookValue();
+            $received = $salePrice->minus($saleExpenses);
+            $gain = $received->minus($book);
             $lines = [];
 
-            if ($capitalReturned->isPositive()) {
-                $lines[] = JournalLineData::debit($this->accounts->byCode($into->accountCode()), $capitalReturned);
+            if ($received->isPositive()) {
+                $lines[] = JournalLineData::debit($this->accounts->byCode($into->accountCode()), $received);
             }
 
-            if ($capitalReturned->isLessThan($book)) {
-                $lines[] = JournalLineData::debit($this->accounts->byCode(ImpairInvestment::IMPAIRMENT_LOSS), $book->minus($capitalReturned));
+            if ($gain->isNegative()) {
+                $lines[] = JournalLineData::debit($this->accounts->byCode(self::LOSS_ON_SALE), $gain->negated());
             }
 
             if ($book->isPositive()) {
                 $lines[] = JournalLineData::credit(Account::query()->findOrFail($locked->account_id), $book);
             }
 
-            if ($capitalReturned->isGreaterThan($book)) {
-                $lines[] = JournalLineData::credit($this->accounts->byCode(RecordInvestmentIncome::INVESTMENT_PROFIT), $capitalReturned->minus($book));
+            if ($gain->isPositive()) {
+                $lines[] = JournalLineData::credit($this->accounts->byCode(self::GAIN_ON_SALE), $gain);
             }
 
             if ($lines !== []) {
                 $entry = ($this->post)($actor, new JournalEntryData(
-                    type: $capitalReturned->isPositive() ? VoucherType::Receipt : VoucherType::Journal,
+                    type: $received->isPositive() ? VoucherType::Receipt : VoucherType::Journal,
                     entryDate: $on,
                     narration: $locked->investment_no.': '.__('investments.closure.narration'),
                     lines: $lines,
@@ -100,7 +115,13 @@ final class CloseInvestment
                 $this->income->post($actor, $locked, $finalProfit, $taxDeducted ?? Money::zero(), $on, $into, null);
             }
 
-            $locked->update(['status' => InvestmentStatus::Closed, 'closed_on' => $on->toDateString()]);
+            $locked->update([
+                'status' => InvestmentStatus::Closed,
+                'closed_on' => $on->toDateString(),
+                'sale_price_poisha' => $salePrice,
+                'sale_expenses_poisha' => $saleExpenses,
+                'sale_gain_poisha' => $gain,
+            ]);
 
             return $locked;
         }, attempts: 3));

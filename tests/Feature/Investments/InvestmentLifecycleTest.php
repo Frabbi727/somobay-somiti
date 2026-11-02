@@ -87,14 +87,14 @@ it('closes at maturity with the capital returned and final profit in one go', fu
     assertBooksTieOut();
 });
 
-it('posts a loss or a gain when the capital returned differs from the book value', function (string $returned, string $code, int $balance): void {
+it('posts a loss or a gain on sale when the capital returned differs from the book value', function (string $returned, string $code, int $balance): void {
     app(CloseInvestment::class)($this->accountant, $this->fdr, Money::ofTaka($returned), CarbonImmutable::parse('2026-12-10'), PaymentMethod::Bank);
 
     expect(glBalance($code))->toBe($balance);
     assertBooksTieOut();
 })->with([
-    'loss on early encashment' => ['98500', '5201', -150000],
-    'gain on sale' => ['101000', '4201', 100000],
+    'loss on early encashment' => ['98500', '5202', -150000],
+    'gain on sale' => ['101000', '4211', 100000],
 ]);
 
 it('writes an investment down by JV, never below zero, president only', function (): void {
@@ -113,7 +113,8 @@ it('writes an investment down by JV, never below zero, president only', function
     // Recovering ৳65,000 later is a ৳5,000 gain over the written-down book value.
     app(CloseInvestment::class)($this->accountant, $this->fdr, Money::ofTaka('65000'), CarbonImmutable::parse('2026-12-15'), PaymentMethod::Bank);
 
-    expect(glBalance('4201'))->toBe(500000);
+    expect(glBalance('4211'))->toBe(500000)
+        ->and(glBalance('4201'))->toBe(0);
     assertBooksTieOut();
 });
 
@@ -148,7 +149,7 @@ it('records profit and closes from the investment screen', function (): void {
     Livewire::test(ViewInvestment::class, ['record' => $this->fdr->getRouteKey()])
         ->callAction('income', data: ['gross' => '1,250', 'tax_deducted' => '125', 'received_on' => '2026-11-10', 'received_into' => 'bank', 'confirm_text' => $this->fdr->investment_no])
         ->assertHasNoActionErrors()
-        ->callAction('close', data: ['capital_returned' => '100,000', 'final_profit' => '0', 'tax_deducted' => '0', 'date' => '2026-12-10', 'received_into' => 'bank', 'confirm_text' => $this->fdr->investment_no])
+        ->callAction('close', data: ['sale_price' => '100,000', 'sale_expenses' => '0', 'final_profit' => '0', 'tax_deducted' => '0', 'date' => '2026-12-10', 'received_into' => 'bank', 'confirm_text' => $this->fdr->investment_no])
         ->assertHasNoActionErrors();
 
     expect(Investment::query()->findOrFail($this->fdr->id)->status)->toBe(InvestmentStatus::Closed)

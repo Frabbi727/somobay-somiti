@@ -64,7 +64,7 @@ final class InvestmentRegisterReport implements Report
         $book->row([
             __('investments.field.number'), __('investments.field.name'), __('investments.field.type'), __('investments.field.institution'), __('investments.field.instrument_no'),
             __('investments.field.invested_on'), __('investments.field.matures_on'), __('investments.field.total_invested'), __('investments.field.book_value'),
-            __('investments.report.income'), __('investments.field.status'),
+            __('investments.report.income'), __('investments.report.gain'), __('investments.field.status'),
         ], bold: true);
 
         foreach ($data['rows'] as $row) {
@@ -72,11 +72,11 @@ final class InvestmentRegisterReport implements Report
             $book->row([
                 $investment->investment_no, $investment->name, $investment->type->getLabel(), $investment->institution, $investment->instrument_no,
                 $investment->invested_on->toDateString(), $investment->matures_on?->toDateString(), $row['invested'],
-                $row['book'], $row['income'], $investment->status->getLabel(),
+                $row['book'], $row['income'], $row['gain'], $investment->status->getLabel(),
             ]);
         }
 
-        $book->row([__('journal.line.total'), null, null, null, null, null, null, null, $data['total'], $data['income'], null], bold: true);
+        $book->row([__('journal.line.total'), null, null, null, null, null, null, null, $data['total'], $data['income'], $data['gain'], null], bold: true);
         $book->blank();
         $book->row([__('investments.field.type'), __('investments.report.register_total'), __('investments.report.ledger_total')], bold: true);
 

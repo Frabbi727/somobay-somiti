@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\DB;
 final class InvestmentRegister
 {
     /**
-     * @return array{rows: list<array{investment: Investment, invested: Money, book: Money, income: Money}>, groups: list<array{type: InvestmentType, book: Money, ledger: Money}>, total: Money, income: Money}
+     * @return array{rows: list<array{investment: Investment, invested: Money, book: Money, income: Money, gain: Money}>, groups: list<array{type: InvestmentType, book: Money, ledger: Money}>, total: Money, income: Money, gain: Money}
      */
     public function asOf(CarbonImmutable $date): array
     {
@@ -59,11 +59,14 @@ final class InvestmentRegister
             $book = Money::ofPoisha((int) $books->get($investment->id, 0));
             $income = Money::ofPoisha((int) $incomes->get($investment->id, 0));
 
-            if ($book->isZero() && $investment->status === InvestmentStatus::Closed && $income->isZero()) {
+            $soldBy = $investment->closed_on !== null && $investment->closed_on->toDateString() <= $day;
+            $gain = $soldBy ? ($investment->sale_gain_poisha ?? Money::zero()) : Money::zero();
+
+            if ($book->isZero() && $investment->status === InvestmentStatus::Closed && $income->isZero() && $gain->isZero()) {
                 continue;
             }
 
-            $rows[] = ['investment' => $investment, 'invested' => Money::ofPoisha((int) $invested->get($investment->id, 0)), 'book' => $book, 'income' => $income];
+            $rows[] = ['investment' => $investment, 'invested' => Money::ofPoisha((int) $invested->get($investment->id, 0)), 'book' => $book, 'income' => $income, 'gain' => $gain];
         }
 
         $groups = [];
@@ -87,6 +90,7 @@ final class InvestmentRegister
             'groups' => $groups,
             'total' => Money::sum(array_map(fn (array $row): Money => $row['book'], $rows)),
             'income' => Money::sum(array_map(fn (array $row): Money => $row['income'], $rows)),
+            'gain' => Money::sum(array_map(fn (array $row): Money => $row['gain'], $rows)),
         ];
     }
 }
