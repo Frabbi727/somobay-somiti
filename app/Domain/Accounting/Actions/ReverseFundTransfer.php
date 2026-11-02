@@ -12,6 +12,7 @@ use App\Domain\Accounting\Services\FundsGuard;
 use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
+use App\Support\Time\YearMonth;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -50,7 +51,7 @@ final class ReverseFundTransfer
             Gate::forUser($actor)->authorize('reverse', $locked);
 
             // The money goes back out of the destination, which must still hold it.
-            $this->funds->assertCovers($this->accounts->byCode($locked->to_method->accountCode()), $locked->amount_poisha);
+            $this->funds->assertCovers($this->accounts->byCode($locked->to_method->accountCode()), $locked->amount_poisha, CarbonImmutable::now(YearMonth::TIMEZONE)->startOfDay());
 
             $reversal = ($this->reverseJournal)(
                 $actor,

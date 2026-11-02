@@ -9,6 +9,8 @@ use App\Domain\Contributions\Models\Payment;
 use App\Domain\Exits\Enums\ExitReason;
 use App\Domain\Exits\Enums\ExitStatus;
 use App\Domain\Exits\Models\MemberExit;
+use App\Domain\Governance\Enums\ResolutionSubject;
+use App\Domain\Governance\Services\RequiredResolutions;
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Models\Member;
 use App\Domain\Notifications\Services\WorkflowNotifier;
@@ -28,6 +30,7 @@ final class RequestExit
     public function __construct(
         private readonly CauserResolver $causer,
         private readonly WorkflowNotifier $notifier,
+        private readonly RequiredResolutions $resolutions,
     ) {}
 
     public function __invoke(User $actor, Member $member, ExitReason $reason, string $details, YearMonth $exitMonth, Money $exitFee, ?int $resolutionId = null): MemberExit
@@ -60,6 +63,8 @@ final class RequestExit
             if ($exitMonth->isBefore(YearMonth::fromDate($locked->joined_on))) {
                 throw DomainRuleViolation::because('exits.errors.before_joining');
             }
+
+            $this->resolutions->assertNotUsedElsewhere(ResolutionSubject::Exit, $resolutionId);
 
             $number = (int) DB::scalar("SELECT nextval('exit_no_seq')");
 

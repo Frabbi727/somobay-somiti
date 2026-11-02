@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Accounting\Actions\OpenFiscalYear;
 use App\Domain\Contributions\Actions\ReversePayment;
 use App\Domain\Contributions\Enums\DueStatus;
+use App\Domain\Contributions\Enums\DueType;
 use App\Domain\Contributions\Enums\PaymentStatus;
 use App\Domain\Contributions\Models\Due;
 use App\Domain\Contributions\Services\AdvanceLedger;
@@ -192,6 +193,65 @@ it('7. keeps every invariant through a mixed history', function (): void {
     app(ReversePayment::class)(userWithRole(Role::President), $toReverse, 'Entered for the wrong member');
 
     generateMonth('2026-09');
+
+    assertBooksTieOut();
+});
+
+it('6. cancels the locked months when a lock payment is reversed, and later months use the rate then in force', function (): void {
+    simplePlan('2026-07', '500', 'lock_prepaid_months');
+    $member = onboard(1, '2026-07');
+    generateMonth('2026-07');
+    travelTo('2026-07-05');
+    $payment = receivePayment($member, '3000'); // July + August–December locked at ৳500
+    simplePlan('2026-10', '600');
+    generateMonth('2026-08');
+    generateMonth('2026-09');
+
+    travelTo('2026-09-10');
+    app(ReversePayment::class)(userWithRole(Role::Accountant), $payment, 'Cheque bounced');
+
+    $open = fn (): array => Due::query()->where('member_id', $member->id)->where('type', DueType::Deposit)->where('status', DueStatus::Open)
+        ->orderBy('month')->get()->mapWithKeys(fn (Due $due): array => [(string) $due->month => [$due->amount_poisha->poisha, $due->paid_poisha->poisha, $due->prepaid_locked]])->all();
+
+    // July reopens; August and September were already generated, so they are owed again at their own rate;
+    // October–December are no longer reserved.
+    expect($open())->toBe([
+        '2026-07' => [50000, 0, false],
+        '2026-08' => [50000, 0, false],
+        '2026-09' => [50000, 0, false],
+    ])
+        ->and(Due::query()->where('member_id', $member->id)->where('prepaid_locked', true)->where('status', '!=', DueStatus::Cancelled)->exists())->toBeFalse();
+
+    generateMonth('2026-10');
+    generateMonth('2026-10'); // running again adds nothing
+
+    expect($open()['2026-10'] ?? null)->toBe([60000, 0, false])
+        ->and(count($open()))->toBe(4);
+
+    assertBooksTieOut();
+});
+
+it('6b. locks the freed months again for a new lock payment after a reversal', function (): void {
+    simplePlan('2026-07', '500', 'lock_prepaid_months');
+    $member = onboard(1, '2026-07');
+    generateMonth('2026-07');
+    travelTo('2026-07-05');
+    $first = receivePayment($member, '3000');
+
+    travelTo('2026-07-06');
+    app(ReversePayment::class)(userWithRole(Role::Accountant), $first, 'Cheque bounced');
+
+    travelTo('2026-07-07');
+    receivePayment($member, '1500'); // July + August, September locked
+
+    $live = Due::query()->where('member_id', $member->id)->where('type', DueType::Deposit)->where('status', '!=', DueStatus::Cancelled)
+        ->orderBy('month')->get()->mapWithKeys(fn (Due $due): array => [(string) $due->month => [$due->paid_poisha->poisha, $due->prepaid_locked]])->all();
+
+    expect($live)->toBe([
+        '2026-07' => [50000, false],
+        '2026-08' => [50000, true],
+        '2026-09' => [50000, true],
+    ]);
 
     assertBooksTieOut();
 });

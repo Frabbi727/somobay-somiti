@@ -53,6 +53,10 @@ final class MemberInfolist
                             ->formatStateUsing(fn (string $state): string => Display::digits($state))
                             ->placeholder('—'),
                         TextEntry::make('guardian_name')->label(__('members.member.guardian_name'))->placeholder('—'),
+                        TextEntry::make('father_name')->label(__('members.member.father_name'))->placeholder('—'),
+                        TextEntry::make('mother_name')->label(__('members.member.mother_name'))->placeholder('—'),
+                        TextEntry::make('profession')->label(__('members.member.profession'))->placeholder('—'),
+                        TextEntry::make('marital_status')->label(__('members.member.marital_status'))->badge()->placeholder('—'),
                         TextEntry::make('joined_on')
                             ->label(__('members.member.joined_on'))
                             ->state(fn (Member $record): string => Display::date($record->joined_on)),

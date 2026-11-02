@@ -85,7 +85,8 @@ final class ApprovePayment
             ['allocations' => $allocations, 'remainder' => $remainder] = $this->engine->allocate($locked->amount_poisha, $openDues);
 
             if ($remainder->isPositive() && $policy === AdvancePolicy::LockPrepaidMonths && $plan !== null) {
-                $lastMonth = Due::query()->where('member_id', $member->id)->where('type', DueType::Deposit)->max('month');
+                $lastMonth = Due::query()->where('member_id', $member->id)->where('type', DueType::Deposit)
+                    ->where('status', '!=', DueStatus::Cancelled)->max('month');
                 $after = $lastMonth === null ? $month : YearMonth::parse(substr((string) $lastMonth, 0, 10))->max($month);
                 $lockedDues = $this->locker->lock($member, $plan, $remainder, $after);
 

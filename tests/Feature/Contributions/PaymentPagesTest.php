@@ -5,10 +5,13 @@ declare(strict_types=1);
 use App\Domain\Accounting\Actions\OpenFiscalYear;
 use App\Domain\Contributions\Actions\ApprovePayment;
 use App\Domain\Contributions\Actions\RecordPayment;
+use App\Domain\Contributions\Actions\RejectPayment;
 use App\Domain\Contributions\Data\PaymentData;
 use App\Domain\Contributions\Enums\PaymentStatus;
 use App\Domain\Contributions\Models\Payment;
 use App\Domain\Contributions\Services\AdvanceLedger;
+use App\Domain\Contributions\Services\PaymentPreviewer;
+use App\Domain\Contributions\Services\SimilarPayments;
 use App\Enums\Role;
 use App\Filament\Pages\Collections\AdvanceBalances;
 use App\Filament\Pages\Collections\CollectPayment;
@@ -19,6 +22,7 @@ use App\Reports\ReceiptDocument;
 use App\Support\Money\Money;
 use Carbon\CarbonImmutable;
 use Database\Seeders\ChartOfAccountsSeeder;
+use Filament\Actions\Action;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Illuminate\Http\UploadedFile;
@@ -177,4 +181,63 @@ it('shows the pending count on the menu and renders in Bangla', function (): voi
     app()->setLocale('bn');
     $this->get(PaymentResource::getUrl('index'))->assertOk()->assertSee(__('payments.status.pending'));
     $this->get(CollectPayment::getUrl())->assertOk()->assertSee('আদায় গ্রহণ');
+});
+
+it('warns when the same member already paid the same amount that day, without blocking', function (): void {
+    pendingPayment($this, '1220');
+    $this->actingAs($this->cashier);
+
+    Livewire::test(CollectPayment::class)
+        ->fillForm(['member_id' => $this->member->id, 'amount' => '1,220'])
+        ->assertSee(__('payments.duplicate.title'))
+        ->fillForm(['amount' => '1,000'])
+        ->assertDontSee(__('payments.duplicate.title'))
+        ->fillForm(['amount' => '1,220'])
+        ->callAction('record')
+        ->assertHasNoFormErrors()
+        ->assertNotified(__('payments.collect.saved', ['amount' => '৳ 1,220.00']));
+
+    expect(Payment::query()->where('status', PaymentStatus::Pending)->count())->toBe(2);
+});
+
+it('ignores rejected, cancelled and other-day payments when looking for duplicates', function (): void {
+    $similar = app(SimilarPayments::class);
+    $payment = pendingPayment($this, '1220');
+    $other = pendingPayment($this, '1220');
+
+    expect($similar->toPayment($other)->pluck('id')->all())->toBe([$payment->id]);
+
+    app(RejectPayment::class)($this->accountant, $payment, 'Entered twice');
+
+    expect($similar->toPayment($other))->toBeEmpty()
+        ->and($similar->to($this->member->id, Money::ofTaka('1220'), CarbonImmutable::parse('2026-07-04')))->toBeEmpty();
+});
+
+it('warns the approver about a possible duplicate', function (): void {
+    pendingPayment($this, '1220');
+    $second = pendingPayment($this, '1220');
+    $this->actingAs($this->accountant);
+
+    Livewire::test(ViewPayment::class, ['record' => $second->getRouteKey()])
+        ->assertActionExists('approve', fn (Action $action): bool => str_starts_with(
+            (string) $action->getModalDescription(),
+            __('payments.duplicate.approve', ['count' => 1]),
+        ));
+});
+
+it('fills the amount that clears every due up to a chosen month', function (): void {
+    travelTo('2026-08-05');
+    generateMonth('2026-08');
+    travelTo('2026-08-05');
+    $this->actingAs($this->cashier);
+
+    expect(collect(app(PaymentPreviewer::class)->clearThrough(app(PaymentPreviewer::class)->openDues($this->member)))
+        ->map(fn (array $row): array => [$row['month']->toDateString(), $row['amount']->toTakaString()])
+        ->all())->toBe([['2026-07-01', '1220.00'], ['2026-08-01', '2240.00']]);
+
+    Livewire::test(CollectPayment::class)
+        ->fillForm(['member_id' => $this->member->id])
+        ->call('fillAmountThrough', '2026-08-01')
+        ->assertSchemaStateSet(['amount' => '2240.00'])
+        ->assertSee(__('payments.collect.to_dues', ['amount' => '৳ 2,240.00']));
 });

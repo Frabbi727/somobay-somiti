@@ -78,6 +78,14 @@ final class MemberExit extends Model
     }
 
     /**
+     * @return HasMany<MemberExitPayoutReversal, $this>
+     */
+    public function payoutReversals(): HasMany
+    {
+        return $this->hasMany(MemberExitPayoutReversal::class);
+    }
+
+    /**
      * @return BelongsTo<User, $this>
      */
     public function requester(): BelongsTo

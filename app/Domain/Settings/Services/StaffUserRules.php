@@ -14,6 +14,13 @@ final class StaffUserRules
 {
     public const int MIN_PASSWORD_LENGTH = 12;
 
+    /**
+     * Roles that record, approve or reverse money; none of them may sit with super admin.
+     *
+     * @var list<Role>
+     */
+    public const array MONEY_ROLES = [Role::President, Role::Accountant, Role::Cashier];
+
     public function assertValid(StaffUserData $data, ?User $existing = null): void
     {
         if ($data->name === '') {
@@ -39,6 +46,14 @@ final class StaffUserRules
 
         if ($data->roles === [] || in_array(Role::Member, $data->roles, true)) {
             throw DomainRuleViolation::because('users.errors.staff_role_required');
+        }
+
+        // The super-admin lock on approving and reversing is per role, so the same person must not
+        // also hold a role that records or approves money (known gap #18).
+        $holdsMoneyRole = array_any(self::MONEY_ROLES, fn (Role $role): bool => in_array($role, $data->roles, true));
+
+        if ($holdsMoneyRole && in_array(Role::SuperAdmin, $data->roles, true)) {
+            throw DomainRuleViolation::because('users.errors.super_admin_combined');
         }
 
         if ($existing === null && $data->password === null) {
