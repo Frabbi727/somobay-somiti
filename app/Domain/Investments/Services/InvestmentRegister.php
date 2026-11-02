@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Investments\Services;
 
 use App\Domain\Accounting\Models\Account;
+use App\Domain\Investments\Enums\InvestmentEntryKind;
 use App\Domain\Investments\Enums\InvestmentStatus;
 use App\Domain\Investments\Enums\InvestmentType;
 use App\Domain\Investments\Models\Investment;
@@ -18,7 +19,7 @@ use Illuminate\Support\Facades\DB;
 final class InvestmentRegister
 {
     /**
-     * @return array{rows: list<array{investment: Investment, book: Money, income: Money}>, groups: list<array{type: InvestmentType, book: Money, ledger: Money}>, total: Money, income: Money}
+     * @return array{rows: list<array{investment: Investment, invested: Money, book: Money, income: Money}>, groups: list<array{type: InvestmentType, book: Money, ledger: Money}>, total: Money, income: Money}
      */
     public function asOf(CarbonImmutable $date): array
     {
@@ -38,6 +39,14 @@ final class InvestmentRegister
             ->selectRaw('l.investment_id, SUM(l.delta_poisha)::bigint AS book')
             ->pluck('book', 'investment_id');
 
+        $invested = DB::table('investment_ledger_entries as l')
+            ->join('journal_entries as e', 'e.id', '=', 'l.journal_entry_id')
+            ->where('e.entry_date', '<=', $day)
+            ->whereIn('l.kind', [InvestmentEntryKind::Disbursement->value, InvestmentEntryKind::TopUp->value])
+            ->groupBy('l.investment_id')
+            ->selectRaw('l.investment_id, SUM(l.delta_poisha)::bigint AS invested')
+            ->pluck('invested', 'investment_id');
+
         $incomes = DB::table('investment_income')
             ->where('received_on', '<=', $day)
             ->groupBy('investment_id')
@@ -54,7 +63,7 @@ final class InvestmentRegister
                 continue;
             }
 
-            $rows[] = ['investment' => $investment, 'book' => $book, 'income' => $income];
+            $rows[] = ['investment' => $investment, 'invested' => Money::ofPoisha((int) $invested->get($investment->id, 0)), 'book' => $book, 'income' => $income];
         }
 
         $groups = [];

@@ -8,6 +8,7 @@ use App\Domain\Accounting\Models\Account;
 use App\Domain\Accounting\Models\JournalEntry;
 use App\Domain\Contributions\Enums\PaymentMethod;
 use App\Domain\Governance\Models\Resolution;
+use App\Domain\Investments\Enums\InvestmentEntryKind;
 use App\Domain\Investments\Enums\InvestmentStatus;
 use App\Domain\Investments\Enums\InvestmentType;
 use App\Models\User;
@@ -73,6 +74,14 @@ final class Investment extends Model
     }
 
     /**
+     * @return HasMany<InvestmentTopUp, $this>
+     */
+    public function topUps(): HasMany
+    {
+        return $this->hasMany(InvestmentTopUp::class);
+    }
+
+    /**
      * @return HasMany<InvestmentIncome, $this>
      */
     public function income(): HasMany
@@ -129,7 +138,17 @@ final class Investment extends Model
     }
 
     /**
-     * Principal less impairments, until it is closed.
+     * Everything paid into it: the first amount plus every approved top-up (before write-downs or closing).
+     */
+    public function totalInvested(): Money
+    {
+        return Money::ofPoisha((int) $this->ledger()
+            ->whereIn('kind', [InvestmentEntryKind::Disbursement->value, InvestmentEntryKind::TopUp->value])
+            ->sum('delta_poisha'));
+    }
+
+    /**
+     * Amount invested less impairments, until it is closed.
      */
     public function bookValue(): Money
     {

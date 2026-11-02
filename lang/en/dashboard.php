@@ -42,6 +42,7 @@ return [
         'expense' => 'Expense',
         'transfer' => 'Fund transfer',
         'investment' => 'Investment',
+        'investment_top_up' => 'Added investment',
         'rate_plan' => 'Rate plan',
         'exit' => 'Member exit',
         'journal_draft' => 'Voucher',

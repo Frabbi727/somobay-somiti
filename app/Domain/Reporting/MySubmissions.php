@@ -14,7 +14,9 @@ use App\Domain\Contributions\Models\Payment;
 use App\Domain\Exits\Enums\ExitStatus;
 use App\Domain\Exits\Models\MemberExit;
 use App\Domain\Investments\Enums\InvestmentStatus;
+use App\Domain\Investments\Enums\InvestmentTopUpStatus;
 use App\Domain\Investments\Models\Investment;
+use App\Domain\Investments\Models\InvestmentTopUp;
 use App\Domain\Reporting\Data\PendingItem;
 use App\Domain\Reporting\Data\SubmissionRow;
 use App\Domain\Settings\Enums\RatePlanStatus;
@@ -99,6 +101,7 @@ final class MySubmissions
             $record instanceof Expense => $record->status === ExpenseStatus::Pending ? 'approve' : null,
             $record instanceof FundTransfer => $record->status === TransferStatus::Pending ? 'approve' : null,
             $record instanceof Investment => $record->status === InvestmentStatus::Pending ? 'approve' : null,
+            $record instanceof InvestmentTopUp => $record->status === InvestmentTopUpStatus::Pending ? 'approve' : null,
             default => null,
         };
     }
@@ -129,6 +132,7 @@ final class MySubmissions
             [Expense::class, 'recorded_by'],
             [FundTransfer::class, 'recorded_by'],
             [Investment::class, 'recorded_by'],
+            [InvestmentTopUp::class, 'recorded_by'],
             [RatePlan::class, 'created_by'],
             [MemberExit::class, 'requested_by'],
             [JournalDraft::class, 'created_by'],

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Investments\Tables;
 
+use App\Domain\Investments\Enums\InvestmentEntryKind;
 use App\Domain\Investments\Enums\InvestmentStatus;
 use App\Domain\Investments\Enums\InvestmentType;
 use App\Domain\Investments\Models\Investment;
@@ -25,7 +26,9 @@ final class InvestmentsTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query): Builder => $query->withSum('ledger as book_value_poisha', 'delta_poisha'))
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query
+                ->withSum('ledger as book_value_poisha', 'delta_poisha')
+                ->withSum(['ledger as invested_poisha' => fn (Builder $ledger): Builder => $ledger->whereIn('kind', [InvestmentEntryKind::Disbursement->value, InvestmentEntryKind::TopUp->value])], 'delta_poisha'))
             ->defaultSort(fn (Builder $query): Builder => $query->orderByDesc('invested_on')->orderByDesc('id'))
             ->columns([
                 TextColumn::make('investment_no')->label(__('investments.field.number'))->searchable(['investment_no', 'name', 'institution', 'instrument_no']),
@@ -42,9 +45,11 @@ final class InvestmentsTable
                     ->state(fn (Investment $record): ?string => $record->matures_on === null ? null : Display::date($record->matures_on))
                     ->placeholder('—')
                     ->visibleFrom('lg'),
-                TextColumn::make('principal_poisha')
-                    ->label(__('investments.field.principal'))
-                    ->formatStateUsing(fn (Investment $record): string => Display::money($record->principal_poisha))
+                TextColumn::make('invested_poisha')
+                    ->label(__('investments.field.total_invested'))
+                    ->state(fn (Investment $record): string => Display::money($record->getAttribute('invested_poisha') === null
+                        ? $record->principal_poisha
+                        : Money::ofPoisha((int) $record->getAttribute('invested_poisha'))))
                     ->alignment(Alignment::End),
                 TextColumn::make('book_value_poisha')
                     ->label(__('investments.field.book_value'))

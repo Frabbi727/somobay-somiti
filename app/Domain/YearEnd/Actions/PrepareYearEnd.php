@@ -13,7 +13,9 @@ use App\Domain\Accounting\Models\FundTransfer;
 use App\Domain\Contributions\Enums\PaymentStatus;
 use App\Domain\Contributions\Models\Payment;
 use App\Domain\Investments\Enums\InvestmentStatus;
+use App\Domain\Investments\Enums\InvestmentTopUpStatus;
 use App\Domain\Investments\Models\Investment;
+use App\Domain\Investments\Models\InvestmentTopUp;
 use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Domain\YearEnd\Data\AppropriationRates;
@@ -110,7 +112,8 @@ final class PrepareYearEnd
         $pending = Payment::query()->where('status', PaymentStatus::Pending)->where('received_on', '<=', $until)->count()
             + Expense::query()->where('status', ExpenseStatus::Pending)->where('spent_on', '<=', $until)->count()
             + FundTransfer::query()->where('status', TransferStatus::Pending)->where('transferred_on', '<=', $until)->count()
-            + Investment::query()->where('status', InvestmentStatus::Pending)->where('invested_on', '<=', $until)->count();
+            + Investment::query()->where('status', InvestmentStatus::Pending)->where('invested_on', '<=', $until)->count()
+            + InvestmentTopUp::query()->where('status', InvestmentTopUpStatus::Pending)->where('invested_on', '<=', $until)->count();
 
         if ($pending > 0) {
             throw DomainRuleViolation::because('year_end.errors.pending_items', ['count' => Display::digits($pending)]);

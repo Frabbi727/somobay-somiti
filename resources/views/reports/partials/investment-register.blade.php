@@ -7,7 +7,7 @@
             <th>{{ __('investments.field.institution') }}</th>
             <th>{{ __('investments.field.invested_on') }}</th>
             <th>{{ __('investments.field.matures_on') }}</th>
-            <th class="num">{{ __('investments.field.principal') }}</th>
+            <th class="num">{{ __('investments.field.total_invested') }}</th>
             <th class="num">{{ __('investments.field.book_value') }}</th>
             <th class="num">{{ __('investments.report.income') }}</th>
             <th>{{ __('investments.field.status') }}</th>
@@ -21,7 +21,7 @@
                 <td>{{ $row['investment']->displayName() }} · {{ $row['investment']->institution }}@if ($row['investment']->instrument_no) · {{ $row['investment']->instrument_no }}@endif</td>
                 <td>{{ Display::date($row['investment']->invested_on) }}</td>
                 <td>{{ $row['investment']->matures_on ? Display::date($row['investment']->matures_on) : '—' }}</td>
-                <td class="num">{{ Display::money($row['investment']->principal_poisha) }}</td>
+                <td class="num">{{ Display::money($row['invested']) }}</td>
                 <td class="num">{{ Display::money($row['book']) }}</td>
                 <td class="num">{{ Display::money($row['income']) }}</td>
                 <td>{{ $row['investment']->status->getLabel() }}</td>

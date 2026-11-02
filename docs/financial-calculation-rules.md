@@ -69,7 +69,7 @@ Receipt voucher (RV): Dr Cash/Bank/bKash/Nagad; Cr 2101 (deposits), 4111 (servic
 
 ## Investments
 
-Approval: PV Dr 13xx, Cr source. Income: RV Dr bank (net) + Dr 5106 (tax), Cr 4201. Write-down: JV Dr 5201, Cr 13xx. Closing: RV with any gain to 4201 or loss to 5201. Statutory limit warnings are recorded, not enforced.
+Approval: PV Dr 13xx, Cr source. Added investment (top-up, approved by a second person): PV Dr 13xx, Cr source on its own date, and a `top_up` register entry; total invested = first amount + approved top-ups, book value = that less write-downs. Income: RV Dr bank (net) + Dr 5106 (tax), Cr 4201. Write-down: JV Dr 5201, Cr 13xx. Closing: RV with any gain to 4201 or loss to 5201. Statutory limit warnings are recorded, not enforced.
 
 ## Member exit (BR-22 as built, `ExitCalculator`, `ApproveExit`)
 

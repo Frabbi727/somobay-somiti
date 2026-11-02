@@ -12,12 +12,10 @@ use App\Domain\Investments\Actions\ApproveInvestment;
 use App\Domain\Investments\Actions\CancelInvestment;
 use App\Domain\Investments\Actions\RecordInvestment;
 use App\Domain\Investments\Actions\RejectInvestment;
-use App\Domain\Investments\Data\InvestmentData;
 use App\Domain\Investments\Enums\InvestmentStatus;
 use App\Domain\Investments\Enums\InvestmentType;
 use App\Domain\Investments\Models\Investment;
 use App\Domain\Investments\Services\InvestmentRegister;
-use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Enums\Role;
 use App\Filament\Resources\Investments\Pages\CreateInvestment;
 use App\Filament\Resources\Investments\Pages\ListInvestments;
@@ -49,36 +47,6 @@ beforeEach(function (): void {
 afterEach(function (): void {
     CarbonImmutable::setTestNow();
 });
-
-/**
- * @param  array<string, mixed>  $overrides
- */
-function investmentData(array $overrides = []): InvestmentData
-{
-    return InvestmentData::fromForm([
-        'type' => 'fixed_deposit',
-        'name' => 'FDR at Sonali Bank',
-        'institution' => 'Sonali Bank',
-        'instrument_no' => 'FDR-1001',
-        'principal' => Money::ofTaka('50000'),
-        'funded_from' => 'bank',
-        'invested_on' => '2026-09-10',
-        'matures_on' => '2027-09-10',
-        'expected_rate' => '8.5',
-        ...$overrides,
-    ]);
-}
-
-function investmentRule(Closure $callback): ?string
-{
-    try {
-        $callback();
-    } catch (DomainRuleViolation $violation) {
-        return $violation->translationKey;
-    }
-
-    return null;
-}
 
 it('records, and on the president’s approval invests by payment voucher into its 13xx account', function (): void {
     $investment = app(RecordInvestment::class)($this->accountant, investmentData());
