@@ -71,7 +71,7 @@ Open it and press **Reverse**, give a reason. Someone **other than the person wh
 ### Add a member yourself
 **Members › New**: laid out like the paper form. The registration fee due is created.
 
-1. **Personal details:** name, father's / husband's name, NID, date of birth, **Gender** (Male, Female, Other) and **Passport no.** (optional; 6–20 capital letters or digits).
+1. **Personal details:** name, father's / husband's name, NID, date of birth, **Gender** (Male, Female) and **Passport no.** (optional; 6–20 capital letters or digits). Optional extras not on the paper form: **father's name**, **mother's name**, **profession** and **marital status** (unmarried, married, widowed, divorced).
 2. **Addresses:** **Present address** and **Permanent address**, each as Division › District › Upazila › Union, then **House / road / village**.
    - Type in any list to search, in Bangla or English; the first few letters of a name are enough (for example "dhanm").
    - Changing a higher list clears the ones below it; choose them again. Each list only offers places under the one above, so two upazilas with the same name never get mixed up.
