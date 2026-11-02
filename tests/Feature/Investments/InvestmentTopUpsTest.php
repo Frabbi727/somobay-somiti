@@ -211,3 +211,14 @@ it('hides “Add investment” from people who cannot record investments', funct
 
     Livewire::test(ViewInvestment::class, ['record' => $this->shop->getKey()])->assertActionHidden('addTopUp');
 });
+
+it('needs the money to have been there on the added amount\'s own date', function (): void {
+    // ৳2,00,000 left after the shop; ৳5,00,000 more arrives on 1 September.
+    app(PostJournal::class)($this->accountant, simpleEntry('1111', '3101', '500000', '2026-09-01'));
+
+    $backDated = app(RecordInvestmentTopUp::class)($this->accountant, $this->shop, topUpData(['amount' => Money::ofTaka('400000'), 'invested_on' => '2026-08-10']));
+    $afterDeposit = app(RecordInvestmentTopUp::class)($this->accountant, $this->shop, topUpData(['amount' => Money::ofTaka('400000'), 'invested_on' => '2026-09-05']));
+
+    expect(investmentRule(fn () => app(ApproveInvestmentTopUp::class)($this->president, $backDated)))->toBe('accounting.errors.insufficient_funds')
+        ->and(app(ApproveInvestmentTopUp::class)($this->president, $afterDeposit)->status)->toBe(InvestmentTopUpStatus::Approved);
+});
