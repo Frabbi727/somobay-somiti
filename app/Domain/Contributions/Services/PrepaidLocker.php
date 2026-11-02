@@ -23,7 +23,10 @@ final class PrepaidLocker
 {
     public const int MAX_MONTHS = 24;
 
-    public function __construct(private readonly ShareRegister $register) {}
+    public function __construct(
+        private readonly ShareRegister $register,
+        private readonly MonthlyDueBuilder $builder,
+    ) {}
 
     /**
      * @return list<Due> the locked dues created, oldest first
@@ -54,11 +57,15 @@ final class PrepaidLocker
             }
 
             $exists = Due::query()->where('member_id', $member->id)->where('month', $month->toDateString())
-                ->whereIn('type', [DueType::Deposit, DueType::ServiceCharge])->exists();
+                ->whereIn('type', [DueType::Deposit, DueType::ServiceCharge])
+                ->where('status', '!=', DueStatus::Cancelled)->exists();
 
             if ($exists) {
                 break;
             }
+
+            // A month freed by a reversed lock payment already holds the cancelled row.
+            $sequences = $this->builder->sequences($month, [$member->id]);
 
             foreach ($rows as $row) {
                 $created[] = Due::query()->create([
@@ -66,7 +73,7 @@ final class PrepaidLocker
                     'month' => $month,
                     'type' => $row['type'],
                     'share_lot_id' => $row['lot'],
-                    'adjustment_seq' => 0,
+                    'adjustment_seq' => $sequences[$row['lot'].'#'.$row['type']->value] ?? 0,
                     'rate_plan_id' => $plan->id,
                     'snapshot' => $plan->snapshot(),
                     'amount_poisha' => $row['amount'],

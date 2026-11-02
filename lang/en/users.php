@@ -49,5 +49,6 @@ return [
         'last_super_admin' => 'At least one active super admin must remain.',
         'cannot_deactivate_self' => 'You cannot deactivate your own account.',
         'own_roles' => 'You cannot change your own roles. Ask another super admin to do it.',
+        'super_admin_combined' => 'A super admin cannot also be president, accountant or cashier. Use a separate account for that role.',
     ],
 ];
