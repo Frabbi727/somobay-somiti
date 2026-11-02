@@ -10,6 +10,7 @@ use App\Domain\Contributions\Actions\RejectPayment;
 use App\Domain\Contributions\Actions\ReversePayment;
 use App\Domain\Contributions\Enums\PaymentStatus;
 use App\Domain\Contributions\Models\Payment;
+use App\Domain\Contributions\Services\SimilarPayments;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Filament\Concerns\ConfirmsWithTier;
 use App\Filament\Support\Display;
@@ -54,7 +55,13 @@ final class PaymentActions
             heading: fn (Payment $record): string => __('payments.actions.approve_heading', ['amount' => Display::money($record->amount_poisha), 'member' => $record->member->displayName()]),
             expected: fn (Payment $record): string => $record->member->member_no,
             submitLabel: fn (Payment $record): string => __('payments.actions.approve_submit', ['amount' => Display::money($record->amount_poisha)]),
-            description: __('payments.actions.approve_description'),
+            description: function (Payment $record): string {
+                $similar = app(SimilarPayments::class)->toPayment($record)->count();
+
+                return $similar === 0
+                    ? __('payments.actions.approve_description')
+                    : __('payments.duplicate.approve', ['count' => $similar]).' '.__('payments.actions.approve_description');
+            },
         );
     }
 

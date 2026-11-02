@@ -51,6 +51,26 @@ final class PaymentPreviewer
         ];
     }
 
+    /**
+     * "Pay this month": because dues settle oldest first (BR-13), a member can only clear a month
+     * by also clearing every month before it. For each open month, the amount that does exactly that.
+     *
+     * @param  Collection<int, Due>  $openDues  as returned by openDues()
+     * @return list<array{month: YearMonth, amount: Money}>
+     */
+    public function clearThrough(Collection $openDues): array
+    {
+        $rows = [];
+        $running = Money::zero();
+
+        foreach ($openDues->groupBy(fn (Due $due): string => $due->month->toDateString()) as $month => $dues) {
+            $running = $running->plus(Money::sum($dues->map(fn (Due $due): Money => $due->outstanding_poisha)));
+            $rows[] = ['month' => YearMonth::parse((string) $month), 'amount' => $running];
+        }
+
+        return $rows;
+    }
+
     private function coversThrough(Member $member, Money $advance): ?YearMonth
     {
         $last = Due::query()->where('member_id', $member->id)->where('type', DueType::Deposit)->max('month');
