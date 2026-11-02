@@ -46,6 +46,7 @@ use App\Support\Money\Money;
 use App\Support\Time\YearMonth;
 use Carbon\CarbonImmutable;
 use Database\Seeders\RoleSeeder;
+use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -528,4 +529,32 @@ function approveRegistration(MemberApplication $application, string $from = '202
     }
 
     return $application;
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function paperCreateState(array $overrides = []): array
+{
+    return [
+        'name_bn' => 'রহিম উদ্দিন',
+        'name_en' => 'Rahim Uddin',
+        'mobile' => '01712-345678',
+        'joined_on' => '2026-10-01',
+        'shares' => 1,
+        'effective_from' => '2026-10',
+        'gender' => 'male',
+        'passport_no' => 'ab 123456',
+        ...paperAddress('present'),
+        'permanent_same_as_present' => true,
+        'documents_received' => ['nid', 'nominee_photo'],
+        'terms_accepted' => true,
+        'nominees' => [nominee(['name' => 'Karima', 'gender' => 'female', 'permanent_same_as_present' => true])],
+        ...$overrides,
+    ];
+}
+
+function paperFormAction(string $name): TestAction
+{
+    return TestAction::make($name)->schemaComponent('form-actions', 'content');
 }

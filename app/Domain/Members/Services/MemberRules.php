@@ -12,6 +12,9 @@ use App\Domain\Shared\Exceptions\DomainRuleViolation;
 
 final class MemberRules
 {
+    /** Longest name or profession the text columns hold. */
+    public const int MAX_TEXT_LENGTH = 255;
+
     public function __construct(private readonly NomineeRules $nominees, private readonly AddressRules $addresses) {}
 
     public function assertValid(MemberData $data, ?Member $existing = null, ?int $ignoreApplicationId = null): void
@@ -26,6 +29,12 @@ final class MemberRules
 
         if ($data->nid !== null && preg_match('/^(\d{10}|\d{13}|\d{17})$/', $data->nid) !== 1) {
             throw DomainRuleViolation::because('members.errors.nid_format');
+        }
+
+        foreach ([$data->guardianName, $data->fatherName, $data->motherName, $data->profession] as $text) {
+            if ($text !== null && mb_strlen($text) > self::MAX_TEXT_LENGTH) {
+                throw DomainRuleViolation::because('members.errors.field_too_long');
+            }
         }
 
         $isNew = $existing === null;
