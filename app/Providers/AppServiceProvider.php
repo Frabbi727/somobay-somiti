@@ -47,6 +47,7 @@ use App\Domain\Notifications\Listeners\SendWelcomeSms;
 use App\Domain\Settings\Contracts\GeneratedMonths;
 use App\Domain\Settings\Contracts\RatePlanUsage;
 use App\Domain\Settings\Events\RatePlanApproved;
+use App\Domain\Settings\Services\FinancialSettings;
 use App\Domain\YearEnd\Services\DividendSubledger;
 use App\Enums\Permission;
 use App\Enums\Role;
@@ -90,6 +91,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(GeneratedMonths::class, DueLedger::class);
         $this->app->bind(RatePlanUsage::class, DueLedger::class);
         $this->app->bind(AdvanceBalances::class, AdvanceLedger::class);
+        $this->app->scoped(FinancialSettings::class);
         $investmentRegisters = [];
 
         foreach (InvestmentType::cases() as $type) {

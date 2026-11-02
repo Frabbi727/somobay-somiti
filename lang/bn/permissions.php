@@ -86,6 +86,8 @@ return [
         'exits_approve' => 'সদস্যপদ ত্যাগের নিষ্পত্তি অনুমোদন',
         'exits_pay' => 'সদস্যপদ ত্যাগের টাকা পরিশোধ',
         'exits_reverse_payout' => 'প্রত্যাহারের পরিশোধ রিভার্স',
+        'financial_settings_propose' => 'আর্থিক সেটিংস পরিবর্তনের প্রস্তাব',
+        'financial_settings_approve' => 'আর্থিক সেটিংস পরিবর্তন অনুমোদন বা বাতিল',
         'rate_plans_draft' => 'রেট প্ল্যান তৈরি ও জমা',
         'rate_plans_link_resolution' => 'রেট প্ল্যানে সিদ্ধান্ত যুক্ত করা',
         'rate_plans_cancel' => 'অনুমোদিত রেট প্ল্যান বাতিল',

@@ -6,9 +6,11 @@ namespace App\Domain\YearEnd\Services;
 
 use App\Domain\Accounting\Enums\AccountType;
 use App\Domain\Accounting\Models\FiscalYear;
+use App\Domain\Settings\Services\FinancialSettings;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Domain\YearEnd\Data\AppropriationRates;
 use App\Domain\YearEnd\Data\YearEndFigures;
+use App\Domain\YearEnd\Enums\StatutoryBase;
 use App\Domain\YearEnd\Models\YearEnd;
 use App\Support\Money\Bps;
 use App\Support\Money\Money;
@@ -42,7 +44,7 @@ final class YearEndCalculator
         // s.34(4): half the profit goes against earlier losses (never more than the loss).
         $half = $netProfit->percentOfBps(Bps::of((int) config('somiti.year_end.loss_offset_bps')));
         $offset = $half->isGreaterThan($priorLoss) ? $priorLoss : $half;
-        $base = config('somiti.year_end.statutory_base') === 'after_loss_offset' ? $netProfit->minus($offset) : $netProfit;
+        $base = app(FinancialSettings::class)->current()->statutoryBase === StatutoryBase::AfterLossOffset ? $netProfit->minus($offset) : $netProfit;
 
         $appropriation = array_map(fn (Bps $rate): Money => $base->percentOfBps($rate), $rates->byKey());
         $pool = $netProfit->minus($offset)->minus(Money::sum($appropriation));

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Governance\Enums;
 
+use App\Domain\Settings\Services\FinancialSettings;
 use Filament\Support\Contracts\HasLabel;
 
 /**
@@ -23,7 +24,7 @@ enum ResolutionSubject: string implements HasLabel
 
     public function isRequired(): bool
     {
-        return in_array($this->value, (array) config('somiti.require_resolution_for'), true);
+        return app(FinancialSettings::class)->requiresResolution($this);
     }
 
     public function getLabel(): string

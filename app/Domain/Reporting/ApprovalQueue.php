@@ -20,7 +20,9 @@ use App\Domain\Investments\Models\InvestmentTopUp;
 use App\Domain\Members\Registration\Enums\MemberApplicationStatus;
 use App\Domain\Members\Registration\Models\MemberApplication;
 use App\Domain\Reporting\Data\PendingItem;
+use App\Domain\Settings\Enums\FinancialSettingsStatus;
 use App\Domain\Settings\Enums\RatePlanStatus;
+use App\Domain\Settings\Models\FinancialSettingsVersion;
 use App\Domain\Settings\Models\RatePlan;
 use App\Domain\YearEnd\Enums\YearEndStatus;
 use App\Domain\YearEnd\Models\YearEnd;
@@ -110,6 +112,7 @@ final class ApprovalQueue
             ['transfer', FundTransfer::query()->where('status', TransferStatus::Pending), 'approve', 'created_at'],
             ['investment', Investment::query()->where('status', InvestmentStatus::Pending), 'approve', 'created_at'],
             ['investment_top_up', InvestmentTopUp::query()->with('investment')->where('status', InvestmentTopUpStatus::Pending), 'approve', 'created_at'],
+            ['financial_settings', FinancialSettingsVersion::query()->with('proposer')->where('status', FinancialSettingsStatus::Pending), 'approve', 'created_at'],
             ['rate_plan', RatePlan::query()->where('status', RatePlanStatus::PendingApproval), 'approve', 'submitted_at'],
             ['year_end', YearEnd::query()->with('fiscalYear')->where('status', YearEndStatus::Draft), 'approve', 'created_at'],
             ['exit', MemberExit::query()->with('member')->where('status', ExitStatus::Requested), 'approve', 'created_at'],

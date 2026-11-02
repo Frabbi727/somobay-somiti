@@ -6,6 +6,7 @@ namespace App\Domain\Accounting\Models;
 
 use App\Domain\Accounting\Enums\ExpenseStatus;
 use App\Domain\Contributions\Enums\PaymentMethod;
+use App\Domain\Settings\Services\FinancialSettings;
 use App\Models\User;
 use App\Policies\ExpensePolicy;
 use App\Support\Money\Money;
@@ -101,7 +102,7 @@ final class Expense extends Model
      */
     public function needsPresident(): bool
     {
-        return $this->amount_poisha->poisha >= (int) config('somiti.expense_president_threshold_poisha');
+        return $this->amount_poisha->isGreaterThanOrEqualTo(app(FinancialSettings::class)->expensePresidentThreshold());
     }
 
     public function getActivitylogOptions(): LogOptions

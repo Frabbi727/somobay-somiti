@@ -82,6 +82,8 @@ enum Permission: string implements HasLabel
     case RatePlansDraft = 'rate_plans.draft';
     case RatePlansLinkResolution = 'rate_plans.link_resolution';
     case RatePlansCancel = 'rate_plans.cancel';
+    case FinancialSettingsPropose = 'financial_settings.propose';
+    case FinancialSettingsApprove = 'financial_settings.approve';
     case SmsTemplatesEdit = 'sms_templates.edit';
     case SomitiProfileEdit = 'somiti_profile.edit';
     case OpeningImport = 'opening.import';
@@ -110,6 +112,8 @@ enum Permission: string implements HasLabel
             self::InvestmentsRecord => [Role::Accountant, Role::Secretary, Role::President],
             self::InvestmentsApprove, self::InvestmentsWriteDown, self::ExitsApprove, self::RatePlansCancel => [Role::President],
             self::RatePlansDraft => [Role::SuperAdmin, Role::Secretary, Role::Accountant],
+            self::FinancialSettingsPropose => [Role::SuperAdmin, Role::Secretary, Role::Accountant, Role::President],
+            self::FinancialSettingsApprove => [Role::President, Role::Secretary],
             self::RatePlansLinkResolution => [Role::SuperAdmin, Role::Secretary, Role::Accountant, Role::President],
             self::SmsTemplatesEdit => [Role::SuperAdmin, Role::Secretary],
             self::TermsPublish => [Role::President, Role::Secretary],
@@ -169,6 +173,7 @@ enum Permission: string implements HasLabel
             self::InvestmentsApprove, self::InvestmentsIncome, self::InvestmentsWriteDown, self::InvestmentsClose, self::InvestmentsReverse,
             self::YearEndPrepare, self::DividendsSettle,
             self::ExitsApprove, self::ExitsPay, self::ExitsReversePayout, self::RatePlansCancel,
+            self::FinancialSettingsApprove,
         ], true);
     }
 

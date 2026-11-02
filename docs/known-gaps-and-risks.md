@@ -26,6 +26,7 @@ What the audit of October 2026 found, what was fixed on branch `ux-roles-approva
 | Expense rejection ignored the president threshold | Only those who may approve an expense may reject it |
 | One resolution could back several investments or exits | One live item per resolution (checked in the actions, unique index in the database); rejected/cancelled items release it |
 | Matched statement lines stayed matched after their voucher was reversed | Reversing a voucher returns its statement lines to the unmatched list |
+| President thresholds, quorums, required resolutions and year-end choices could only be changed in the server config | Settings › Financial settings: one person proposes with a reason, someone else approves; history kept, applies without a deploy, year-end choices frozen while a year-end waits |
 | Member home screen showed only outstanding, savings and advance | Also total billed, paid, waived, this month's due, earlier months' due and the monthly deposit for the member's shares (portal and app API) |
 
 ## Data to check on the live system (one-off)

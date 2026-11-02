@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\YearEnd\Data;
 
+use App\Domain\Settings\Services\FinancialSettings;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Support\Money\Bps;
 
@@ -34,12 +35,9 @@ final readonly class AppropriationRates
 
     public static function defaults(): self
     {
-        $default = fn (string $key): Bps => Bps::of((int) config("somiti.year_end.{$key}.default"));
-        $badDebt = (bool) config('somiti.year_end.financing_society')
-            ? max((int) config('somiti.year_end.bad_debt_fund.financing_min'), (int) config('somiti.year_end.bad_debt_fund.default'))
-            : (int) config('somiti.year_end.bad_debt_fund.default');
+        $settings = app(FinancialSettings::class)->current();
 
-        return new self($default('reserve'), $default('development_fund'), Bps::of($badDebt), $default('other_funds'));
+        return new self($settings->reserve, $settings->developmentFund, $settings->badDebtFund, $settings->otherFunds);
     }
 
     /**
@@ -82,7 +80,7 @@ final readonly class AppropriationRates
             $min = (int) config("somiti.year_end.{$key}.min");
             $max = (int) config("somiti.year_end.{$key}.max");
 
-            if ($key === 'bad_debt_fund' && (bool) config('somiti.year_end.financing_society')) {
+            if ($key === 'bad_debt_fund' && app(FinancialSettings::class)->current()->financingSociety) {
                 $min = max($min, (int) config('somiti.year_end.bad_debt_fund.financing_min'));
             }
 

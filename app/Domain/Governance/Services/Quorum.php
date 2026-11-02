@@ -7,6 +7,7 @@ namespace App\Domain\Governance\Services;
 use App\Domain\Governance\Enums\MeetingType;
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Models\Member;
+use App\Domain\Settings\Services\FinancialSettings;
 use App\Enums\Role;
 use App\Models\User;
 
@@ -39,7 +40,7 @@ final class Quorum
      */
     public function required(MeetingType $type, int $eligible): int
     {
-        $bps = (int) config('somiti.quorum_bps.'.$type->value, 5001);
+        $bps = app(FinancialSettings::class)->quorum($type)->value;
 
         return max(1, intdiv($eligible * $bps + 9_999, 10_000));
     }
