@@ -10,6 +10,9 @@ use App\Domain\Governance\Actions\RecordAttendance;
 use App\Domain\Governance\Data\MeetingData;
 use App\Domain\Governance\Data\ResolutionData;
 use App\Domain\Governance\Models\Resolution;
+use App\Domain\Investments\Actions\RecordInvestment;
+use App\Domain\Investments\Actions\RejectInvestment;
+use App\Domain\Investments\Data\InvestmentData;
 use App\Domain\Settings\Actions\ApproveRatePlan;
 use App\Domain\Settings\Actions\DraftRatePlan;
 use App\Domain\Settings\Actions\LinkRatePlanResolution;
@@ -20,11 +23,14 @@ use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Enums\Role;
 use App\Filament\Clusters\Settings\Resources\RatePlans\Pages\ViewRatePlan;
 use App\Models\User;
+use App\Support\Money\Money;
 use Carbon\CarbonImmutable;
+use Database\Seeders\ChartOfAccountsSeeder;
 use Filament\Facades\Filament;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 
 /*
@@ -139,4 +145,33 @@ it('links a resolution from the rate plan screen', function (): void {
     expect($plan->fresh()?->resolution_id)->toBe($resolution->id);
 
     $this->get(ViewRatePlan::getUrl(['record' => $plan]))->assertOk()->assertSee($resolution->resolution_no);
+});
+
+function resolvedInvestment(int $resolutionId): InvestmentData
+{
+    return InvestmentData::fromForm([
+        'type' => 'fixed_deposit', 'name' => 'FDR at Sonali Bank', 'institution' => 'Sonali Bank',
+        'principal' => Money::ofTaka('50000'), 'funded_from' => 'bank', 'invested_on' => '2026-09-01',
+        'resolution_id' => $resolutionId,
+    ]);
+}
+
+it('lets one resolution back only one live investment', function (): void {
+    $this->seed(ChartOfAccountsSeeder::class);
+    $resolution = committeeResolution('investment');
+    $first = app(RecordInvestment::class)($this->accountant, resolvedInvestment($resolution->id));
+
+    expect(requiredRule(fn () => app(RecordInvestment::class)($this->accountant, resolvedInvestment($resolution->id))))
+        ->toBe('governance.errors.resolution_in_use');
+
+    $copy = (array) DB::table('investments')->where('id', $first->id)
+        ->first(['type', 'account_id', 'institution', 'principal_poisha', 'funded_from', 'invested_on', 'status', 'recorded_by', 'resolution_id']);
+
+    expect(fn () => DB::transaction(fn () => DB::table('investments')->insert([...$copy, 'investment_no' => 'INV-9999', 'idempotency_key' => (string) Str::uuid()])))
+        ->toThrow(QueryException::class);
+
+    // A rejected investment releases its resolution.
+    app(RejectInvestment::class)($this->president, $first, 'Committee changed its mind');
+
+    expect(app(RecordInvestment::class)($this->accountant, resolvedInvestment($resolution->id))->resolution_id)->toBe($resolution->id);
 });

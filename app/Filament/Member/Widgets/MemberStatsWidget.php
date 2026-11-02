@@ -45,6 +45,21 @@ final class MemberStatsWidget extends StatsOverviewWidget
             Stat::make(__('portal.dashboard.advance'), Display::money($summary['advance']))
                 ->icon(Heroicon::OutlinedForward)
                 ->description(__('portal.dashboard.shares').': '.Display::digits($summary['shares'])),
+            Stat::make(__('portal.dashboard.due_this_month'), Display::money($summary['due_this_month']))
+                ->icon(Heroicon::OutlinedCalendar)
+                ->color($summary['due_this_month']->isPositive() ? 'warning' : 'success'),
+            Stat::make(__('portal.dashboard.due_earlier'), Display::money($summary['due_earlier']))
+                ->icon(Heroicon::OutlinedClock)
+                ->color($summary['due_earlier']->isPositive() ? 'danger' : 'success'),
+            Stat::make(__('portal.dashboard.billed'), Display::money($summary['billed']))
+                ->icon(Heroicon::OutlinedDocumentText)
+                ->description(__('portal.dashboard.paid_and_waived', [
+                    'paid' => Display::money($summary['paid']),
+                    'waived' => Display::money($summary['waived']),
+                ])),
+            Stat::make(__('portal.dashboard.monthly_deposit'), $summary['monthly_deposit'] === null ? '—' : Display::money($summary['monthly_deposit']))
+                ->icon(Heroicon::OutlinedBanknotes)
+                ->description(__('portal.dashboard.monthly_deposit_help', ['count' => Display::digits($summary['shares'])])),
         ];
     }
 }

@@ -133,6 +133,15 @@ it('needs the president at or above the threshold', function (): void {
     expect(app(ApproveExpense::class)($this->president, $large)->status)->toBe(ExpenseStatus::Approved);
 });
 
+it('lets only the president reject a large expense, like approving it', function (): void {
+    config(['somiti.expense_president_threshold_poisha' => 1_000_000]);
+    $large = app(RecordExpense::class)($this->cashier, expenseData(['amount' => Money::ofTaka('10000')]));
+
+    expect(fn () => app(RejectExpense::class)($this->accountant, $large, 'Not needed now'))->toThrow(AuthorizationException::class);
+
+    expect(app(RejectExpense::class)($this->president, $large, 'Not needed now')->status)->toBe(ExpenseStatus::Rejected);
+});
+
 it('refuses to pay out more than the paying account holds', function (): void {
     $expense = app(RecordExpense::class)($this->cashier, expenseData(['paid_from' => 'bkash']));
 

@@ -51,7 +51,7 @@ final class PayExit
             if ($net->isPositive()) {
                 $payees = $this->payees($locked);
                 $source = $this->accounts->byCode($paidFrom->accountCode());
-                $this->funds->assertCovers($source, $net);
+                $this->funds->assertCovers($source, $net, $on);
 
                 $entry = ($this->post)($actor, new JournalEntryData(
                     type: VoucherType::Payment,
@@ -74,6 +74,7 @@ final class PayExit
                         'share_bps' => $payee['share_bps'],
                         'amount_poisha' => $amounts[$key],
                         'paid_from' => $paidFrom,
+                        'payout_journal_entry_id' => $entryId,
                     ]);
                 }
             }
