@@ -57,6 +57,14 @@ final class InvestmentPolicy
     }
 
     /**
+     * What an active investment is expected to pay (rent, profit) and how often. Tracking only.
+     */
+    public function setExpectedReturn(User $user, Investment $investment): bool
+    {
+        return $investment->status === InvestmentStatus::Active && $user->may(Permission::InvestmentsRecord);
+    }
+
+    /**
      * Profit received on an active investment (P10.S2).
      */
     public function recordIncome(User $user, Investment $investment): bool

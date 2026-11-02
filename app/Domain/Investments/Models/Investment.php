@@ -81,6 +81,14 @@ final class Investment extends Model
     }
 
     /**
+     * @return HasMany<InvestmentReturnExpectation, $this>
+     */
+    public function returnExpectations(): HasMany
+    {
+        return $this->hasMany(InvestmentReturnExpectation::class);
+    }
+
+    /**
      * @return HasMany<InvestmentTopUp, $this>
      */
     public function topUps(): HasMany

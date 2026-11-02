@@ -72,6 +72,13 @@ Receipt voucher (RV): Dr Cash/Bank/bKash/Nagad; Cr 2101 (deposits), 4111 (servic
 
 Approval: PV Dr 13xx, Cr source. Added investment (top-up, approved by a second person): PV Dr 13xx, Cr source on its own date, and a `top_up` register entry; total invested = first amount + approved top-ups, book value = that less write-downs. Income: RV Dr bank (net) + Dr 5106 (tax), Cr 4201. Write-down: JV Dr 5201, Cr 13xx. Closing / sale: RV for the sale price less selling expenses; against the book value the difference is a gain on sale (Cr 4211) or a loss on sale (Dr 5202), kept apart from rent and other profit (4201) and from write-downs (5201). The returned principal is never income. The sale price, expenses and gain/loss are stored on the investment and shown in the register beside rent and profit. Statutory limit warnings are recorded, not enforced.
 
+### Expected returns (T-12, `ExpectedReturns`)
+
+- Tracking only: nothing is accrued or posted. Rent and profit enter the books (4201) only when received.
+- Each expected return is an amount, a frequency (monthly, quarterly, half-yearly, yearly, one time, or stopped) and the first due date. It applies until the next entry's date; an entry with the same date replaces the earlier one. Rows are never edited.
+- Due dates step from the first date without drifting (31 Aug → 30 Sep → 31 Oct). Nothing is expected after the investment is sold or reversed.
+- Received = gross income from the first expected date to the report date, excluding income whose voucher was reversed. Difference = received − expected; "payments behind" = shortfall ÷ the current amount, whole payments only.
+
 ## Member exit (BR-22 as built, `ExitCalculator`, `ApproveExit`)
 
 Settlement = savings (2101) + unused advance (2111) + unpaid dividends (2201) − what the member still owes − exit fee.

@@ -175,6 +175,53 @@ return [
     'closure' => [
         'narration' => 'closed / matured',
     ],
+    'returns' => [
+        'title' => 'Expected returns',
+        'tracking_only' => 'What this investment should pay (rent, profit) against what has been received. For follow-up only: income enters the books when it is received.',
+        'history' => 'Expected return history',
+        'from' => 'From :date',
+        'frequency' => [
+            'monthly' => 'Monthly',
+            'quarterly' => 'Quarterly',
+            'half_yearly' => 'Half-yearly',
+            'yearly' => 'Yearly',
+            'one_time' => 'One time',
+            'none' => 'Stopped',
+        ],
+        'field' => [
+            'frequency' => 'How often',
+            'amount' => 'Amount each time',
+            'starts_on' => 'First payment due on',
+            'starts_on_help' => 'Later payments fall on the same day of the month. A new entry replaces the old one from this date; one with the same date corrects it.',
+            'current' => 'Expected now',
+            'expected_to_date' => 'Expected to date',
+            'received' => 'Received',
+            'difference' => 'Received − expected',
+            'last_received' => 'Last received',
+            'next_due' => 'Next due',
+        ],
+        'actions' => [
+            'set' => 'Set expected return',
+            'set_heading' => 'Expected return for :number · :name',
+            'set_description' => 'Only for follow-up: nothing is posted to the books. Choose "Stopped" if payments ended (e.g. the tenant left).',
+        ],
+        'notifications' => [
+            'set' => 'Expecting :amount :frequency from :date',
+            'stopped' => 'No return expected from :date',
+        ],
+        'report' => [
+            'title' => 'Expected vs received returns',
+            'heading' => 'Expected vs received returns as of :date',
+            'behind' => 'about :count payment(s) behind',
+            'empty' => 'No investment has an expected return yet.',
+            'note' => 'Received counts rent and profit (before tax) recorded from the first expected date, excluding reversed vouchers. Nothing here is posted to the books.',
+        ],
+        'errors' => [
+            'not_active' => 'Investment :number is not active.',
+            'before_investment' => 'Returns cannot start before the investment date (:date).',
+            'nothing_to_stop' => 'There is no expected return to stop yet.',
+        ],
+    ],
     'report' => [
         'title' => 'Investment register',
         'heading' => 'Investment register as of :date',
