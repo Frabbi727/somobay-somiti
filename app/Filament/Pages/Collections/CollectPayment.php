@@ -11,6 +11,7 @@ use App\Domain\Contributions\Models\Payment;
 use App\Domain\Contributions\Services\AdvanceLedger;
 use App\Domain\Contributions\Services\PaidThroughCalculator;
 use App\Domain\Contributions\Services\PaymentPreviewer;
+use App\Domain\Contributions\Services\SimilarPayments;
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Models\Member;
 use App\Filament\Concerns\ConfirmsWithTier;
@@ -35,6 +36,7 @@ use Filament\Pages\Page;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use UnitEnum;
@@ -151,10 +153,13 @@ final class CollectPayment extends Page
 
         $previewer = app(PaymentPreviewer::class);
         $amount = $this->amount();
+        $openDues = $previewer->openDues($member);
 
         return [
             'member' => $member,
-            'openDues' => $previewer->openDues($member),
+            'openDues' => $openDues,
+            'clearThrough' => collect($previewer->clearThrough($openDues))->keyBy(fn (array $row): string => $row['month']->toDateString()),
+            'similar' => $this->similarPayments(),
             'advance' => app(AdvanceLedger::class)->balance($member->id),
             'paidThrough' => app(PaidThroughCalculator::class)->for($member),
             'preview' => $amount === null ? null : $previewer->preview($member, $amount),
@@ -205,9 +210,57 @@ final class CollectPayment extends Page
                         'date' => is_string($this->data['received_on'] ?? null) ? CarbonImmutable::parse($this->data['received_on']) : null,
                     ],
                 ),
+                description: fn (): ?string => $this->duplicateWarning(),
                 showOld: false,
             ),
         ];
+    }
+
+    /**
+     * "Pay this month": fills the amount that clears every open due up to and including the month.
+     */
+    public function fillAmountThrough(string $month): void
+    {
+        $member = $this->member();
+
+        if ($member === null) {
+            return;
+        }
+
+        $previewer = app(PaymentPreviewer::class);
+
+        foreach ($previewer->clearThrough($previewer->openDues($member)) as $row) {
+            if ($row['month']->toDateString() === $month) {
+                $this->data['amount'] = $row['amount']->toTakaString();
+            }
+        }
+    }
+
+    private function duplicateWarning(): ?string
+    {
+        $count = $this->similarPayments()->count();
+
+        if ($count === 0) {
+            return null;
+        }
+
+        return __('payments.duplicate.confirm', ['count' => $count]);
+    }
+
+    /**
+     * @return Collection<int, Payment>
+     */
+    private function similarPayments(): Collection
+    {
+        $member = $this->member();
+        $amount = $this->amount();
+        $date = $this->data['received_on'] ?? null;
+
+        if ($member === null || $amount === null || ! is_string($date) || $date === '') {
+            return new Collection;
+        }
+
+        return app(SimilarPayments::class)->to($member->id, $amount, CarbonImmutable::parse($date));
     }
 
     private function resetForm(?int $memberId = null): void

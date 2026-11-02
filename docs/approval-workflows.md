@@ -137,9 +137,11 @@ flowchart LR
     P -->|president approves after the exit month ends| A[Approved<br/>dues after exit released, savings moved,<br/>what is owed settled, shares ended,<br/>settlement to 2301]
     A -->|bell to payers| W(Waiting for payout)
     W -->|accountant/president pays| PD[Paid out]
+    PD -->|someone other than the payer reverses the payout| W
 ```
 
 - Approval refuses while the member has payments waiting for approval, owes more than they hold, or has a share change planned after the exit month.
+- **A payout made by mistake can be reversed** (someone other than the payer, with the reverse-exit-payouts permission, with a reason): a mirror voucher returns the money to 2301 and the exit waits to be paid again. The settlement is not touched; the original payout and the reversal stay on record. An approval made by mistake cannot be undone yet (known gap).
 - **Approving an exit ends all the member's shares from the next month; an exited member gets no dividend for that fiscal year or later** (decided 2026-10-11).
 
 ## 10. Year-end and dividends

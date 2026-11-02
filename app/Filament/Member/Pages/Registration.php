@@ -6,6 +6,7 @@ namespace App\Filament\Member\Pages;
 
 use App\Domain\Geo\Services\GeoDirectory;
 use App\Domain\Members\Enums\Gender;
+use App\Domain\Members\Enums\MaritalStatus;
 use App\Domain\Members\Models\NomineeRelation;
 use App\Domain\Members\Registration\Actions\SaveRegistrationDraft;
 use App\Domain\Members\Registration\Actions\SubmitRegistration;
@@ -59,7 +60,7 @@ final class Registration extends Page
     use ConfirmsWithTier, ScopedToApplicant;
 
     /** @var list<string> */
-    private const array PERSONAL_FIELDS = ['name_bn', 'name_en', 'guardian_name', 'nid', 'date_of_birth'];
+    private const array PERSONAL_FIELDS = ['name_bn', 'name_en', 'guardian_name', 'father_name', 'mother_name', 'profession', 'marital_status', 'nid', 'date_of_birth'];
 
     /** @var list<string> */
     private const array CONTACT_FIELDS = ['email', 'gender', 'passport_no', 'present_upazila_id', 'present_union_id', 'present_address_line', 'permanent_same_as_present', 'permanent_upazila_id', 'permanent_union_id', 'permanent_address_line'];
@@ -110,7 +111,8 @@ final class Registration extends Page
         ])->values()->all();
 
         $this->form->fill([
-            ...$application->only(['name_bn', 'name_en', 'guardian_name', 'nid', 'email', 'photo_path', 'requested_shares']),
+            ...$application->only(['name_bn', 'name_en', 'guardian_name', 'father_name', 'mother_name', 'profession', 'nid', 'email', 'photo_path', 'requested_shares']),
+            'marital_status' => $application->marital_status?->value,
             ...self::personState($application),
             'terms_accepted' => false,
             'date_of_birth' => $application->date_of_birth?->toDateString(),
@@ -144,6 +146,10 @@ final class Registration extends Page
                         TextInput::make('name_bn')->label(__('members.member.name_bn'))->required()->maxLength(255),
                         TextInput::make('name_en')->label(__('members.member.name_en'))->required()->maxLength(255),
                         TextInput::make('guardian_name')->label(__('members.member.guardian_name'))->maxLength(255),
+                        TextInput::make('father_name')->label(__('members.member.father_name'))->maxLength(255),
+                        TextInput::make('mother_name')->label(__('members.member.mother_name'))->maxLength(255),
+                        TextInput::make('profession')->label(__('members.member.profession'))->maxLength(255),
+                        Select::make('marital_status')->label(__('members.member.marital_status'))->options(MaritalStatus::class),
                         TextInput::make('nid')->label(__('members.member.nid'))->helperText(__('members.member.nid_help'))->regex(self::NID_PATTERN),
                         DatePicker::make('date_of_birth')->label(__('members.member.date_of_birth'))->native(false)->maxDate(now())->defaultFocusedDate(now()->subYears(30)->startOfYear()),
                         FileUpload::make('photo_path')->label(__('registration.field.photo'))->placeholder(__('registration.field.photo_placeholder'))->image()->avatar()->disk('local')->directory('member-photos')->visibility('private')->maxSize(1024)
@@ -352,6 +358,7 @@ final class Registration extends Page
         $data = $this->draftData();
         $sameAddress = (bool) ($data['permanent_same_as_present'] ?? false);
         $gender = Gender::tryFrom((string) ($data['gender'] ?? ''))?->getLabel();
+        $marital = MaritalStatus::tryFrom((string) ($data['marital_status'] ?? ''))?->getLabel();
 
         $nominees = collect((array) ($this->data['nominees'] ?? []))
             ->filter(fn (mixed $row): bool => is_array($row) && trim((string) ($row['name'] ?? '')) !== '')
@@ -362,6 +369,10 @@ final class Registration extends Page
             'name_bn' => __('members.member.name_bn'),
             'name_en' => __('members.member.name_en'),
             'guardian_name' => __('members.member.guardian_name'),
+            'father_name' => __('members.member.father_name'),
+            'mother_name' => __('members.member.mother_name'),
+            'profession' => __('members.member.profession'),
+            'marital_status' => __('members.member.marital_status'),
             'nid' => __('members.member.nid'),
             'date_of_birth' => __('members.member.date_of_birth'),
             'email' => __('members.member.email'),
@@ -374,6 +385,7 @@ final class Registration extends Page
         ], [], [
             ...$data,
             'gender' => $gender,
+            'marital_status' => $marital,
             'present_address' => self::addressText($data, 'present'),
             'permanent_address' => self::addressText($data, $sameAddress ? 'present' : 'permanent'),
             'nominees' => $nominees,

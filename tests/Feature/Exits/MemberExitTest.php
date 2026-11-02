@@ -8,10 +8,13 @@ use App\Domain\Accounting\Data\JournalEntryData;
 use App\Domain\Accounting\Data\JournalLineData;
 use App\Domain\Accounting\Enums\VoucherType;
 use App\Domain\Accounting\Models\FiscalYear;
+use App\Domain\Contributions\Actions\ReversePayment;
 use App\Domain\Contributions\Enums\DueStatus;
 use App\Domain\Contributions\Enums\DueType;
 use App\Domain\Contributions\Enums\PaymentMethod;
+use App\Domain\Contributions\Enums\PaymentStatus;
 use App\Domain\Contributions\Models\Due;
+use App\Domain\Contributions\Models\Payment;
 use App\Domain\Contributions\Services\AdvanceLedger;
 use App\Domain\Exits\Actions\ApproveExit;
 use App\Domain\Exits\Actions\CancelExit;
@@ -348,5 +351,17 @@ it('requests, approves and pays an exit from the screens', function (): void {
         ->assertHasNoActionErrors();
 
     expect($exit->fresh()?->status)->toBe(ExitStatus::Paid);
+    assertBooksTieOut();
+});
+
+it('refuses to reverse a payment once the member has exited', function (): void {
+    $member = onboard(1, '2026-07');
+    approvedJulyExit($member, fn (MemberExit $exit) => app(ApproveExit::class)($this->president, $exit));
+    $payment = Payment::query()->where('member_id', $member->id)->sole();
+
+    expect(exitRule(fn () => app(ReversePayment::class)($this->accountant, $payment, 'Wrong member chosen')))->toBe('payments.errors.reverse_after_exit')
+        ->and($payment->fresh()?->status)->toBe(PaymentStatus::Approved)
+        ->and(Due::query()->where('member_id', $member->id)->where('status', DueStatus::Open)->exists())->toBeFalse();
+
     assertBooksTieOut();
 });

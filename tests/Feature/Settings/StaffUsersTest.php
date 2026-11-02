@@ -89,10 +89,10 @@ it('always keeps one active super admin', function (): void {
 });
 
 it('never lets a user change their own roles', function (): void {
-    $data = staffData(['email' => $this->admin->email, 'roles' => ['super_admin', 'president'], 'password' => null]);
+    $data = staffData(['email' => $this->admin->email, 'roles' => ['super_admin', 'secretary'], 'password' => null]);
 
     expect(staffRuleKey(fn () => app(UpdateStaffUser::class)($this->admin, $this->admin, $data)))->toBe('users.errors.own_roles')
-        ->and($this->admin->fresh()?->hasAnyOf(Role::President))->toBeFalse();
+        ->and($this->admin->fresh()?->hasAnyOf(Role::Secretary))->toBeFalse();
 
     // Their own name may still change.
     $renamed = app(UpdateStaffUser::class)($this->admin, $this->admin, staffData(['name' => 'New name', 'email' => $this->admin->email, 'roles' => ['super_admin'], 'password' => null]));
@@ -153,4 +153,21 @@ it('does not offer Deactivate on your own account', function (): void {
 
     Livewire::test(EditUser::class, ['record' => $this->admin->getRouteKey()])->assertActionHidden('deactivate');
     Livewire::test(EditUser::class, ['record' => userWithRole(Role::Cashier)->getRouteKey()])->assertActionVisible('deactivate');
+});
+
+it('never gives one account super admin together with a role that approves money', function (string $role): void {
+    expect(staffRuleKey(fn () => app(CreateStaffUser::class)($this->admin, staffData(['roles' => ['super_admin', $role]]))))
+        ->toBe('users.errors.super_admin_combined');
+
+    $other = app(CreateStaffUser::class)($this->admin, staffData(['roles' => ['super_admin'], 'email' => 'second@somiti.test']));
+
+    expect(staffRuleKey(fn () => app(UpdateStaffUser::class)($this->admin, $other, staffData(['roles' => ['super_admin', $role], 'email' => 'second@somiti.test', 'password' => null]))))
+        ->toBe('users.errors.super_admin_combined')
+        ->and($other->fresh()?->getRoleNames()->all())->toBe(['super_admin']);
+})->with(['president', 'accountant', 'cashier']);
+
+it('still lets a super admin also be the auditor', function (): void {
+    $user = app(CreateStaffUser::class)($this->admin, staffData(['roles' => ['super_admin', 'auditor']]));
+
+    expect($user->hasAnyOf(Role::SuperAdmin) && $user->hasAnyOf(Role::Auditor))->toBeTrue();
 });

@@ -11,6 +11,10 @@ return [
         'name_bn' => 'Name (Bangla)',
         'name_en' => 'Name (English)',
         'guardian_name' => "Father's / husband's name",
+        'father_name' => "Father's name",
+        'mother_name' => "Mother's name",
+        'profession' => 'Profession',
+        'marital_status' => 'Marital status',
         'nid' => 'NID',
         'nid_help' => '10, 13 or 17 digits.',
         'date_of_birth' => 'Date of birth',
@@ -82,6 +86,12 @@ return [
         'male' => 'Male',
         'female' => 'Female',
     ],
+    'marital_status' => [
+        'unmarried' => 'Unmarried',
+        'married' => 'Married',
+        'widowed' => 'Widowed',
+        'divorced' => 'Divorced',
+    ],
     'documents' => [
         'nid' => 'National ID (NID)',
         'passport' => 'Passport',
@@ -139,6 +149,7 @@ return [
         'edit' => 'Edit relation',
     ],
     'errors' => [
+        'field_too_long' => 'A name or the profession is too long (at most 255 characters).',
         'gender_required' => "Choose the member's gender.",
         'passport_format' => 'The passport number may only have letters and digits (6–20).',
         'address_required' => ':whose is required (upazila and address line).',

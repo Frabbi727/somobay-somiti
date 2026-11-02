@@ -19,6 +19,14 @@ What the audit of October 2026 found, what was fixed on branch `ux-roles-approva
 | Dashboard the same for everyone; no "who has my entry" | Role-aware parts, "What you entered" with names, alerts, explained figures, history on record pages |
 | Overdue count differed from the Defaulters report | Same rule |
 | Bangla status words differed between modules | One set of words |
+| Reversing a "lock prepaid months" payment left the locked future dues open at the old rate | The locked dues are cancelled; months already generated get a new due at their own rate, later months are built by the monthly run |
+| Reversing an exited member's payment reopened cancelled dues | Refused once the member has exited |
+| `FundsGuard` checked the all-time balance, so a back-dated payout could make a past balance negative | The payout must be covered on its own date and every later date |
+| A user could hold super admin together with president, accountant or cashier and approve under that role | That combination is refused when creating or editing a user |
+| Expense rejection ignored the president threshold | Only those who may approve an expense may reject it |
+| One resolution could back several investments or exits | One live item per resolution (checked in the actions, unique index in the database); rejected/cancelled items release it |
+| Matched statement lines stayed matched after their voucher was reversed | Reversing a voucher returns its statement lines to the unmatched list |
+| Member home screen showed only outstanding, savings and advance | Also total billed, paid, waived, this month's due, earlier months' due and the monthly deposit for the member's shares (portal and app API) |
 
 ## Data to check on the live system (one-off)
 
@@ -36,23 +44,16 @@ It also lists any dividend lines already posted to members after they exited. **
 | # | Gap | Risk | Suggested next step |
 |---|---|---|---|
 | 1 | Single-person actions: advance refund below the limit, late-fee waiver, dividend settlement, exit payout, investment income/write-down/close, recording a resolution's outcome, closing a fiscal year | one person can move or forgive money | **Decision:** which need a second person |
-| 2 | No reversal flow for approved investments, exit approvals/payouts, year-end postings, dividend settlements, advance refunds | a mistake needs a manual workaround | design reversal actions one by one |
-| 3 | Reversing a payment approved under "lock prepaid months" leaves the locked future dues open at the old rate | wrong dues after a reversal | fix in `ReversePayment` (cancel prepaid-locked dues) |
-| 4 | Reversing a payment of an exited member reopens cancelled dues | exited member shows dues again | refuse reversal after exit, or handle it |
+| 2 | No reversal flow for approved investments, exit approvals, year-end postings, dividend settlements, advance refunds | a mistake needs a manual workaround | design reversal actions one by one |
 | 5 | Retroactive rate corrections (BR-7 adjustment dues) not built | none now (refused) | **Decision:** whether needed |
 | 6 | Pro-rata dividend for the exit year | none now (decided: no dividend) | revisit only if bylaws require |
 | 7 | Refundable share capital (3101) not in the exit settlement (BR-22) | depends on bylaws | **Decision** |
-| 8 | Expense *rejection* ignores the president threshold (anyone who may approve small expenses can reject a large one) | low | align `ExpensePolicy::reject` |
 | 9 | Idempotency check in record expense/transfer/investment runs before the transaction (database unique key is the backstop) | rare duplicate error message | move inside a locked transaction |
 | 10 | Registration chain stuck if nobody active holds a step's role | applications wait forever | now visible ("nobody can approve"); reminder goes to nobody — president must fix roles |
 | 11 | Cash book page uses the collections area and member statement uses cash reports, unlike `Area.php` | who sees two reports differs from the permissions page wording | **Decision:** move them or update the wording |
-| 12 | `FundsGuard` uses the all-time balance, not the balance on the entry date | a back-dated payout can make a past balance negative | check balance as of date |
 | 13 | Dashboard "collected this month" counts by receipt date; reports count by voucher date or due month | figures differ when payments are reversed later | explained on the tile and in `financial-calculation-rules.md` |
 | 14 | Exited/inactive member reactivated: no dues for the months inactive | missing dues | **Decision:** policy for reactivation |
-| 15 | Investment and exit resolutions can be reused for several items | weak governance link | make resolution links unique |
-| 16 | Matched statement lines are not updated when their voucher is reversed | reconciliation drift | unmatch on reversal |
 | 17 | `viewReports` gate and `opening.import` permission are unused | confusion only | remove |
-| 18 | A user holding both super admin and a committee role can still approve under the committee role | the super-admin lock is per role | **Decision:** forbid combining super admin with president/accountant/cashier |
 
 ## Operational risks (from the roadmap)
 

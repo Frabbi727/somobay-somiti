@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Members\Schemas;
 
 use App\Domain\Geo\Data\PostalAddress;
+use App\Domain\Members\Enums\MaritalStatus;
 use App\Domain\Members\Enums\RegistrationDocument;
 use App\Domain\Members\Models\Member;
 use App\Domain\Members\Models\Nominee;
@@ -47,6 +48,10 @@ final class MemberForm
                         TextInput::make('name_bn')->label(__('members.member.name_bn'))->required()->maxLength(255),
                         TextInput::make('name_en')->label(__('members.member.name_en'))->required()->maxLength(255),
                         TextInput::make('guardian_name')->label(__('members.member.guardian_name'))->maxLength(255),
+                        TextInput::make('father_name')->label(__('members.member.father_name'))->maxLength(255),
+                        TextInput::make('mother_name')->label(__('members.member.mother_name'))->maxLength(255),
+                        TextInput::make('profession')->label(__('members.member.profession'))->maxLength(255),
+                        Select::make('marital_status')->label(__('members.member.marital_status'))->options(MaritalStatus::class),
                         TextInput::make('nid')
                             ->label(__('members.member.nid'))
                             ->helperText(__('members.member.nid_help'))
@@ -191,6 +196,10 @@ final class MemberForm
             'name_bn' => $member->name_bn,
             'name_en' => $member->name_en,
             'guardian_name' => $member->guardian_name,
+            'father_name' => $member->father_name,
+            'mother_name' => $member->mother_name,
+            'profession' => $member->profession,
+            'marital_status' => $member->marital_status?->value,
             'nid' => $member->nid,
             'date_of_birth' => $member->date_of_birth?->toDateString(),
             'joined_on' => $member->joined_on->toDateString(),

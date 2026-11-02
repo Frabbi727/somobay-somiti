@@ -79,7 +79,7 @@ function expectedTiers(): array
         // A failed SMS goes out again; nothing about the books changes.
         'resend' => 'T1',
         'attendance' => 'T1', 'propose' => 'T1', 'withdraw' => 'T1', 'decide' => 'T3',
-        'income' => 'T3', 'impair' => 'T3', 'settle' => 'T3', 'creditAll' => 'T3', 'pay' => 'T3',
+        'income' => 'T3', 'impair' => 'T3', 'settle' => 'T3', 'creditAll' => 'T3', 'pay' => 'T3', 'reversePayout' => 'T3',
         'InvestmentActions › close' => 'T3', 'ViewInvestment › close' => 'T3', 'ListInvestments table › close' => 'T3',
 
         // No confirmation: navigation and downloads.

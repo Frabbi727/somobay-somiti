@@ -8,7 +8,9 @@ use App\Domain\Contributions\Enums\PaymentMethod;
 use App\Domain\Exits\Actions\ApproveExit;
 use App\Domain\Exits\Actions\CancelExit;
 use App\Domain\Exits\Actions\PayExit;
+use App\Domain\Exits\Actions\ReverseExitPayout;
 use App\Domain\Exits\Models\MemberExit;
+use App\Domain\Exits\Models\MemberExitPayoutReversal;
 use App\Filament\Concerns\ConfirmsWithTier;
 use App\Filament\Resources\MemberExits\Schemas\MemberExitInfolist;
 use App\Filament\Support\Display;
@@ -74,6 +76,31 @@ final class MemberExitActions
             fields: [
                 Select::make('paid_from')->label(__('exits.field.paid_from'))->options(PaymentMethod::class)->default(PaymentMethod::Cash->value)->required()->native(false),
             ],
+        );
+    }
+
+    public static function reversePayout(): Action
+    {
+        $action = Action::make('reversePayout')
+            ->label(__('exits.actions.reverse_payout'))
+            ->tooltip(__('exits.actions.reverse_payout'))
+            ->icon(Heroicon::OutlinedArrowUturnLeft)
+            ->color('danger')
+            ->authorize('reversePayout')
+            ->action(function (MemberExit $record, array $data): void {
+                DomainActionRunner::run(fn (User $actor): MemberExit => app(ReverseExitPayout::class)($actor, $record, (string) ($data['reason'] ?? '')));
+                $voucher = MemberExitPayoutReversal::query()->where('member_exit_id', $record->id)->latest('id')->first()?->reversalEntry->voucher_no;
+
+                Notification::make()->title(__('exits.notifications.payout_reversed', ['voucher' => Display::digits((string) $voucher)]))->success()->send();
+            });
+
+        return self::tier3(
+            $action,
+            heading: fn (MemberExit $record): string => __('exits.actions.reverse_payout_heading', ['net' => Display::money($record->net_poisha), 'number' => $record->exit_no]),
+            expected: fn (MemberExit $record): string => $record->member->member_no,
+            submitLabel: __('exits.actions.reverse_payout'),
+            description: __('exits.actions.reverse_payout_description'),
+            fields: [Textarea::make('reason')->label(__('exits.field.reason'))->required()->minLength(5)->rows(2)],
         );
     }
 
