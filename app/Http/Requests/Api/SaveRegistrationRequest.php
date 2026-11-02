@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Api;
 
 use App\Domain\Members\Enums\Gender;
+use App\Domain\Members\Enums\MaritalStatus;
 use App\Support\Contact\MobileNumber;
 use App\Support\Money\Bps;
 use Closure;
@@ -29,6 +30,10 @@ final class SaveRegistrationRequest extends FormRequest
             'name_bn' => ['sometimes', 'nullable', 'string', 'max:255'],
             'name_en' => ['sometimes', 'nullable', 'string', 'max:255'],
             'guardian_name' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'father_name' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'mother_name' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'profession' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'marital_status' => ['sometimes', 'nullable', Rule::enum(MaritalStatus::class)],
             'nid' => ['sometimes', 'nullable', 'string', 'regex:'.self::NID],
             'date_of_birth' => ['sometimes', 'nullable', 'date_format:Y-m-d', 'before:today'],
             'email' => ['sometimes', 'nullable', 'email', 'max:255'],

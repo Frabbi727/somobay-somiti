@@ -47,11 +47,11 @@ final class GenerateMonthlyDues
         $existing = DB::table('dues')
             ->where('month', $month->toDateString())
             ->whereIn('type', [DueType::Deposit->value, DueType::ServiceCharge->value])
-            ->get(['type', 'share_lot_id'])
-            ->map(fn (object $row): string => $row->type.'#'.$row->share_lot_id)
+            ->get(['type', 'share_lot_id', 'adjustment_seq'])
+            ->map(fn (object $row): string => $row->type.'#'.$row->share_lot_id.'#'.$row->adjustment_seq)
             ->flip();
 
-        $new = array_values(array_filter($rows, fn (array $row): bool => ! $existing->has($row['type'].'#'.$row['share_lot_id'])));
+        $new = array_values(array_filter($rows, fn (array $row): bool => ! $existing->has($row['type'].'#'.$row['share_lot_id'].'#'.$row['adjustment_seq'])));
 
         return $this->summarise($month, $plan, $rows, $new);
     }

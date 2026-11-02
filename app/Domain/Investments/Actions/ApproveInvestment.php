@@ -57,7 +57,7 @@ final class ApproveInvestment
 
             $warnings = $this->limits->warningsFor($locked->type, $locked->principal_poisha);
             $source = $this->accounts->byCode($locked->funded_from->accountCode());
-            $this->funds->assertCovers($source, $locked->principal_poisha);
+            $this->funds->assertCovers($source, $locked->principal_poisha, $locked->invested_on);
 
             $entry = ($this->post)($actor, new JournalEntryData(
                 type: VoucherType::Payment,

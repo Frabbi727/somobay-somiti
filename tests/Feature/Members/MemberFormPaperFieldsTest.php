@@ -17,7 +17,6 @@ use App\Filament\Resources\Members\Pages\CreateMember;
 use App\Filament\Resources\Members\Pages\EditMember;
 use App\Filament\Resources\Members\Pages\ViewMember;
 use Carbon\CarbonImmutable;
-use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Repeater;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -35,29 +34,6 @@ beforeEach(function (): void {
 afterEach(function (): void {
     CarbonImmutable::setTestNow();
 });
-
-/**
- * @return array<string, mixed>
- */
-function paperCreateState(array $overrides = []): array
-{
-    return [
-        'name_bn' => 'রহিম উদ্দিন',
-        'name_en' => 'Rahim Uddin',
-        'mobile' => '01712-345678',
-        'joined_on' => '2026-10-01',
-        'shares' => 1,
-        'effective_from' => '2026-10',
-        'gender' => 'male',
-        'passport_no' => 'ab 123456',
-        ...paperAddress('present'),
-        'permanent_same_as_present' => true,
-        'documents_received' => ['nid', 'nominee_photo'],
-        'terms_accepted' => true,
-        'nominees' => [nominee(['name' => 'Karima', 'gender' => 'female', 'permanent_same_as_present' => true])],
-        ...$overrides,
-    ];
-}
 
 it('office create saves gender, addresses, nominee addresses and documents', function (): void {
     $undo = Repeater::fake();
@@ -253,8 +229,3 @@ it('refuses to record documents on a closed application or without permission', 
     expect(fn () => app(RecordApplicationDocuments::class)(userWithRole(Role::Member), $open, [RegistrationDocument::Nid]))
         ->toThrow(AuthorizationException::class);
 });
-
-function paperFormAction(string $name): TestAction
-{
-    return TestAction::make($name)->schemaComponent('form-actions', 'content');
-}

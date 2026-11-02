@@ -6,6 +6,7 @@ namespace App\Domain\Members\Data;
 
 use App\Domain\Geo\Data\PostalAddress;
 use App\Domain\Members\Enums\Gender;
+use App\Domain\Members\Enums\MaritalStatus;
 use App\Domain\Members\Enums\RegistrationDocument;
 use App\Support\Bangla\BanglaNumber;
 use App\Support\Contact\MobileNumber;
@@ -37,6 +38,10 @@ final readonly class MemberData
         public ?PostalAddress $presentAddress = null,
         public ?PostalAddress $permanentAddress = null,
         public array $documentsReceived = [],
+        public ?string $fatherName = null,
+        public ?string $motherName = null,
+        public ?string $profession = null,
+        public ?MaritalStatus $maritalStatus = null,
     ) {}
 
     /**
@@ -58,6 +63,7 @@ final readonly class MemberData
         $present = PostalAddress::fromForm($data, 'present');
         $passport = $text('passport_no');
         $gender = $data['gender'] ?? null;
+        $marital = $data['marital_status'] ?? null;
 
         return new self(
             nameBn: $text('name_bn') ?? '',
@@ -76,6 +82,10 @@ final readonly class MemberData
             presentAddress: $present,
             permanentAddress: ($data['permanent_same_as_present'] ?? false) ? $present : PostalAddress::fromForm($data, 'permanent'),
             documentsReceived: self::documents($data['documents_received'] ?? []),
+            fatherName: $text('father_name'),
+            motherName: $text('mother_name'),
+            profession: $text('profession'),
+            maritalStatus: $marital instanceof MaritalStatus ? $marital : (is_string($marital) ? MaritalStatus::tryFrom($marital) : null),
         );
     }
 
@@ -125,6 +135,10 @@ final readonly class MemberData
             'name_bn' => $this->nameBn,
             'name_en' => $this->nameEn,
             'guardian_name' => $this->guardianName,
+            'father_name' => $this->fatherName,
+            'mother_name' => $this->motherName,
+            'profession' => $this->profession,
+            'marital_status' => $this->maritalStatus,
             'nid' => $this->nid,
             'date_of_birth' => $this->dateOfBirth?->toDateString(),
             'mobile' => $this->mobile,
