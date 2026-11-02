@@ -58,6 +58,7 @@ return [
         'submitted' => ['title' => 'A member exit is waiting for your approval', 'body' => ':reference: :party wants to leave. Check the settlement, then approve it.'],
         'approved' => ['title' => 'The member exit was approved', 'body' => ':reference (:party) is approved. The settlement of :amount now waits to be paid.'],
         'to_pay' => ['title' => 'An exit settlement is waiting to be paid', 'body' => ':reference: pay :amount to :party, then record the payout.'],
+        'payout_reversed' => ['title' => 'An exit payout was reversed', 'body' => ':reference (:party): the payout of :amount was reversed and waits to be paid again.'],
     ],
 
     'journal_draft' => [

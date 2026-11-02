@@ -74,6 +74,7 @@ final class PayExit
                         'share_bps' => $payee['share_bps'],
                         'amount_poisha' => $amounts[$key],
                         'paid_from' => $paidFrom,
+                        'payout_journal_entry_id' => $entryId,
                     ]);
                 }
             }
