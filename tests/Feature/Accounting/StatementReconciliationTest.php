@@ -15,7 +15,9 @@ use App\Domain\Accounting\Models\JournalLine;
 use App\Domain\Accounting\Models\StatementImport;
 use App\Domain\Accounting\Models\StatementLine;
 use App\Domain\Accounting\Statements\StatementReconciliation;
+use App\Domain\Contributions\Actions\ReversePayment;
 use App\Domain\Contributions\Enums\PaymentMethod;
+use App\Domain\Contributions\Models\Payment;
 use App\Domain\Integrity\InvariantChecker;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Enums\Role;
@@ -208,4 +210,20 @@ it('imports a statement from the screen and works its lines', function (): void 
     expect($fee->fresh()?->status)->toBe(StatementLineStatus::Ignored)
         ->and($import->file_path)->toStartWith('statements/')
         ->and($import->filename)->toBe('bkash-aug.csv');
+});
+
+it('returns a matched line to the unmatched list when its voucher is reversed', function (): void {
+    $import = importCsv(AUGUST_BKASH);
+    $payment = Payment::query()->where('member_id', $this->rahim->id)->sole();
+    $line = $import->lines()->where('reference', 'BK1111AAAA')->sole();
+
+    expect($line->status)->toBe(StatementLineStatus::Matched);
+
+    app(ReversePayment::class)(userWithRole(Role::President), $payment, 'Wrong member chosen');
+
+    $line->refresh();
+
+    expect($line->status)->toBe(StatementLineStatus::Unmatched)
+        ->and($line->journal_line_id)->toBeNull()
+        ->and($import->lines()->where('reference', 'BK2222BBBB')->sole()->status)->toBe(StatementLineStatus::Matched);
 });

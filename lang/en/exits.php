@@ -52,12 +52,21 @@ return [
         'pay_submit' => 'Pay :net',
         'cancel' => 'Cancel request',
         'cancel_heading' => 'Cancel exit request :number?',
+        'reverse_payout' => 'Reverse payout',
+        'reverse_payout_heading' => 'Reverse the payout of :net for :number?',
+        'reverse_payout_description' => 'Use this only if the payout was made by mistake (wrong account, wrong person, money not handed over). A mirror voucher brings the money back; the settlement stays as approved and can be paid out again.',
     ],
     'notifications' => [
         'requested' => 'Exit :number recorded.',
         'approved' => 'Exit approved — settlement :net set aside.',
         'paid' => 'Settlement paid out.',
         'cancelled' => 'Exit request cancelled.',
+        'payout_reversed' => 'Payout reversed — voucher :voucher posted. The settlement waits to be paid again.',
+    ],
+    'payout_reversal' => [
+        'reversed' => 'Reversed',
+        'title' => 'Reversed payouts',
+        'by' => 'Reversed by',
     ],
     'narration' => [
         'release' => 'Exit :member: dues after the exit month released to advance',
@@ -66,6 +75,8 @@ return [
         'payout' => 'Exit :number (:member): settlement paid',
     ],
     'errors' => [
+        'nothing_to_reverse' => 'Exit :number has no payout to reverse.',
+        'reverse_own_payout' => 'You recorded this payout, so someone else must reverse it.',
         'shares_after_exit' => 'This member has a share change planned for after :month. An exit ends all shares, so check the member’s share history first, then approve again.',
         'fee_negative' => 'The exit fee cannot be negative.',
         'future_month' => 'The exit month cannot be in the future.',

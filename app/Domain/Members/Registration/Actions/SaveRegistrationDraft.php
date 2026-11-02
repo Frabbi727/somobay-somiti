@@ -95,7 +95,7 @@ final class SaveRegistrationDraft
             throw DomainRuleViolation::because('registration.errors.email_invalid');
         }
 
-        foreach (['name_bn' => 255, 'name_en' => 255, 'guardian_name' => 255, 'email' => 255, 'address' => 1000] as $field => $max) {
+        foreach (['name_bn' => 255, 'name_en' => 255, 'guardian_name' => 255, 'father_name' => 255, 'mother_name' => 255, 'profession' => 255, 'email' => 255, 'address' => 1000] as $field => $max) {
             $value = $attributes[$field] ?? null;
 
             if (is_string($value) && mb_strlen($value) > $max) {

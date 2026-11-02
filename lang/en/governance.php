@@ -106,6 +106,7 @@ return [
     'errors' => [
         'resolution_required' => 'A passed :subject resolution must be linked before this can be approved.',
         'resolution_unusable' => 'Resolution :number is not a passed :subject resolution.',
+        'resolution_in_use' => 'Resolution :number already backs another investment or exit. Each resolution can back only one.',
         'resolution_used' => 'Resolution :number already backs another plan.',
         'title_required' => 'Give the meeting a title.',
         'type_frozen' => 'Attendance is already recorded; the meeting type can no longer change.',

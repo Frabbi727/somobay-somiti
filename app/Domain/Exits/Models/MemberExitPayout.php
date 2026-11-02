@@ -25,6 +25,7 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property int $share_bps
  * @property Money $amount_poisha
  * @property PaymentMethod $paid_from
+ * @property int|null $payout_journal_entry_id
  */
 #[UsePolicy(MemberExitPayoutPolicy::class)]
 final class MemberExitPayout extends Model

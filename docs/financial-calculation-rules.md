@@ -53,7 +53,7 @@ Late from **due date + grace days**. One fee per member per month, attached to t
 
 When a payment is approved it settles open dues **oldest month first**, and within a month in the plan's payment order (default: late fee → service charge → registration → deposit). What is left:
 - **Apply at current rate** (default): goes to the member's **advance** (2111) and is applied automatically to future dues when they are generated, at the rate of that month.
-- **Lock prepaid months**: whole future months (up to 24) are created now at today's rate and marked paid; the rest goes to advance.
+- **Lock prepaid months**: whole future months (up to 24) are created now at today's rate and marked paid; the rest goes to advance. If the payment is reversed, the locked dues are cancelled: months already generated get a new due at that month's rate, and later months are built normally.
 
 Receipt voucher (RV): Dr Cash/Bank/bKash/Nagad; Cr 2101 (deposits), 4111 (service), 4101 (registration), 4121 (late fee), 2111 (surplus).
 
@@ -65,7 +65,7 @@ Receipt voucher (RV): Dr Cash/Bank/bKash/Nagad; Cr 2101 (deposits), 4111 (servic
 
 ## Expenses and transfers
 
-- Expense: PV Dr expense account, Cr paying account. The paying account must hold the amount (FundsGuard, all-time balance).
+- Expense: PV Dr expense account, Cr paying account. The paying account must hold the amount on the payment date and on every later date already posted (FundsGuard), so a back-dated payout cannot make a past balance negative.
 - Transfer: CV Dr destination (+ Dr 5104 charge), Cr source.
 
 ## Investments
@@ -103,7 +103,7 @@ Note: refundable share capital (3101), listed in BR-22, is not part of the settl
 
 ## Corrections
 
-Posted vouchers never change. Corrections are **reversals** (a mirror voucher with a reason, linked to the original) or, for prices, a **new rate plan version**. Payments, expenses, transfers, vouchers, investments and added investment amounts can be reversed; exits, year-ends, dividend settlements and refunds have no reversal flow yet (known gap).
+Posted vouchers never change. Corrections are **reversals** (a mirror voucher with a reason, linked to the original) or, for prices, a **new rate plan version**. Payments, expenses, transfers, vouchers, investments, added investment amounts and exit payouts can be reversed; exit approvals, year-ends, dividend settlements and refunds have no reversal flow yet (known gap).
 
 ## Checks that prove the books add up
 
