@@ -44,11 +44,12 @@ final class ExpensePolicy
             : $user->may(Permission::ExpensesApprove);
     }
 
+    /**
+     * The same people who may approve it: a large expense waits for the president either way.
+     */
     public function reject(User $user, Expense $expense): bool
     {
-        return $expense->status === ExpenseStatus::Pending
-            && $expense->recorded_by !== $user->id
-            && $user->may(Permission::ExpensesApprove);
+        return $this->approve($user, $expense);
     }
 
     public function cancel(User $user, Expense $expense): bool

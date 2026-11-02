@@ -6,9 +6,11 @@ namespace App\Domain\Accounting\Actions;
 
 use App\Domain\Accounting\Data\JournalEntryData;
 use App\Domain\Accounting\Data\JournalLineData;
+use App\Domain\Accounting\Enums\StatementLineStatus;
 use App\Domain\Accounting\Enums\VoucherType;
 use App\Domain\Accounting\Models\JournalEntry;
 use App\Domain\Accounting\Models\JournalLine;
+use App\Domain\Accounting\Models\StatementLine;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use App\Support\Time\YearMonth;
@@ -75,6 +77,8 @@ final class ReverseJournal
                 allowInactiveAccounts: true,
             );
 
+            $this->releaseStatementLines($original);
+
             activity('accounting')
                 ->performedOn($original)
                 ->causedBy($actor)
@@ -84,5 +88,26 @@ final class ReverseJournal
 
             return $reversal;
         }, attempts: 3);
+    }
+
+    /**
+     * A reversed voucher no longer explains a bank or wallet statement line: any line matched to it
+     * goes back to the unmatched list, to be matched to the corrected entry.
+     */
+    private function releaseStatementLines(JournalEntry $original): void
+    {
+        $lines = StatementLine::query()
+            ->whereIn('journal_line_id', $original->lines->pluck('id'))
+            ->lockForUpdate()
+            ->get();
+
+        foreach ($lines as $line) {
+            $line->update([
+                'status' => StatementLineStatus::Unmatched,
+                'journal_line_id' => null,
+                'matched_by' => null,
+                'matched_at' => null,
+            ]);
+        }
     }
 }
