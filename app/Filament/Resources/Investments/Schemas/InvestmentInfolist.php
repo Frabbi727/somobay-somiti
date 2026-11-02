@@ -35,6 +35,10 @@ final class InvestmentInfolist
                     TextEntry::make('principal_poisha')
                         ->label(__('investments.field.principal'))
                         ->formatStateUsing(fn (Investment $record): string => Display::money($record->principal_poisha)),
+                    TextEntry::make('total_invested')
+                        ->label(__('investments.field.total_invested'))
+                        ->state(fn (Investment $record): string => Display::money($record->totalInvested()))
+                        ->visible(fn (Investment $record): bool => $record->ledger->isNotEmpty()),
                     TextEntry::make('book_value')
                         ->label(__('investments.field.book_value'))
                         ->state(fn (Investment $record): string => Display::money($record->bookValue()))

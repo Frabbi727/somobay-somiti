@@ -9,6 +9,7 @@ use Filament\Support\Contracts\HasLabel;
 enum InvestmentEntryKind: string implements HasLabel
 {
     case Disbursement = 'disbursement';
+    case TopUp = 'top_up';
     case Impairment = 'impairment';
     case Closure = 'closure';
 

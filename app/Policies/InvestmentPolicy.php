@@ -49,6 +49,14 @@ final class InvestmentPolicy
     }
 
     /**
+     * More money put into an investment that is already active (recorded now, approved by someone else).
+     */
+    public function addTopUp(User $user, Investment $investment): bool
+    {
+        return $investment->status === InvestmentStatus::Active && $user->may(Permission::InvestmentsRecord);
+    }
+
+    /**
      * Profit received on an active investment (P10.S2).
      */
     public function recordIncome(User $user, Investment $investment): bool

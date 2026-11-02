@@ -126,7 +126,7 @@ flowchart LR
 
 ## 8. Investment
 
-record → approve (president; resolution if configured; payment voucher to 13xx) or reject → while active: record income, write down, close. No reversal flow for an approved investment (known gap).
+record → approve (president; resolution if configured; payment voucher to 13xx) or reject → while active: add investment (top-up: record → approve by someone other than the recorder, or reject/cancel; payment voucher to 13xx), record income, write down, close. A pending top-up cannot be approved once the investment is closed and blocks year-end preparation. No reversal flow for an approved investment (known gap).
 
 ## 9. Member exit
 

@@ -22,6 +22,8 @@ How it works (`app/Domain/Notifications/Services`):
 | Expense / transfer reversed | recorder and approver | reason |
 | Investment recorded | people who can approve it | number, amount, institution |
 | Investment approved / rejected | recorder | outcome |
+| Added investment (top-up) recorded | people who can approve it | number, amount, investment name |
+| Added investment approved / rejected | recorder | outcome (+ reason) |
 | Rate plan submitted | president and secretary (not the drafter) | code, share unit, start month → check the impact preview |
 | Rate plan fully approved / sent back | drafter | approved from month X / read the comment and resubmit |
 | Year-end prepared | people who can approve it | net profit → review and approve |

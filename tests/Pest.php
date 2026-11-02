@@ -15,6 +15,7 @@ use App\Domain\Contributions\Enums\DueType;
 use App\Domain\Contributions\Models\Due;
 use App\Domain\Contributions\Models\Payment;
 use App\Domain\Integrity\InvariantChecker;
+use App\Domain\Investments\Data\InvestmentData;
 use App\Domain\Members\Actions\CreateMember;
 use App\Domain\Members\Data\MemberData;
 use App\Domain\Members\Models\Member;
@@ -557,4 +558,34 @@ function paperCreateState(array $overrides = []): array
 function paperFormAction(string $name): TestAction
 {
     return TestAction::make($name)->schemaComponent('form-actions', 'content');
+}
+
+/**
+ * @param  array<string, mixed>  $overrides
+ */
+function investmentData(array $overrides = []): InvestmentData
+{
+    return InvestmentData::fromForm([
+        'type' => 'fixed_deposit',
+        'name' => 'FDR at Sonali Bank',
+        'institution' => 'Sonali Bank',
+        'instrument_no' => 'FDR-1001',
+        'principal' => Money::ofTaka('50000'),
+        'funded_from' => 'bank',
+        'invested_on' => '2026-09-10',
+        'matures_on' => '2027-09-10',
+        'expected_rate' => '8.5',
+        ...$overrides,
+    ]);
+}
+
+function investmentRule(Closure $callback): ?string
+{
+    try {
+        $callback();
+    } catch (DomainRuleViolation $violation) {
+        return $violation->translationKey;
+    }
+
+    return null;
 }

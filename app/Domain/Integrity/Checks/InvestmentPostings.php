@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Every investment register entry is exactly its voucher's net movement on that investment's
- * 13xx account, and active investments never have a negative book value.
+ * 13xx account, active investments never have a negative book value, and every approved top-up
+ * is in the register.
  */
 final class InvestmentPostings implements IntegrityCheck
 {
@@ -45,6 +46,20 @@ final class InvestmentPostings implements IntegrityCheck
 
         foreach ($negative as $row) {
             $findings[] = new Finding($this->key(), "Investment {$row->investment_no}: book value {$row->book} is not possible for its status", []);
+        }
+
+        $topUps = DB::select(<<<'SQL'
+            SELECT i.investment_no, t.id, t.amount_poisha
+            FROM investment_top_ups t
+            JOIN investments i ON i.id = t.investment_id
+            WHERE t.status = 'approved'
+              AND NOT EXISTS (SELECT 1 FROM investment_ledger_entries le
+                              WHERE le.investment_id = t.investment_id AND le.journal_entry_id = t.journal_entry_id
+                                AND le.kind = 'top_up' AND le.delta_poisha = t.amount_poisha)
+            SQL);
+
+        foreach ($topUps as $row) {
+            $findings[] = new Finding($this->key(), "Investment {$row->investment_no}: approved top-up of {$row->amount_poisha} has no matching register entry", ['top_up_id' => (int) $row->id]);
         }
 
         return $findings;

@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Investments;
 
 use App\Domain\Investments\Enums\InvestmentStatus;
+use App\Domain\Investments\Enums\InvestmentTopUpStatus;
 use App\Domain\Investments\Models\Investment;
+use App\Domain\Investments\Models\InvestmentTopUp;
 use App\Filament\Navigation\NavGroup;
 use App\Filament\Resources\Investments\Pages\CreateInvestment;
 use App\Filament\Resources\Investments\Pages\ListInvestments;
 use App\Filament\Resources\Investments\Pages\ViewInvestment;
+use App\Filament\Resources\Investments\RelationManagers\TopUpsRelationManager;
 use App\Filament\Resources\Investments\Schemas\InvestmentForm;
 use App\Filament\Resources\Investments\Schemas\InvestmentInfolist;
 use App\Filament\Resources\Investments\Tables\InvestmentsTable;
@@ -43,7 +46,8 @@ final class InvestmentResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $pending = Investment::query()->where('status', InvestmentStatus::Pending)->count();
+        $pending = Investment::query()->where('status', InvestmentStatus::Pending)->count()
+            + InvestmentTopUp::query()->where('status', InvestmentTopUpStatus::Pending)->count();
 
         return $pending === 0 ? null : Display::digits($pending);
     }
@@ -66,6 +70,13 @@ final class InvestmentResource extends Resource
     public static function table(Table $table): Table
     {
         return InvestmentsTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            TopUpsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array
