@@ -53,10 +53,11 @@ final class ApproveInvestment
 
             Gate::forUser($actor)->authorize('approve', $locked);
             $this->resolutions->assertSatisfied(ResolutionSubject::Investment, $locked->resolution_id);
+            $this->resolutions->assertNotUsedElsewhere(ResolutionSubject::Investment, $locked->resolution_id, $locked->id);
 
             $warnings = $this->limits->warningsFor($locked->type, $locked->principal_poisha);
             $source = $this->accounts->byCode($locked->funded_from->accountCode());
-            $this->funds->assertCovers($source, $locked->principal_poisha);
+            $this->funds->assertCovers($source, $locked->principal_poisha, $locked->invested_on);
 
             $entry = ($this->post)($actor, new JournalEntryData(
                 type: VoucherType::Payment,

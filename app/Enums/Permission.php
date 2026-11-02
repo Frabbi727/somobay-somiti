@@ -75,6 +75,7 @@ enum Permission: string implements HasLabel
     case ExitsRequest = 'exits.request';
     case ExitsApprove = 'exits.approve';
     case ExitsPay = 'exits.pay';
+    case ExitsReversePayout = 'exits.reverse_payout';
 
     // Settings.
     case RatePlansDraft = 'rate_plans.draft';
@@ -166,7 +167,7 @@ enum Permission: string implements HasLabel
             self::JournalsManage, self::JournalsReverse,
             self::InvestmentsApprove, self::InvestmentsIncome, self::InvestmentsWriteDown, self::InvestmentsClose,
             self::YearEndPrepare, self::DividendsSettle,
-            self::ExitsApprove, self::ExitsPay, self::RatePlansCancel,
+            self::ExitsApprove, self::ExitsPay, self::ExitsReversePayout, self::RatePlansCancel,
         ], true);
     }
 

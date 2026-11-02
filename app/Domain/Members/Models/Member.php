@@ -6,6 +6,7 @@ namespace App\Domain\Members\Models;
 
 use App\Domain\Contributions\Models\Due;
 use App\Domain\Members\Enums\Gender;
+use App\Domain\Members\Enums\MaritalStatus;
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Enums\RegistrationDocument;
 use App\Models\User;
@@ -33,6 +34,10 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property string $name_bn
  * @property string $name_en
  * @property string|null $guardian_name
+ * @property string|null $father_name
+ * @property string|null $mother_name
+ * @property string|null $profession
+ * @property MaritalStatus|null $marital_status
  * @property string|null $nid
  * @property CarbonImmutable|null $date_of_birth
  * @property string $mobile
@@ -150,6 +155,7 @@ final class Member extends Model
         return [
             'status' => MemberStatus::class,
             'gender' => Gender::class,
+            'marital_status' => MaritalStatus::class,
             'documents_received' => AsEnumCollection::of(RegistrationDocument::class),
             'date_of_birth' => 'immutable_date',
             'joined_on' => 'immutable_date',

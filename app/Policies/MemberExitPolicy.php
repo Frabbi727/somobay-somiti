@@ -48,6 +48,17 @@ final class MemberExitPolicy
         return $exit->status === ExitStatus::Approved && $user->may(Permission::ExitsPay);
     }
 
+    /**
+     * Undo a payout made by mistake: someone other than the person who paid it.
+     */
+    public function reversePayout(User $user, MemberExit $exit): bool
+    {
+        return $exit->status === ExitStatus::Paid
+            && $exit->payout_journal_entry_id !== null
+            && $exit->paid_by !== $user->id
+            && $user->may(Permission::ExitsReversePayout);
+    }
+
     public function update(User $user, MemberExit $exit): bool
     {
         return false;

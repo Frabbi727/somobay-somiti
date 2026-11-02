@@ -54,6 +54,7 @@ final class MonthlyDueBuilder
             ->orderBy('l.id')
             ->get(['l.id', 'l.member_id', 'l.shares']);
 
+        $sequences = $this->sequences($month, $memberIds);
         $snapshot = json_encode($plan->snapshot(), JSON_THROW_ON_ERROR);
         $dueDate = $month->day($plan->due_day)->toDateString();
         $now = now();
@@ -73,7 +74,7 @@ final class MonthlyDueBuilder
                     'month' => $month->toDateString(),
                     'type' => $type->value,
                     'share_lot_id' => (int) $lot->id,
-                    'adjustment_seq' => 0,
+                    'adjustment_seq' => $sequences[$lot->id.'#'.$type->value] ?? 0,
                     'rate_plan_id' => $plan->id,
                     'snapshot' => $snapshot,
                     'amount_poisha' => $amount->poisha,
@@ -87,6 +88,30 @@ final class MonthlyDueBuilder
         }
 
         return $rows;
+    }
+
+    /**
+     * The adjustment_seq each lot's deposit and service-charge due takes in the month, keyed
+     * "lot#type". Normally 0; when a prepaid-locked due was cancelled (its payment reversed) the
+     * replacement takes the next number, so the natural key stays unique and a re-run inserts
+     * nothing new.
+     *
+     * @param  array<int, int>  $memberIds
+     * @return array<string, int>
+     */
+    public function sequences(YearMonth $month, array $memberIds): array
+    {
+        return DB::table('dues')
+            ->whereIn('member_id', $memberIds)
+            ->where('month', $month->toDateString())
+            ->whereIn('type', [DueType::Deposit->value, DueType::ServiceCharge->value])
+            ->where('prepaid_locked', true)
+            ->where('status', DueStatus::Cancelled->value)
+            ->groupBy('share_lot_id', 'type')
+            ->selectRaw('share_lot_id, type, MAX(adjustment_seq) + 1 AS seq')
+            ->get()
+            ->mapWithKeys(fn (object $row): array => [$row->share_lot_id.'#'.$row->type => (int) $row->seq])
+            ->all();
     }
 
     /**

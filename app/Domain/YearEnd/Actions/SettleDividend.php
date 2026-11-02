@@ -60,7 +60,7 @@ final class SettleDividend
 
             if ($how === DividendSettlement::Payout) {
                 $source = $this->accounts->byCode(($paidFrom ?? PaymentMethod::Cash)->accountCode());
-                $this->funds->assertCovers($source, $locked->amount_poisha);
+                $this->funds->assertCovers($source, $locked->amount_poisha, $on);
                 $other = JournalLineData::credit($source, $locked->amount_poisha);
             } else {
                 $other = JournalLineData::credit($this->accounts->byCode(AccountCode::MEMBER_SAVINGS), $locked->amount_poisha, $locked->member_id);

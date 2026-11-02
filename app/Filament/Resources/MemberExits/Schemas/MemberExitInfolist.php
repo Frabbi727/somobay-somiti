@@ -8,6 +8,7 @@ use App\Domain\Exits\Data\ExitPreview;
 use App\Domain\Exits\Enums\ExitStatus;
 use App\Domain\Exits\Models\MemberExit;
 use App\Domain\Exits\Models\MemberExitPayout;
+use App\Domain\Exits\Models\MemberExitPayoutReversal;
 use App\Domain\Exits\Services\ExitCalculator;
 use App\Filament\Support\Display;
 use App\Filament\Support\HistorySection;
@@ -59,7 +60,7 @@ final class MemberExitInfolist
                 ]),
             Section::make(__('exits.field.payee'))
                 ->columnSpanFull()
-                ->visible(fn (MemberExit $record): bool => $record->status === ExitStatus::Paid)
+                ->visible(fn (MemberExit $record): bool => $record->payouts->isNotEmpty())
                 ->schema([
                     RepeatableEntry::make('payouts')
                         ->hiddenLabel()
@@ -67,11 +68,36 @@ final class MemberExitInfolist
                         ->schema([
                             TextEntry::make('payee')->hiddenLabel(),
                             TextEntry::make('share_bps')->hiddenLabel()->formatStateUsing(fn (int $state): string => Bps::of($state)->format(app()->getLocale())),
-                            TextEntry::make('amount_poisha')->hiddenLabel()->formatStateUsing(fn (MemberExitPayout $record): string => Display::money($record->amount_poisha)),
+                            TextEntry::make('amount_poisha')
+                                ->hiddenLabel()
+                                ->formatStateUsing(fn (MemberExitPayout $record): string => Display::money($record->amount_poisha))
+                                ->badge(fn (MemberExitPayout $record): bool => self::isReversed($record))
+                                ->color(fn (MemberExitPayout $record): ?string => self::isReversed($record) ? 'danger' : null)
+                                ->suffix(fn (MemberExitPayout $record): string => self::isReversed($record) ? ' · '.__('exits.payout_reversal.reversed') : ''),
+                        ]),
+                ]),
+            Section::make(__('exits.payout_reversal.title'))
+                ->columnSpanFull()
+                ->visible(fn (MemberExit $record): bool => $record->payoutReversals->isNotEmpty())
+                ->schema([
+                    RepeatableEntry::make('payoutReversals')
+                        ->hiddenLabel()
+                        ->columns(4)
+                        ->schema([
+                            TextEntry::make('reversalEntry.voucher_no')->hiddenLabel()->formatStateUsing(fn (string $state): string => Display::digits($state)),
+                            TextEntry::make('amount_poisha')->hiddenLabel()->formatStateUsing(fn (MemberExitPayoutReversal $record): string => Display::money($record->amount_poisha)),
+                            TextEntry::make('reverser.name')->hiddenLabel()->prefix(__('exits.payout_reversal.by').': '),
+                            TextEntry::make('reason')->hiddenLabel(),
                         ]),
                 ]),
             HistorySection::make(),
         ]);
+    }
+
+    private static function isReversed(MemberExitPayout $payout): bool
+    {
+        return $payout->payout_journal_entry_id !== null
+            && MemberExitPayoutReversal::query()->where('payout_journal_entry_id', $payout->payout_journal_entry_id)->exists();
     }
 
     public static function preview(MemberExit $exit): ExitPreview
