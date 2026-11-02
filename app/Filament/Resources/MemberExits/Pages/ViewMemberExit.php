@@ -19,7 +19,7 @@ final class ViewMemberExit extends ViewRecord
 
     protected function resolveRecord(int|string $key): Model
     {
-        return parent::resolveRecord($key)->load('payouts');
+        return parent::resolveRecord($key)->load(['payouts', 'payoutReversals.reversalEntry', 'payoutReversals.reverser']);
     }
 
     public function getTitle(): string
@@ -32,6 +32,7 @@ final class ViewMemberExit extends ViewRecord
         return [
             MemberExitActions::approve(),
             MemberExitActions::pay(),
+            MemberExitActions::reversePayout(),
             MemberExitActions::cancel(),
         ];
     }

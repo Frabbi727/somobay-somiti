@@ -39,6 +39,17 @@ final class ExitSubledger implements SubledgerSource
             ->where('e.entry_date', '<=', $day)
             ->sum('x.net_poisha');
 
+        // Payouts later reversed: paid from their payout date, owed again from their reversal date.
+        $paid += (int) DB::table('member_exit_payout_reversals as r')
+            ->join('journal_entries as e', 'e.id', '=', 'r.payout_journal_entry_id')
+            ->where('e.entry_date', '<=', $day)
+            ->sum('r.amount_poisha');
+
+        $paid -= (int) DB::table('member_exit_payout_reversals as r')
+            ->join('journal_entries as e', 'e.id', '=', 'r.reversal_journal_entry_id')
+            ->where('e.entry_date', '<=', $day)
+            ->sum('r.amount_poisha');
+
         return Money::ofPoisha(-($approved - $paid));
     }
 }

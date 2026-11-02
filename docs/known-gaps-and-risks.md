@@ -36,7 +36,7 @@ It also lists any dividend lines already posted to members after they exited. **
 | # | Gap | Risk | Suggested next step |
 |---|---|---|---|
 | 1 | Single-person actions: advance refund below the limit, late-fee waiver, dividend settlement, exit payout, investment income/write-down/close, recording a resolution's outcome, closing a fiscal year | one person can move or forgive money | **Decision:** which need a second person |
-| 2 | No reversal flow for approved investments, exit approvals/payouts, year-end postings, dividend settlements, advance refunds | a mistake needs a manual workaround | design reversal actions one by one |
+| 2 | No reversal flow for approved investments, exit approvals, year-end postings, dividend settlements, advance refunds | a mistake needs a manual workaround | design reversal actions one by one |
 | 3 | Reversing a payment approved under "lock prepaid months" leaves the locked future dues open at the old rate | wrong dues after a reversal | fix in `ReversePayment` (cancel prepaid-locked dues) |
 | 4 | Reversing a payment of an exited member reopens cancelled dues | exited member shows dues again | refuse reversal after exit, or handle it |
 | 5 | Retroactive rate corrections (BR-7 adjustment dues) not built | none now (refused) | **Decision:** whether needed |
