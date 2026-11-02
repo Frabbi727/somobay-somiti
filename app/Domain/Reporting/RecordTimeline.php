@@ -58,7 +58,7 @@ final class RecordTimeline
                 InvestmentStatus::Pending => 'pending',
                 InvestmentStatus::Active, InvestmentStatus::Closed => 'approved',
                 default => $record->status->value,
-            }, $record->recorded_by, $record->created_at, ['approved_at' => $record->getAttribute('approved_at')], $record->rejection_reason, null),
+            }, $record->recorded_by, $record->created_at, ['approved_at' => $record->getAttribute('approved_at')], $record->rejection_reason, $record->reversal_reason),
             $record instanceof MemberExit => $this->exit($record),
             $record instanceof RatePlan => $this->ratePlan($record),
             $record instanceof YearEnd => $this->yearEnd($record),

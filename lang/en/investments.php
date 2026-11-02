@@ -60,12 +60,14 @@ return [
         'rejected' => 'Rejected',
         'cancelled' => 'Cancelled',
         'closed' => 'Closed',
+        'reversed' => 'Reversed',
     ],
     'entry_kind' => [
         'disbursement' => 'Invested',
         'top_up' => 'Added investment',
         'impairment' => 'Written down',
         'closure' => 'Closed',
+        'reversal' => 'Reversed',
     ],
     'actions' => [
         'income' => 'Record profit',
@@ -87,6 +89,9 @@ return [
         'reject_heading' => 'Reject investment :number?',
         'cancel' => 'Cancel',
         'cancel_heading' => 'Cancel your investment :number?',
+        'reverse' => 'Reverse',
+        'reverse_heading' => 'Reverse investment :number (:amount)?',
+        'reverse_description' => 'A mirror voucher brings the money back to where it was paid from. The investment stays in the records, marked reversed. Use this only for an investment approved by mistake.',
     ],
     'notifications' => [
         'income_recorded' => 'Profit recorded — voucher :voucher.',
@@ -97,11 +102,17 @@ return [
         'approved_with_warnings' => 'Investment approved with limit warnings — see the investment.',
         'rejected' => 'Investment rejected.',
         'cancelled' => 'Investment cancelled.',
+        'reversed' => 'Investment reversed — voucher :voucher posted.',
     ],
     'warnings' => [
         'limit' => ':type would total :total, above :percent of :account (:limit). Check s.33 and get the required approval.',
     ],
     'errors' => [
+        'reverse_not_active' => 'Only an active investment can be reversed, and :number is not active.',
+        'reverse_own_approval' => 'You approved this, so someone else must reverse it.',
+        'reverse_top_ups_first' => ':number has added amounts. Reverse the approved ones and cancel or reject the pending ones first.',
+        'reverse_has_activity' => ':number already has profit, a write-down or a sale recorded, so it cannot be reversed. Undoing those is not supported yet; tell the president and the accountant.',
+        'top_up_not_approved' => 'This added amount for :number is not approved, so there is nothing to reverse.',
         'income_amounts' => 'Profit must be more than zero and more than the tax deducted.',
         'income_date' => 'The date must be on or after the investment date and not in the future.',
         'impairment_amount' => 'The write-down must be more than zero and at most the book value (:book).',
@@ -128,6 +139,7 @@ return [
             'approved' => 'Approved',
             'rejected' => 'Rejected',
             'cancelled' => 'Cancelled',
+            'reversed' => 'Reversed',
         ],
         'actions' => [
             'add' => 'Add investment',
@@ -142,6 +154,8 @@ return [
             'reject_heading' => 'Reject :amount for :number?',
             'cancel' => 'Cancel',
             'cancel_heading' => 'Cancel your :amount for :number?',
+            'reverse' => 'Reverse',
+            'reverse_heading' => 'Reverse :amount added to :number?',
         ],
         'notifications' => [
             'recorded' => ':amount recorded for :number and waiting for approval.',
@@ -149,6 +163,7 @@ return [
             'approved_with_warnings' => 'Added investment approved with limit warnings — see the investment.',
             'rejected' => 'Added investment rejected.',
             'cancelled' => 'Added investment cancelled.',
+            'reversed' => 'Added investment reversed — voucher :voucher posted.',
         ],
     ],
     'income' => [

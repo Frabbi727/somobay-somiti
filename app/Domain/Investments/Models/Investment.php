@@ -51,6 +51,10 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property int|null $rejected_by
  * @property string|null $rejection_reason
  * @property int|null $journal_entry_id
+ * @property int|null $reversed_by
+ * @property CarbonImmutable|null $reversed_at
+ * @property string|null $reversal_reason
+ * @property int|null $reversal_journal_entry_id
  * @property CarbonImmutable|null $closed_on
  * @property Money|null $sale_price_poisha
  * @property Money|null $sale_expenses_poisha
@@ -141,12 +145,12 @@ final class Investment extends Model
     }
 
     /**
-     * Everything paid into it: the first amount plus every approved top-up (before write-downs or closing).
+     * Everything paid into it: the first amount plus every approved top-up, less any reversed (before write-downs or closing).
      */
     public function totalInvested(): Money
     {
         return Money::ofPoisha((int) $this->ledger()
-            ->whereIn('kind', [InvestmentEntryKind::Disbursement->value, InvestmentEntryKind::TopUp->value])
+            ->whereIn('kind', [InvestmentEntryKind::Disbursement->value, InvestmentEntryKind::TopUp->value, InvestmentEntryKind::Reversal->value])
             ->sum('delta_poisha'));
     }
 
@@ -177,6 +181,7 @@ final class Investment extends Model
             'matures_on' => 'immutable_date',
             'closed_on' => 'immutable_date',
             'approved_at' => 'immutable_datetime',
+            'reversed_at' => 'immutable_datetime',
             'expected_rate_bps' => 'integer',
         ];
     }

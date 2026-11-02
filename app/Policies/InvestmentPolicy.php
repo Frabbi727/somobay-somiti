@@ -75,6 +75,16 @@ final class InvestmentPolicy
         return $investment->status === InvestmentStatus::Active && $user->may(Permission::InvestmentsClose);
     }
 
+    /**
+     * Undo an approval made by mistake: someone other than the approver (like reversing a payment).
+     */
+    public function reverse(User $user, Investment $investment): bool
+    {
+        return $investment->status === InvestmentStatus::Active
+            && $investment->approved_by !== $user->id
+            && $user->may(Permission::InvestmentsReverse);
+    }
+
     public function update(User $user, Investment $investment): bool
     {
         return false;

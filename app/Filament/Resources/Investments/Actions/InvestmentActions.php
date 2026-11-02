@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Investments\Actions;
 
+use App\Domain\Accounting\Models\JournalEntry;
 use App\Domain\Contributions\Enums\PaymentMethod;
 use App\Domain\Investments\Actions\ApproveInvestment;
 use App\Domain\Investments\Actions\CancelInvestment;
@@ -11,6 +12,7 @@ use App\Domain\Investments\Actions\CloseInvestment;
 use App\Domain\Investments\Actions\ImpairInvestment;
 use App\Domain\Investments\Actions\RecordInvestmentIncome;
 use App\Domain\Investments\Actions\RejectInvestment;
+use App\Domain\Investments\Actions\ReverseInvestment;
 use App\Domain\Investments\Models\Investment;
 use App\Domain\Investments\Models\InvestmentIncome;
 use App\Domain\Investments\Services\InvestmentLimits;
@@ -214,6 +216,33 @@ final class InvestmentActions
                 DatePicker::make('date')->label(__('investments.field.date'))->default(fn (): string => CarbonImmutable::now(YearMonth::TIMEZONE)->toDateString())->native(false)->required(),
                 Select::make('received_into')->label(__('investments.field.received_into'))->options(PaymentMethod::class)->default(PaymentMethod::Bank->value)->required()->native(false),
             ],
+        );
+    }
+
+    public static function reverse(): Action
+    {
+        $action = Action::make('reverse')
+            ->label(__('investments.actions.reverse'))
+            ->tooltip(__('investments.actions.reverse'))
+            ->icon(Heroicon::OutlinedArrowUturnLeft)
+            ->color('danger')
+            ->authorize('reverse')
+            ->action(function (Investment $record, array $data): void {
+                $investment = DomainActionRunner::run(fn (User $actor): Investment => app(ReverseInvestment::class)($actor, $record, (string) ($data['reason'] ?? '')));
+
+                Notification::make()
+                    ->title(__('investments.notifications.reversed', ['voucher' => Display::digits((string) JournalEntry::query()->whereKey($investment->reversal_journal_entry_id)->value('voucher_no'))]))
+                    ->success()
+                    ->send();
+            });
+
+        return self::tier3(
+            $action,
+            heading: fn (Investment $record): string => __('investments.actions.reverse_heading', ['number' => $record->investment_no, 'amount' => Display::money($record->bookValue())]),
+            expected: fn (Investment $record): string => $record->investment_no,
+            submitLabel: __('investments.actions.reverse'),
+            description: __('investments.actions.reverse_description'),
+            fields: [Textarea::make('reason')->label(__('investments.field.reason'))->required()->minLength(5)->rows(2)],
         );
     }
 

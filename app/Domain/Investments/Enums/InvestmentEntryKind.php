@@ -12,6 +12,7 @@ enum InvestmentEntryKind: string implements HasLabel
     case TopUp = 'top_up';
     case Impairment = 'impairment';
     case Closure = 'closure';
+    case Reversal = 'reversal';
 
     public function getLabel(): string
     {

@@ -41,7 +41,7 @@ final class InvestmentPostings implements IntegrityCheck
             SELECT i.investment_no, SUM(le.delta_poisha) AS book
             FROM investments i JOIN investment_ledger_entries le ON le.investment_id = i.id
             GROUP BY i.id, i.investment_no
-            HAVING SUM(le.delta_poisha) < 0 OR (MIN(i.status) = 'closed' AND SUM(le.delta_poisha) <> 0)
+            HAVING SUM(le.delta_poisha) < 0 OR (MIN(i.status) IN ('closed', 'reversed') AND SUM(le.delta_poisha) <> 0)
             SQL);
 
         foreach ($negative as $row) {

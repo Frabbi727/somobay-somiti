@@ -26,7 +26,7 @@ final class InvestmentRegister
         $day = $date->toDateString();
 
         $investments = Investment::query()
-            ->whereIn('status', [InvestmentStatus::Active, InvestmentStatus::Closed])
+            ->whereIn('status', [InvestmentStatus::Active, InvestmentStatus::Closed, InvestmentStatus::Reversed])
             ->where('invested_on', '<=', $day)
             ->orderBy('type')
             ->orderBy('invested_on')
@@ -42,7 +42,7 @@ final class InvestmentRegister
         $invested = DB::table('investment_ledger_entries as l')
             ->join('journal_entries as e', 'e.id', '=', 'l.journal_entry_id')
             ->where('e.entry_date', '<=', $day)
-            ->whereIn('l.kind', [InvestmentEntryKind::Disbursement->value, InvestmentEntryKind::TopUp->value])
+            ->whereIn('l.kind', [InvestmentEntryKind::Disbursement->value, InvestmentEntryKind::TopUp->value, InvestmentEntryKind::Reversal->value])
             ->groupBy('l.investment_id')
             ->selectRaw('l.investment_id, SUM(l.delta_poisha)::bigint AS invested')
             ->pluck('invested', 'investment_id');
@@ -62,7 +62,7 @@ final class InvestmentRegister
             $soldBy = $investment->closed_on !== null && $investment->closed_on->toDateString() <= $day;
             $gain = $soldBy ? ($investment->sale_gain_poisha ?? Money::zero()) : Money::zero();
 
-            if ($book->isZero() && $investment->status === InvestmentStatus::Closed && $income->isZero() && $gain->isZero()) {
+            if ($book->isZero() && in_array($investment->status, [InvestmentStatus::Closed, InvestmentStatus::Reversed], true) && $income->isZero() && $gain->isZero()) {
                 continue;
             }
 

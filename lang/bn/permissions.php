@@ -77,6 +77,7 @@ return [
         'investments_income' => 'বিনিয়োগের মুনাফা লেখা',
         'investments_write_down' => 'বিনিয়োগের মূল্য কমানো',
         'investments_close' => 'বিনিয়োগ বন্ধ বা মেয়াদপূর্তি',
+        'investments_reverse' => 'অনুমোদিত বিনিয়োগ ও অতিরিক্ত বিনিয়োগ বাতিল (রিভার্স)',
         'year_end_prepare' => 'বছর-শেষ প্রস্তুত করা',
         'dividends_settle' => 'লভ্যাংশ পরিশোধ বা জমা',
         'meetings_manage' => 'সভা আহ্বান ও পরিচালনা',

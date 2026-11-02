@@ -66,6 +66,7 @@ enum Permission: string implements HasLabel
     case InvestmentsIncome = 'investments.income';
     case InvestmentsWriteDown = 'investments.write_down';
     case InvestmentsClose = 'investments.close';
+    case InvestmentsReverse = 'investments.reverse';
     case YearEndPrepare = 'year_end.prepare';
     case DividendsSettle = 'dividends.settle';
 
@@ -164,7 +165,7 @@ enum Permission: string implements HasLabel
             self::PaymentsApprove, self::PaymentsReverse, self::DuesWaive, self::AdvanceRefund,
             self::ExpensesApprove, self::ExpensesReverse, self::TransfersApprove, self::TransfersReverse,
             self::JournalsManage, self::JournalsReverse,
-            self::InvestmentsApprove, self::InvestmentsIncome, self::InvestmentsWriteDown, self::InvestmentsClose,
+            self::InvestmentsApprove, self::InvestmentsIncome, self::InvestmentsWriteDown, self::InvestmentsClose, self::InvestmentsReverse,
             self::YearEndPrepare, self::DividendsSettle,
             self::ExitsApprove, self::ExitsPay, self::RatePlansCancel,
         ], true);

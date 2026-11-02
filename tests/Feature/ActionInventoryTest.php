@@ -82,7 +82,7 @@ function expectedTiers(): array
         'income' => 'T3', 'impair' => 'T3', 'settle' => 'T3', 'creditAll' => 'T3', 'pay' => 'T3',
         'InvestmentActions › close' => 'T3', 'ViewInvestment › close' => 'T3', 'ListInvestments table › close' => 'T3',
         // More money into an investment: recorded like profit received, approved like the investment.
-        'addTopUp' => 'T3', 'approveTopUp' => 'T3', 'rejectTopUp' => 'T3', 'cancelTopUp' => 'T1',
+        'addTopUp' => 'T3', 'approveTopUp' => 'T3', 'rejectTopUp' => 'T3', 'cancelTopUp' => 'T1', 'reverseTopUp' => 'T3',
 
         // No confirmation: navigation and downloads.
         'view' => null, 'edit' => null, 'pdf' => null, 'excel' => null, 'receipt' => null,

@@ -28,7 +28,7 @@ final class InvestmentsTable
         return $table
             ->modifyQueryUsing(fn (Builder $query): Builder => $query
                 ->withSum('ledger as book_value_poisha', 'delta_poisha')
-                ->withSum(['ledger as invested_poisha' => fn (Builder $ledger): Builder => $ledger->whereIn('kind', [InvestmentEntryKind::Disbursement->value, InvestmentEntryKind::TopUp->value])], 'delta_poisha'))
+                ->withSum(['ledger as invested_poisha' => fn (Builder $ledger): Builder => $ledger->whereIn('kind', [InvestmentEntryKind::Disbursement->value, InvestmentEntryKind::TopUp->value, InvestmentEntryKind::Reversal->value])], 'delta_poisha'))
             ->defaultSort(fn (Builder $query): Builder => $query->orderByDesc('invested_on')->orderByDesc('id'))
             ->columns([
                 TextColumn::make('investment_no')->label(__('investments.field.number'))->searchable(['investment_no', 'name', 'institution', 'instrument_no']),
