@@ -48,7 +48,7 @@ final class ApproveFundTransfer
             $source = $this->accounts->byCode($locked->from_method->accountCode());
             $destination = $this->accounts->byCode($locked->to_method->accountCode());
 
-            $this->funds->assertCovers($source, $locked->outflow());
+            $this->funds->assertCovers($source, $locked->outflow(), $locked->transferred_on);
 
             $lines = [JournalLineData::debit($destination, $locked->amount_poisha)];
 

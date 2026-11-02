@@ -108,6 +108,7 @@ return [
     ],
     'errors' => [
         'reverse_own_approval' => 'You approved this payment, so someone else must reverse it. Ask another committee member who is allowed to reverse it.',
+        'reverse_after_exit' => 'This member has exited and their settlement already used this payment, so it cannot be reversed. Nothing was changed.',
         'member_submission' => 'Members can report only bKash or Nagad payments.',
         'member_unavailable' => 'This member cannot receive payments (they may have exited). Check the member’s status.',
         'amount_positive' => 'The amount must be more than zero.',
