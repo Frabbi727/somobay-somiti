@@ -33,6 +33,12 @@ final class DashboardController
             'paid_through' => ApiValue::month($summary['paid_through']),
             'advance_months_estimate' => $summary['estimate'],
             'shares' => $summary['shares'],
+            'monthly_deposit' => $summary['monthly_deposit'] === null ? null : ApiValue::money($summary['monthly_deposit']),
+            'billed' => ApiValue::money($summary['billed']),
+            'paid' => ApiValue::money($summary['paid']),
+            'waived' => ApiValue::money($summary['waived']),
+            'due_this_month' => ApiValue::money($summary['due_this_month']),
+            'due_earlier' => ApiValue::money($summary['due_earlier']),
             'pay_now_visible' => $summary['outstanding']->isPositive(),
             'recent_payments' => Payment::query()->where('member_id', $member->id)->latest('received_on')->latest('id')->limit(5)->get()
                 ->map(fn (Payment $payment): array => PaymentSummaryResource::make($payment))->all(),

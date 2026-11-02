@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\Investments\Actions;
 
 use App\Domain\Accounting\Services\Accounts;
+use App\Domain\Governance\Enums\ResolutionSubject;
+use App\Domain\Governance\Services\RequiredResolutions;
 use App\Domain\Investments\Data\InvestmentData;
 use App\Domain\Investments\Enums\InvestmentStatus;
 use App\Domain\Investments\Models\Investment;
@@ -24,6 +26,7 @@ final class RecordInvestment
 {
     public function __construct(
         private readonly Accounts $accounts,
+        private readonly RequiredResolutions $resolutions,
         private readonly CauserResolver $causer,
         private readonly WorkflowNotifier $notifier,
     ) {}
@@ -45,6 +48,8 @@ final class RecordInvestment
         $this->assertValid($data);
 
         return $this->causer->withCauser($actor, fn (): Investment => DB::transaction(function () use ($actor, $data): Investment {
+            $this->resolutions->assertNotUsedElsewhere(ResolutionSubject::Investment, $data->resolutionId);
+
             $number = (int) DB::scalar("SELECT nextval('investment_no_seq')");
 
             $record = Investment::query()->create([
