@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Domain\Accounting\Actions\OpenFiscalYear;
+use App\Domain\Accounting\Actions\PostJournal;
 use App\Domain\Governance\Actions\CreateMeeting;
 use App\Domain\Governance\Actions\DecideResolution;
 use App\Domain\Governance\Actions\HoldMeeting;
@@ -10,9 +12,15 @@ use App\Domain\Governance\Actions\RecordAttendance;
 use App\Domain\Governance\Data\MeetingData;
 use App\Domain\Governance\Data\ResolutionData;
 use App\Domain\Governance\Models\Resolution;
+use App\Domain\Investments\Actions\ApproveInvestment;
+use App\Domain\Investments\Actions\ApproveInvestmentTopUp;
 use App\Domain\Investments\Actions\RecordInvestment;
+use App\Domain\Investments\Actions\RecordInvestmentTopUp;
 use App\Domain\Investments\Actions\RejectInvestment;
+use App\Domain\Investments\Actions\ReverseInvestment;
+use App\Domain\Investments\Actions\ReverseInvestmentTopUp;
 use App\Domain\Investments\Data\InvestmentData;
+use App\Domain\Investments\Data\InvestmentTopUpData;
 use App\Domain\Settings\Actions\ApproveRatePlan;
 use App\Domain\Settings\Actions\DraftRatePlan;
 use App\Domain\Settings\Actions\LinkRatePlanResolution;
@@ -174,4 +182,48 @@ it('lets one resolution back only one live investment', function (): void {
     app(RejectInvestment::class)($this->president, $first, 'Committee changed its mind');
 
     expect(app(RecordInvestment::class)($this->accountant, resolvedInvestment($resolution->id))->resolution_id)->toBe($resolution->id);
+});
+
+it('releases the resolution of a reversed investment so it can be entered again', function (): void {
+    $this->seed(ChartOfAccountsSeeder::class);
+    app(OpenFiscalYear::class)($this->accountant, 2026);
+    app(PostJournal::class)($this->accountant, simpleEntry('1111', '3101', '100000', '2026-07-01'));
+    $resolution = committeeResolution('investment');
+    $investment = app(ApproveInvestment::class)($this->president, app(RecordInvestment::class)($this->accountant, resolvedInvestment($resolution->id)));
+
+    expect(requiredRule(fn () => app(RecordInvestment::class)($this->accountant, resolvedInvestment($resolution->id))))->toBe('governance.errors.resolution_in_use');
+
+    app(ReverseInvestment::class)($this->accountant, $investment, 'Entered against the wrong bank');
+
+    expect(app(RecordInvestment::class)($this->accountant, resolvedInvestment($resolution->id))->resolution_id)->toBe($resolution->id);
+});
+
+it('gives each added investment amount its own resolution', function (): void {
+    $this->seed(ChartOfAccountsSeeder::class);
+    app(OpenFiscalYear::class)($this->accountant, 2026);
+    app(PostJournal::class)($this->accountant, simpleEntry('1111', '3101', '200000', '2026-07-01'));
+    $first = committeeResolution('investment');
+    $investment = app(ApproveInvestment::class)($this->president, app(RecordInvestment::class)($this->accountant, resolvedInvestment($first->id)));
+    $topUp = fn (int $resolutionId) => app(RecordInvestmentTopUp::class)($this->accountant, $investment, InvestmentTopUpData::fromForm([
+        'amount' => Money::ofTaka('10000'), 'funded_from' => 'bank', 'invested_on' => '2026-09-05', 'resolution_id' => $resolutionId,
+    ]));
+
+    expect(requiredRule(fn () => $topUp($first->id)))->toBe('governance.errors.resolution_in_use');
+
+    $second = committeeResolution('investment');
+    $added = $topUp($second->id);
+
+    expect(requiredRule(fn () => $topUp($second->id)))->toBe('governance.errors.resolution_in_use')
+        ->and(requiredRule(fn () => app(RecordInvestment::class)($this->accountant, resolvedInvestment($second->id))))->toBe('governance.errors.resolution_in_use');
+
+    $copy = (array) DB::table('investment_top_ups')->where('id', $added->id)
+        ->first(['investment_id', 'amount_poisha', 'funded_from', 'invested_on', 'status', 'recorded_by', 'resolution_id']);
+
+    expect(fn () => DB::transaction(fn () => DB::table('investment_top_ups')->insert([...$copy, 'idempotency_key' => (string) Str::uuid()])))
+        ->toThrow(QueryException::class);
+
+    app(ApproveInvestmentTopUp::class)($this->president, $added);
+    app(ReverseInvestmentTopUp::class)($this->accountant, $added->fresh() ?? $added, 'Paid from the wrong account');
+
+    expect($topUp($second->id)->resolution_id)->toBe($second->id);
 });

@@ -10,8 +10,11 @@ use App\Domain\Governance\Enums\ResolutionStatus;
 use App\Domain\Governance\Enums\ResolutionSubject;
 use App\Domain\Governance\Models\Resolution;
 use App\Domain\Investments\Enums\InvestmentStatus;
+use App\Domain\Investments\Enums\InvestmentTopUpStatus;
 use App\Domain\Investments\Models\Investment;
+use App\Domain\Investments\Models\InvestmentTopUp;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * "Linked resolution required where configured" (Phase 9): approvals of the subjects listed in
@@ -46,25 +49,41 @@ final class RequiredResolutions
     }
 
     /**
-     * One resolution backs one investment or one exit: a resolution already linked to another live
-     * (not rejected or cancelled) investment or exit cannot be used again.
+     * One resolution backs one item: an investment, an added investment amount (top-up) or an exit.
+     * Rejected, cancelled and reversed items release it. Locks the resolution row so two approvals
+     * cannot both claim it; call inside the transaction that links it.
      */
-    public function assertNotUsedElsewhere(ResolutionSubject $subject, ?int $resolutionId, ?int $exceptId = null): void
+    public function assertNotUsedElsewhere(ResolutionSubject $subject, ?int $resolutionId, ?Model $except = null): void
     {
         if ($resolutionId === null) {
             return;
         }
 
-        $query = match ($subject) {
-            ResolutionSubject::Investment => Investment::query()->whereNotIn('status', [InvestmentStatus::Rejected, InvestmentStatus::Cancelled]),
-            ResolutionSubject::Exit => MemberExit::query()->where('status', '!=', ExitStatus::Cancelled),
-            default => null,
+        $resolution = Resolution::query()->whereKey($resolutionId)->lockForUpdate()->first();
+
+        if ($resolution === null) {
+            return;
+        }
+
+        $others = match ($subject) {
+            ResolutionSubject::Investment => [
+                Investment::query()->whereNotIn('status', [InvestmentStatus::Rejected, InvestmentStatus::Cancelled, InvestmentStatus::Reversed]),
+                InvestmentTopUp::query()->whereNotIn('status', [InvestmentTopUpStatus::Rejected, InvestmentTopUpStatus::Cancelled, InvestmentTopUpStatus::Reversed]),
+            ],
+            ResolutionSubject::Exit => [MemberExit::query()->where('status', '!=', ExitStatus::Cancelled)],
+            default => [],
         };
 
-        if ($query?->where('resolution_id', $resolutionId)->when($exceptId !== null, fn ($builder) => $builder->whereKeyNot($exceptId))->exists() === true) {
-            throw DomainRuleViolation::because('governance.errors.resolution_in_use', [
-                'number' => (string) Resolution::query()->whereKey($resolutionId)->value('resolution_no'),
-            ]);
+        foreach ($others as $query) {
+            $model = $query->getModel();
+            $used = $query
+                ->where('resolution_id', $resolutionId)
+                ->when($except !== null && $except::class === $model::class, fn ($builder) => $builder->whereKeyNot($except?->getKey()))
+                ->exists();
+
+            if ($used) {
+                throw DomainRuleViolation::because('governance.errors.resolution_in_use', ['number' => $resolution->resolution_no]);
+            }
         }
     }
 }

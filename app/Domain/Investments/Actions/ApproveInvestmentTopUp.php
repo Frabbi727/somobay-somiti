@@ -61,6 +61,7 @@ final class ApproveInvestmentTopUp
             }
 
             $this->resolutions->assertSatisfied(ResolutionSubject::Investment, $locked->resolution_id);
+            $this->resolutions->assertNotUsedElsewhere(ResolutionSubject::Investment, $locked->resolution_id, $locked);
 
             $warnings = $this->limits->warningsFor($investment->type, $locked->amount_poisha);
             $source = $this->accounts->byCode($locked->funded_from->accountCode());

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Investments\Actions;
 
+use App\Domain\Governance\Enums\ResolutionSubject;
+use App\Domain\Governance\Services\RequiredResolutions;
 use App\Domain\Investments\Data\InvestmentTopUpData;
 use App\Domain\Investments\Enums\InvestmentStatus;
 use App\Domain\Investments\Enums\InvestmentTopUpStatus;
@@ -27,6 +29,7 @@ final class RecordInvestmentTopUp
     public function __construct(
         private readonly CauserResolver $causer,
         private readonly WorkflowNotifier $notifier,
+        private readonly RequiredResolutions $resolutions,
     ) {}
 
     public function __invoke(User $actor, Investment $investment, InvestmentTopUpData $data): InvestmentTopUp
@@ -50,6 +53,7 @@ final class RecordInvestmentTopUp
 
             Gate::forUser($actor)->authorize('addTopUp', $locked);
             $this->assertValid($locked, $data);
+            $this->resolutions->assertNotUsedElsewhere(ResolutionSubject::Investment, $data->resolutionId);
 
             $topUp = $locked->topUps()->create([
                 'amount_poisha' => $data->amount,
