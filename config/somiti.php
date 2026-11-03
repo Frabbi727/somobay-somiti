@@ -2,6 +2,13 @@
 
 declare(strict_types=1);
 
+/*
+| Starting values only for the settings on Settings › Financial settings (president thresholds,
+| approval reminders, quorums, required resolutions, year-end choices and default fund rates): once
+| a change there is approved, the approved values apply instead (App\Domain\Settings\Services\FinancialSettings).
+| The year-end legal minimums/maximums, investment limits and technical settings stay here.
+*/
+
 return [
 
     /*

@@ -86,6 +86,8 @@ return [
         'exits_approve' => 'Approve exit settlements',
         'exits_pay' => 'Pay out exit settlements',
         'exits_reverse_payout' => 'Reverse exit payouts',
+        'financial_settings_propose' => 'Propose changes to financial settings',
+        'financial_settings_approve' => 'Approve or reject financial settings changes',
         'rate_plans_draft' => 'Draft and submit rate plans',
         'rate_plans_link_resolution' => 'Link a resolution to a rate plan',
         'rate_plans_cancel' => 'Cancel approved rate plans',

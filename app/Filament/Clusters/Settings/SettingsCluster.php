@@ -6,6 +6,7 @@ namespace App\Filament\Clusters\Settings;
 
 use App\Enums\Area;
 use App\Filament\Clusters\Settings\Pages\BackupsPage;
+use App\Filament\Clusters\Settings\Pages\FinancialSettingsPage;
 use App\Filament\Clusters\Settings\Pages\RolePermissionsPage;
 use App\Filament\Navigation\NavGroup;
 use App\Models\User;
@@ -44,7 +45,7 @@ final class SettingsCluster extends Cluster
         $user = auth()->user();
 
         return $user instanceof User
-            && (Area::RatePlans->allows($user) || Area::Messaging->allows($user) || $user->can('viewAny', User::class) || RolePermissionsPage::canAccess() || BackupsPage::canAccess());
+            && (Area::RatePlans->allows($user) || Area::Messaging->allows($user) || $user->can('viewAny', User::class) || RolePermissionsPage::canAccess() || BackupsPage::canAccess() || FinancialSettingsPage::canAccess());
     }
 
     public static function getClusterBreadcrumb(): string

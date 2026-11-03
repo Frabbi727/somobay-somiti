@@ -36,6 +36,11 @@ return [
         'reversed' => ['title' => 'A fund transfer was reversed', 'body' => ':reference (:amount) was reversed. Reason: :reason.'],
     ],
 
+    'financial_settings' => [
+        'submitted' => ['title' => 'New financial settings are waiting for your approval', 'body' => 'Proposal :reference by :party. Reason: :reason. Check the changes, then approve or reject them.'],
+        'approved' => ['title' => 'Your financial settings were approved', 'body' => 'Proposal :reference is approved and in force now.'],
+        'rejected' => ['title' => 'Your financial settings were rejected', 'body' => 'Proposal :reference was rejected. Reason: :reason. Nothing changed.'],
+    ],
     'investment_top_up' => [
         'submitted' => ['title' => 'More money for an investment is waiting for your approval', 'body' => ':reference: :amount more for :party. Check it, then approve or reject it.'],
         'approved' => ['title' => 'Your added investment was approved', 'body' => ':reference (:amount more for :party) is approved and recorded in the books.'],

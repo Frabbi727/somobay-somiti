@@ -6,6 +6,7 @@ namespace App\Domain\Notifications\Actions;
 
 use App\Domain\Notifications\Services\InAppNotifier;
 use App\Domain\Reporting\ApprovalQueue;
+use App\Domain\Settings\Services\FinancialSettings;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Support\Display;
 use App\Models\User;
@@ -26,7 +27,7 @@ final class SendApprovalReminders
 
     public function __invoke(CarbonImmutable $now): int
     {
-        $days = (int) config('somiti.approval_reminder_days');
+        $days = app(FinancialSettings::class)->approvalReminderDays();
 
         if ($days <= 0) {
             return 0;

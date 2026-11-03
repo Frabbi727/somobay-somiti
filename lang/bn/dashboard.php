@@ -42,6 +42,7 @@ return [
         'expense' => 'খরচ',
         'transfer' => 'তহবিল স্থানান্তর',
         'investment' => 'বিনিয়োগ',
+        'financial_settings' => 'আর্থিক সেটিংস',
         'investment_top_up' => 'অতিরিক্ত বিনিয়োগ',
         'rate_plan' => 'রেট প্ল্যান',
         'exit' => 'সদস্য প্রত্যাহার',

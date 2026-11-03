@@ -15,6 +15,7 @@ use App\Domain\Contributions\Enums\PaymentMethod;
 use App\Domain\Contributions\Models\AdvanceLedgerEntry;
 use App\Domain\Contributions\Services\AdvanceLedger;
 use App\Domain\Members\Models\Member;
+use App\Domain\Settings\Services\FinancialSettings;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Enums\Role;
 use App\Models\User;
@@ -50,7 +51,7 @@ final class RefundAdvance
             throw DomainRuleViolation::because('payments.errors.reason_required');
         }
 
-        $threshold = Money::ofPoisha((int) config('somiti.advance_refund_president_threshold_poisha'));
+        $threshold = app(FinancialSettings::class)->advanceRefundPresidentThreshold();
 
         if ($amount->isGreaterThanOrEqualTo($threshold) && ! $actor->hasAnyOf(Role::President)) {
             throw DomainRuleViolation::because('payments.errors.refund_needs_president', ['threshold' => $threshold->format(app()->getLocale())]);

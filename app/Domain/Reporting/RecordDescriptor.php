@@ -12,8 +12,10 @@ use App\Domain\Exits\Models\MemberExit;
 use App\Domain\Investments\Models\Investment;
 use App\Domain\Investments\Models\InvestmentTopUp;
 use App\Domain\Members\Registration\Models\MemberApplication;
+use App\Domain\Settings\Models\FinancialSettingsVersion;
 use App\Domain\Settings\Models\RatePlan;
 use App\Domain\YearEnd\Models\YearEnd;
+use App\Filament\Clusters\Settings\Pages\FinancialSettingsPage;
 use App\Filament\Clusters\Settings\Resources\RatePlans\RatePlanResource;
 use App\Filament\Resources\Expenses\ExpenseResource;
 use App\Filament\Resources\FundTransfers\FundTransferResource;
@@ -45,6 +47,7 @@ final class RecordDescriptor
             $record instanceof Investment => 'investment',
             $record instanceof InvestmentTopUp => 'investment_top_up',
             $record instanceof RatePlan => 'rate_plan',
+            $record instanceof FinancialSettingsVersion => 'financial_settings',
             $record instanceof YearEnd => 'year_end',
             $record instanceof MemberExit => 'exit',
             $record instanceof JournalDraft => 'journal_draft',
@@ -99,6 +102,11 @@ final class RecordDescriptor
                 'party' => Display::yearMonth($record->effective_from),
                 'reason' => '',
             ],
+            $record instanceof FinancialSettingsVersion => [
+                'reference' => '#'.Display::digits((string) $record->id),
+                'party' => $record->proposer->name,
+                'reason' => (string) ($record->rejection_reason ?? $record->reason),
+            ],
             $record instanceof YearEnd => [
                 'reference' => $record->fiscalYear->code,
                 'amount' => Display::money($record->net_profit_poisha),
@@ -133,6 +141,7 @@ final class RecordDescriptor
             $record instanceof Investment => InvestmentResource::getUrl('view', ['record' => $record], panel: 'admin'),
             $record instanceof InvestmentTopUp => InvestmentResource::getUrl('view', ['record' => $record->investment_id], panel: 'admin'),
             $record instanceof RatePlan => RatePlanResource::getUrl('view', ['record' => $record], panel: 'admin'),
+            $record instanceof FinancialSettingsVersion => FinancialSettingsPage::getUrl(panel: 'admin'),
             $record instanceof YearEnd => YearEndResource::getUrl('view', ['record' => $record], panel: 'admin'),
             $record instanceof MemberExit => MemberExitResource::getUrl('view', ['record' => $record], panel: 'admin'),
             $record instanceof JournalDraft => JournalDraftResource::getUrl(panel: 'admin'),

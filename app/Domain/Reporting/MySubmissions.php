@@ -19,7 +19,9 @@ use App\Domain\Investments\Models\Investment;
 use App\Domain\Investments\Models\InvestmentTopUp;
 use App\Domain\Reporting\Data\PendingItem;
 use App\Domain\Reporting\Data\SubmissionRow;
+use App\Domain\Settings\Enums\FinancialSettingsStatus;
 use App\Domain\Settings\Enums\RatePlanStatus;
+use App\Domain\Settings\Models\FinancialSettingsVersion;
 use App\Domain\Settings\Models\RatePlan;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -92,6 +94,7 @@ final class MySubmissions
         return match (true) {
             $record instanceof JournalDraft => $record->isPosted() ? null : 'post',
             $record instanceof RatePlan => $record->status === RatePlanStatus::PendingApproval ? 'approve' : null,
+            $record instanceof FinancialSettingsVersion => $record->status === FinancialSettingsStatus::Pending ? 'approve' : null,
             $record instanceof MemberExit => match ($record->status) {
                 ExitStatus::Requested => 'approve',
                 ExitStatus::Approved => 'pay',
@@ -134,6 +137,7 @@ final class MySubmissions
             [Investment::class, 'recorded_by'],
             [InvestmentTopUp::class, 'recorded_by'],
             [RatePlan::class, 'created_by'],
+            [FinancialSettingsVersion::class, 'proposed_by'],
             [MemberExit::class, 'requested_by'],
             [JournalDraft::class, 'created_by'],
         ];
