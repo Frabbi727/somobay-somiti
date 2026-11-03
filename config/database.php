@@ -99,6 +99,9 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+            // Laravel writes timestamps as plain local times; the session must read them in the
+            // app's timezone, or a server running in UTC would shift every timestamp by 6 hours.
+            'timezone' => env('DB_TIMEZONE', env('APP_TIMEZONE', 'Asia/Dhaka')),
         ],
 
         'sqlsrv' => [

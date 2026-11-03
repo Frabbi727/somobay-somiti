@@ -241,3 +241,13 @@ it('fills the amount that clears every due up to a chosen month', function (): v
         ->assertSchemaStateSet(['amount' => '2240.00'])
         ->assertSee(__('payments.collect.to_dues', ['amount' => '৳ 2,240.00']));
 });
+
+it('counts only pending payments as selectable, following the filters', function (): void {
+    pendingPayment($this, '500');
+    $approved = pendingPayment($this, '700');
+    app(ApprovePayment::class)($this->accountant, $approved);
+    $this->actingAs($this->accountant);
+
+    expect(Livewire::test(ListPayments::class)->instance()->getAllSelectableTableRecordsCount())->toBe(1)
+        ->and(Livewire::test(ListPayments::class)->filterTable('status', 'approved')->instance()->getAllSelectableTableRecordsCount())->toBe(0);
+});
