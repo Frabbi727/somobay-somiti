@@ -51,6 +51,7 @@ return [
         'waived' => 'Late fee waived',
     ],
     'errors' => [
+        'before_go_live' => 'Dues before the go-live month (:go_live) are not generated; :month is covered by the opening balances.',
         'already_running' => 'Dues for :month are being generated right now. Try again in a minute.',
         'too_far_ahead' => 'Dues can be generated only up to :limit (not :month).',
         'gap' => 'Generate :next first; months cannot be skipped (asked for :month).',

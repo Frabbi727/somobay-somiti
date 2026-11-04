@@ -8,6 +8,7 @@ use App\Domain\Contributions\Enums\DueType;
 use App\Domain\Contributions\Events\MonthlyDuesGenerated;
 use App\Domain\Contributions\Reports\DueGenerationPlan;
 use App\Domain\Contributions\Services\MonthlyDueBuilder;
+use App\Domain\GoLive\Services\GoLiveMonth;
 use App\Domain\Settings\Contracts\GeneratedMonths;
 use App\Domain\Settings\Exceptions\NoRatePlanForMonth;
 use App\Domain\Settings\Models\RatePlan;
@@ -34,6 +35,7 @@ final class GenerateMonthlyDues
         private readonly MonthlyDueBuilder $builder,
         private readonly RateResolver $rates,
         private readonly GeneratedMonths $generated,
+        private readonly GoLiveMonth $goLive,
     ) {}
 
     /**
@@ -121,6 +123,12 @@ final class GenerateMonthlyDues
      */
     public function assertMonthAllowed(YearMonth $month): void
     {
+        $goLive = $this->goLive->get();
+
+        if ($goLive !== null && $month->isBefore($goLive)) {
+            throw DomainRuleViolation::because('dues.errors.before_go_live', ['month' => (string) $month, 'go_live' => (string) $goLive]);
+        }
+
         $limit = YearMonth::current()->next();
 
         if ($month->isAfter($limit)) {

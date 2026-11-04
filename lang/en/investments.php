@@ -68,6 +68,7 @@ return [
         'impairment' => 'Written down',
         'closure' => 'Closed',
         'reversal' => 'Reversed',
+        'opening' => 'Opening balance',
     ],
     'actions' => [
         'income' => 'Record profit',

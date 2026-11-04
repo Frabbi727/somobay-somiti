@@ -68,6 +68,7 @@ return [
         'impairment' => 'অবচয়',
         'closure' => 'সমাপ্তি',
         'reversal' => 'রিভার্স',
+        'opening' => 'প্রারম্ভিক জের',
     ],
     'actions' => [
         'income' => 'মুনাফা লিপিবদ্ধ',

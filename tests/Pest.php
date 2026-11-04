@@ -14,6 +14,7 @@ use App\Domain\Contributions\Data\PaymentData;
 use App\Domain\Contributions\Enums\DueType;
 use App\Domain\Contributions\Models\Due;
 use App\Domain\Contributions\Models\Payment;
+use App\Domain\GoLive\Services\OpeningTemplate;
 use App\Domain\Integrity\InvariantChecker;
 use App\Domain\Investments\Data\InvestmentData;
 use App\Domain\Members\Actions\CreateMember;
@@ -50,7 +51,10 @@ use Database\Seeders\RoleSeeder;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Tests\TestCase;
 
 /*
@@ -588,4 +592,65 @@ function investmentRule(Closure $callback): ?string
     }
 
     return null;
+}
+
+/**
+ * Writes the go-live template with the given rows (keyed by sheet, data from row 3) to a temp
+ * file and returns its path.
+ *
+ * @param  array<string, list<array<string, string|int|float|null>>>  $rows
+ */
+function openingWorkbookFile(array $rows): string
+{
+    $path = tempnam(sys_get_temp_dir(), 'opening').'.xlsx';
+    file_put_contents($path, app(OpeningTemplate::class)->binary());
+    $book = IOFactory::load($path);
+
+    foreach ($rows as $sheet => $list) {
+        $worksheet = $book->getSheetByName(OpeningTemplate::SHEETS[$sheet]);
+
+        foreach ($list as $index => $row) {
+            foreach ($row as $column => $value) {
+                $col = array_search($column, OpeningTemplate::COLUMNS[$sheet], true) + 1;
+                $worksheet?->getCell([$col, $index + 3])->setValue($value);
+            }
+        }
+    }
+
+    (new Xlsx($book))->save($path);
+    $book->disconnectWorksheets();
+
+    return $path;
+}
+
+/**
+ * One go-live workbook member row as text (as the reader returns it); numbers and mobiles are
+ * unique per call.
+ *
+ * @param  array<string, string>  $overrides
+ * @return array<string, string>
+ */
+function memberRow(array $overrides = []): array
+{
+    static $n = 0;
+    $n++;
+
+    return [
+        '_row' => (string) ($n + 2), 'member_no' => sprintf('M-%04d', $n), 'name_bn' => 'রহিম', 'name_en' => 'Rahim',
+        'mobile' => sprintf('0171%07d', $n), 'nid' => '', 'joined_on' => '2020-07-01', 'shares' => '2',
+        'savings' => '12000', 'advance' => '', 'arrears_deposit' => '', 'arrears_fees' => '',
+        ...$overrides,
+    ];
+}
+
+/**
+ * Stores a go-live workbook with the given rows on the (faked) local disk and returns its path.
+ *
+ * @param  array<string, list<array<string, string|int|float|null>>>  $rows
+ */
+function storeOpeningFile(array $rows, string $name = 'sheet.xlsx'): string
+{
+    Storage::disk('local')->put('opening-imports/'.$name, (string) file_get_contents(openingWorkbookFile($rows)));
+
+    return 'opening-imports/'.$name;
 }
