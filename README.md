@@ -33,6 +33,7 @@ composer test && composer analyse && composer format:check
 ```
 
 ```bash
+
 cd /home/techreal/shomiti.techrealify.com
 git pull --rebase origin production
 php artisan down
