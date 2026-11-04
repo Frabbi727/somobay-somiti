@@ -188,6 +188,24 @@ are written to the audit log.
 1. **Reports › Integrity report** → **Run checks now** → 14 checks, all clear.
 2. Failure alerts go to super admins and accountants (panel, email in Mailpit, SMS in the log).
 
+### Go-live rehearsal (opening balances) — `president@somiti.test`
+
+Rehearse the go-live import on an **empty** database first; it refuses to post once members, vouchers, payments or dues exist (so not on the demo somiti).
+
+```bash
+php artisan migrate:fresh --seed   # logins, chart of accounts and SMS templates only — no members
+```
+
+1. `accountant@` opens the fiscal year that contains the go-live month (**Accounting › Fiscal years**) and drafts a rate plan starting in the go-live month; `president@` and `secretary@` approve it.
+2. `president@` opens **Settings › Go-live import** and downloads the template.
+3. Fill the **Members** sheet (one row per member: number `M-0001`, names, mobile, joining date, shares, savings, advance *or* unpaid amounts), the **Society** sheet (cash 1101, bank 1111, wallets 1121/1122, funds 2211/3101/3201–3203) and the **Investments** sheet (open investments at today's amount).
+4. Upload it with the go-live month. Every problem is listed by sheet, row and column; fix them in Excel and upload again (the new file replaces the draft).
+5. When there are no problems, check the summary and the opening trial balance, then **Post opening balances** and type `POST`.
+6. Check: **Trial balance** equals the sheet; each member's savings and advance match; unpaid amounts show in **Defaulters**; each investment is active with its own opening voucher; **Integrity** is clean. Generate the go-live month's dues — advances are applied to them.
+7. Complete each member's profile (gender, addresses) and nominees on the member page; only balances come from the sheet.
+
+On the live server, do the same once on a **fresh** database: test data must be removed with `migrate:fresh` (posted vouchers can never be deleted row by row). Take a backup first.
+
 ## 4. Undo / restore
 
 * Rebuild the demo: `php artisan somiti:demo --fresh`.
