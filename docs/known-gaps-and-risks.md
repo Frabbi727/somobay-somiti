@@ -28,6 +28,7 @@ What the audit of October 2026 found, what was fixed on branch `ux-roles-approva
 | Matched statement lines stayed matched after their voucher was reversed | Reversing a voucher returns its statement lines to the unmatched list |
 | President thresholds, quorums, required resolutions and year-end choices could only be changed in the server config | Settings › Financial settings: one person proposes with a reason, someone else approves; history kept, applies without a deploy, year-end choices frozen while a year-end waits |
 | Member home screen showed only outstanding, savings and advance | Also total billed, paid, waived, this month's due, earlier months' due and the monthly deposit for the member's shares (portal and app API) |
+| An advance refund made by mistake could not be undone | **Collections › Advance Refunds** lists every refund; someone other than whoever made it (with *Reverse advance refunds*) reverses it with a mirror voucher, and the member gets the advance back. Refused once the member has exited |
 
 ## Data to check on the live system (one-off)
 
@@ -45,7 +46,7 @@ It also lists any dividend lines already posted to members after they exited. **
 | # | Gap | Risk | Suggested next step |
 |---|---|---|---|
 | 1 | Single-person actions: advance refund below the limit, late-fee waiver, dividend settlement, exit payout, investment income/write-down/close, recording a resolution's outcome, closing a fiscal year | one person can move or forgive money | **Decision:** which need a second person |
-| 2 | No reversal flow for exit approvals, year-end postings, dividend settlements, advance refunds | a mistake needs a manual workaround | design reversal actions one by one |
+| 2 | No reversal flow for exit approvals, year-end postings, dividend settlements | a mistake needs a manual workaround | design reversal actions one by one |
 | 5 | Retroactive rate corrections (BR-7 adjustment dues) not built | none now (refused) | **Decision:** whether needed |
 | 6 | Pro-rata dividend for the exit year | none now (decided: no dividend) | revisit only if bylaws require |
 | 7 | Refundable share capital (3101) not in the exit settlement (BR-22) | depends on bylaws | **Decision** |

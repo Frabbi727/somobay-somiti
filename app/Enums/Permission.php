@@ -43,6 +43,7 @@ enum Permission: string implements HasLabel
     case DuesGenerate = 'dues.generate';
     case DuesWaive = 'dues.waive';
     case AdvanceRefund = 'advance.refund';
+    case AdvanceRefundReverse = 'advance.reverse_refund';
     case ExpensesRecord = 'expenses.record';
     case ExpensesApprove = 'expenses.approve';
     case ExpensesReverse = 'expenses.reverse';
@@ -167,7 +168,7 @@ enum Permission: string implements HasLabel
     public function isChecker(): bool
     {
         return in_array($this, [
-            self::PaymentsApprove, self::PaymentsReverse, self::DuesWaive, self::AdvanceRefund,
+            self::PaymentsApprove, self::PaymentsReverse, self::DuesWaive, self::AdvanceRefund, self::AdvanceRefundReverse,
             self::ExpensesApprove, self::ExpensesReverse, self::TransfersApprove, self::TransfersReverse,
             self::JournalsManage, self::JournalsReverse,
             self::InvestmentsApprove, self::InvestmentsIncome, self::InvestmentsWriteDown, self::InvestmentsClose, self::InvestmentsReverse,
