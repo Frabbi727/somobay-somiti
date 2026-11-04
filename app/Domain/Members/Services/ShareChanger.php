@@ -51,6 +51,26 @@ final class ShareChanger
         return $lot;
     }
 
+    /**
+     * A lot brought in by the go-live import: effective from the member's original month, with no
+     * rate-plan lookup and no registration fee (paid before the app existed).
+     */
+    public function openingLot(User $actor, Member $member, int $shares, YearMonth $from): ShareLot
+    {
+        $this->assertCount($shares);
+
+        $lot = ShareLot::query()->create([
+            'member_id' => $member->id,
+            'shares' => $shares,
+            'effective_from' => $from,
+            'created_by' => $actor->id,
+        ]);
+
+        $this->record($actor, $member, ShareChangeType::Increase, $shares, $from, 'Opening balance');
+
+        return $lot;
+    }
+
     public function decrease(User $actor, Member $member, int $shares, YearMonth $from, ?string $reason = null): void
     {
         $this->assertCount($shares);

@@ -27,19 +27,27 @@ it('balances with the difference in accumulated surplus', function (): void {
         [['_row' => '3', 'type' => 'fixed_deposit', 'name' => 'Sonali FDR', 'institution' => 'Sonali', 'instrument_no' => '', 'principal' => '15000', 'invested_on' => '2025-01-01', 'matures_on' => '', 'expected_rate_percent' => '', 'funded_from' => 'bank']],
     );
 
-    $summary = app(OpeningBalanceSheet::class)->summary($result);
-    $lines = app(OpeningBalanceSheet::class)->journalLines($result, ['M-0001' => 11, 'M-0002' => 12]);
+    $sheet = app(OpeningBalanceSheet::class);
+    $summary = $sheet->summary($result);
+    $lines = $sheet->journalLines($result, ['M-0001' => 11, 'M-0002' => 12]);
+    $investment = $sheet->investmentLines($result->investments[0]);
     $debit = Money::sum(array_map(fn ($l) => $l->debit, $lines));
     $credit = Money::sum(array_map(fn ($l) => $l->credit, $lines));
 
-    // assets 2,000 + 15,000 = 17,000; owed 10,000 + 1,000 + 5,000 + 500 = 16,500 → surplus 500 credit
+    // assets 2,000 + 15,000 = 17,000; owed 10,000 + 1,000 + 5,000 + 500 = 16,500 → surplus 500 credit.
+    // The main voucher holds 2,000 against 16,500 (3901 Dr 14,500); the FDR's own voucher Cr 3901 15,000.
     expect($summary['surplus_poisha'])->toBe(50000)
         ->and($debit->equals($credit))->toBeTrue()
-        ->and($debit->poisha)->toBe(1700000)
+        ->and($debit->poisha)->toBe(1650000)
+        ->and(collect($lines)->firstWhere(fn ($l) => $l->debit->poisha === 1450000))->not->toBeNull()
         ->and(collect($lines)->where('memberId', 11)->count())->toBe(2)
-        ->and(collect($lines)->firstWhere('memo', 'Sonali FDR'))->not->toBeNull()
+        ->and($investment)->toHaveCount(2)
+        ->and($investment[0]->debit->poisha)->toBe(1500000)
+        ->and($investment[1]->credit->poisha)->toBe(1500000)
+        ->and($investment[0]->memo)->toBe('Sonali FDR')
         ->and($summary)->toMatchArray(['members' => 2, 'shares' => 4, 'savings_poisha' => 1500000, 'advance_poisha' => 100000, 'investments' => 1])
-        ->and(collect($summary['lines'])->firstWhere('code', '2101'))->toBe(['code' => '2101', 'debit_poisha' => 0, 'credit_poisha' => 1500000]);
+        ->and(collect($summary['lines'])->firstWhere('code', '2101'))->toBe(['code' => '2101', 'debit_poisha' => 0, 'credit_poisha' => 1500000])
+        ->and(collect($summary['lines'])->firstWhere('code', '3901'))->toBe(['code' => '3901', 'debit_poisha' => 0, 'credit_poisha' => 50000]);
 });
 
 it('debits accumulated surplus when the society owes more than it holds, and omits it when equal', function (): void {

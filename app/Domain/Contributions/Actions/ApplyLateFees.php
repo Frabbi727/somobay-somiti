@@ -47,6 +47,7 @@ final class ApplyLateFees
                     ->where('member_id', $memberId)
                     ->whereIn('type', [DueType::Deposit, DueType::ServiceCharge, DueType::Registration, DueType::LateFee])
                     ->whereNotIn('status', [DueStatus::Cancelled])
+                    ->where('opening', false)
                     ->orderBy('id')
                     ->lockForUpdate()
                     ->get();
@@ -144,6 +145,7 @@ final class ApplyLateFees
             ->where('m.status', '!=', MemberStatus::Exited->value)
             ->whereIn('d.type', [DueType::Deposit->value, DueType::ServiceCharge->value, DueType::Registration->value])
             ->where('d.status', DueStatus::Open->value)
+            ->where('d.opening', false)
             ->where('d.outstanding_poisha', '>', 0)
             ->where('d.due_date', '<', $today->toDateString())
             ->distinct()

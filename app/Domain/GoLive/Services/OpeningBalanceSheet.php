@@ -14,7 +14,8 @@ use App\Support\Money\Money;
 /**
  * The opening journal and its summary from validated rows. Used by both the preview and the
  * post, so the posted voucher is exactly what was previewed. The difference between what the
- * society holds and what it owes goes to Accumulated Surplus (3901). Arrears are not journaled:
+ * society holds and what it owes goes to Accumulated Surplus (3901); each investment comes in on
+ * its own voucher against 3901. Arrears are not journaled:
  * like every due, they reach the books only when paid.
  */
 final class OpeningBalanceSheet
@@ -61,6 +62,10 @@ final class OpeningBalanceSheet
     }
 
     /**
+     * The main opening voucher: cash, bank, wallets, society funds and member balances, with 3901
+     * balancing it. Investments are left out: each gets its own voucher (investmentLines), because
+     * an investment is reversed or closed through its own voucher.
+     *
      * @param  array<string, int>  $memberIdsByNo
      * @return list<JournalLineData>
      */
@@ -68,7 +73,7 @@ final class OpeningBalanceSheet
     {
         $lines = [];
 
-        foreach ($this->entries($opening, $memberIdsByNo) as [$code, $debit, $credit, $memberId, $memo]) {
+        foreach ($this->entries($opening, $memberIdsByNo, withInvestments: false) as [$code, $debit, $credit, $memberId, $memo]) {
             $account = $this->accounts->byCode($code);
             $lines[] = $debit->isPositive()
                 ? JournalLineData::debit($account, $debit, $memberId, $memo)
@@ -79,9 +84,24 @@ final class OpeningBalanceSheet
     }
 
     /**
+     * One investment's opening voucher: Dr its 13xx account, Cr accumulated surplus.
+     *
+     * @return list<JournalLineData>
+     */
+    public function investmentLines(OpeningInvestmentRow $row): array
+    {
+        $memo = self::investmentMemo($row);
+
+        return [
+            JournalLineData::debit($this->accounts->byCode($row->type->accountCode()), $row->principal, null, $memo),
+            JournalLineData::credit($this->accounts->byCode(AccountCode::ACCUMULATED_SURPLUS), $row->principal, null, $memo),
+        ];
+    }
+
+    /**
      * Positive = the society holds more than it owes (credit 3901).
      */
-    public function surplus(ValidatedOpening $opening): Money
+    public function surplus(ValidatedOpening $opening, bool $withInvestments = true): Money
     {
         $held = Money::zero();
         $owed = Money::zero();
@@ -94,8 +114,10 @@ final class OpeningBalanceSheet
             }
         }
 
-        foreach ($opening->investments as $row) {
-            $held = $held->plus($row->principal);
+        if ($withInvestments) {
+            foreach ($opening->investments as $row) {
+                $held = $held->plus($row->principal);
+            }
         }
 
         foreach ($opening->members as $row) {
@@ -115,11 +137,12 @@ final class OpeningBalanceSheet
 
     /**
      * Non-zero entries in posting order: society debits, investments, members, society credits, 3901.
+     * Without investments, 3901 balances the remaining lines on their own.
      *
      * @param  array<string, int>  $memberIdsByNo
      * @return list<array{0: string, 1: Money, 2: Money, 3: int|null, 4: string|null}>
      */
-    private function entries(ValidatedOpening $opening, array $memberIdsByNo): array
+    private function entries(ValidatedOpening $opening, array $memberIdsByNo, bool $withInvestments = true): array
     {
         $zero = Money::zero();
         $entries = [];
@@ -130,8 +153,10 @@ final class OpeningBalanceSheet
             }
         }
 
-        foreach ($opening->investments as $row) {
-            $entries[] = [$row->type->accountCode(), $row->principal, $zero, null, self::investmentMemo($row)];
+        if ($withInvestments) {
+            foreach ($opening->investments as $row) {
+                $entries[] = [$row->type->accountCode(), $row->principal, $zero, null, self::investmentMemo($row)];
+            }
         }
 
         foreach ($opening->members as $row) {
@@ -152,7 +177,7 @@ final class OpeningBalanceSheet
             }
         }
 
-        $surplus = $this->surplus($opening);
+        $surplus = $this->surplus($opening, $withInvestments);
 
         if ($surplus->isPositive()) {
             $entries[] = [AccountCode::ACCUMULATED_SURPLUS, $zero, $surplus, null, null];
