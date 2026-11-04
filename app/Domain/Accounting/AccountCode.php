@@ -27,6 +27,9 @@ final class AccountCode
 
     public const string EXIT_PAYABLE = '2301';
 
+    /** Accumulated surplus (retained earnings); also takes the go-live opening difference. */
+    public const string ACCUMULATED_SURPLUS = '3901';
+
     public const string REGISTRATION_FEE_INCOME = '4101';
 
     public const string SERVICE_CHARGE_INCOME = '4111';
