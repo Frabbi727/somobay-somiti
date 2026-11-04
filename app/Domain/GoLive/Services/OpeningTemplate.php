@@ -17,8 +17,7 @@ final class OpeningTemplate
     public const array SHEETS = ['members' => 'Members', 'society' => 'Society', 'investments' => 'Investments'];
 
     public const array COLUMNS = [
-        'members' => ['member_no', 'name_bn', 'name_en', 'mobile', 'nid', 'joined_on', 'shares', 'savings', 'advance', 'arrears_deposit', 'arrears_fees',
-            'nominee1_name', 'nominee1_relation', 'nominee1_percent', 'nominee2_name', 'nominee2_relation', 'nominee2_percent'],
+        'members' => ['member_no', 'name_bn', 'name_en', 'mobile', 'nid', 'joined_on', 'shares', 'savings', 'advance', 'arrears_deposit', 'arrears_fees'],
         'society' => ['account_code', 'amount'],
         'investments' => ['type', 'name', 'institution', 'instrument_no', 'principal', 'invested_on', 'matures_on', 'expected_rate_percent', 'funded_from'],
     ];

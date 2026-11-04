@@ -620,3 +620,23 @@ function openingWorkbookFile(array $rows): string
 
     return $path;
 }
+
+/**
+ * One go-live workbook member row as text (as the reader returns it); numbers and mobiles are
+ * unique per call.
+ *
+ * @param  array<string, string>  $overrides
+ * @return array<string, string>
+ */
+function memberRow(array $overrides = []): array
+{
+    static $n = 0;
+    $n++;
+
+    return [
+        '_row' => (string) ($n + 2), 'member_no' => sprintf('M-%04d', $n), 'name_bn' => 'রহিম', 'name_en' => 'Rahim',
+        'mobile' => sprintf('0171%07d', $n), 'nid' => '', 'joined_on' => '2020-07-01', 'shares' => '2',
+        'savings' => '12000', 'advance' => '', 'arrears_deposit' => '', 'arrears_fees' => '',
+        ...$overrides,
+    ];
+}
