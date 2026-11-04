@@ -5,6 +5,8 @@ declare(strict_types=1);
 return [
     'title' => 'Go-live import',
     'subheading' => 'Bring in existing members and opening balances once, before using the app.',
+    'narration' => 'Opening balances at go-live (:month)',
+    'investment_narration' => 'Opening balance :number: :name',
     'status' => ['draft' => 'Draft', 'posted' => 'Posted'],
     'columns' => [
         'member_no' => 'Member no.',
@@ -45,6 +47,10 @@ return [
     ],
     'sheet' => ['members' => 'Members', 'society' => 'Society', 'investments' => 'Investments'],
     'errors' => [
+        'not_clean' => 'Fix every error in the sheet and upload it again before posting.',
+        'file_changed' => 'The uploaded file has changed since it was checked. Upload it again.',
+        'not_fresh' => 'Opening balances can only be posted into an empty system. Members, vouchers, payments or dues already exist, so nothing was posted.',
+        'not_draft' => 'This import has already been posted. Nothing was changed.',
         'already_posted' => 'The opening balances are already posted. Use the normal pages (members, shares, vouchers) to correct anything.',
         'member_no_format' => 'Member numbers look like M-0001.',
         'duplicate_member_no' => 'Member number :no appears more than once in the sheet.',
