@@ -73,7 +73,7 @@ function expectedTiers(): array
         'EditMembershipTerms form › save' => 'T1',
 
         // T1: low-risk, reversible.
-        'restore' => 'T1', 'testRestore' => 'T1', 'duplicate' => 'T1', 'reactivate' => 'T1', 'lock' => 'T1', 'setPortalPassword' => 'T1', 'recordDocuments' => 'T1',
+        'restore' => 'T1', 'testRestore' => 'T1', 'uploadOpening' => 'T1', 'duplicate' => 'T1', 'reactivate' => 'T1', 'lock' => 'T1', 'setPortalPassword' => 'T1', 'recordDocuments' => 'T1',
         // Statement reconciliation never changes the books.
         'match' => 'T1', 'unmatch' => 'T1', 'ignore' => 'T1', 'automatch' => 'T1',
         // A failed SMS goes out again; nothing about the books changes.
@@ -88,7 +88,7 @@ function expectedTiers(): array
         // No confirmation: navigation and downloads.
         'view' => null, 'edit' => null, 'pdf' => null, 'excel' => null, 'receipt' => null,
         'downloadImpact' => null, 'generate' => null, 'newVoucher' => null, 'collect' => null,
-        'meeting' => null, 'reload' => null, 'download' => null, 'openMember' => null,
+        'meeting' => null, 'reload' => null, 'download' => null, 'openMember' => null, 'downloadTemplate' => null,
     ];
 }
 

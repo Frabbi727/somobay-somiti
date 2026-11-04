@@ -618,6 +618,7 @@ function openingWorkbookFile(array $rows): string
     }
 
     (new Xlsx($book))->save($path);
+    $book->disconnectWorksheets();
 
     return $path;
 }
