@@ -58,6 +58,7 @@ return [
         'dues_generate' => 'Generate monthly dues and late fees',
         'dues_waive' => 'Waive dues',
         'advance_refund' => 'Refund advance balances',
+        'advance_reverse_refund' => 'Reverse advance refunds',
         'expenses_record' => 'Record expenses',
         'expenses_approve' => 'Approve or reject expenses (below the limit)',
         'expenses_reverse' => 'Reverse expenses',

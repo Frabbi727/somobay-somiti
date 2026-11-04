@@ -58,6 +58,7 @@ return [
         'dues_generate' => 'মাসিক কিস্তি ও বিলম্ব ফি তৈরি',
         'dues_waive' => 'কিস্তি মওকুফ',
         'advance_refund' => 'অগ্রিম ফেরত',
+        'advance_reverse_refund' => 'অগ্রিম ফেরত রিভার্স',
         'expenses_record' => 'খরচ লেখা',
         'expenses_approve' => 'খরচ অনুমোদন বা বাতিল (সীমার নিচে)',
         'expenses_reverse' => 'খরচ রিভার্স করা',

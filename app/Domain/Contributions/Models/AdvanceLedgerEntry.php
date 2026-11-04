@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Domain\Contributions\Models;
 
+use App\Domain\Accounting\Models\JournalEntry;
 use App\Domain\Contributions\Enums\AdvanceEntryKind;
+use App\Domain\Members\Models\Member;
 use App\Domain\Shared\Exceptions\ImmutableRecord;
+use App\Models\User;
 use App\Policies\AdvanceLedgerEntryPolicy;
 use App\Support\Money\Money;
 use App\Support\Money\MoneyCast;
@@ -13,6 +16,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
@@ -32,6 +36,10 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property int|null $created_by
  * @property CarbonImmutable $created_at
  * @property-read Due|null $due
+ * @property-read Member $member
+ * @property-read JournalEntry|null $journalEntry
+ * @property-read User|null $creator
+ * @property-read AdvanceLedgerEntry|null $reversal
  */
 #[UsePolicy(AdvanceLedgerEntryPolicy::class)]
 final class AdvanceLedgerEntry extends Model
@@ -54,6 +62,40 @@ final class AdvanceLedgerEntry extends Model
     public function due(): BelongsTo
     {
         return $this->belongsTo(Due::class);
+    }
+
+    /**
+     * @return BelongsTo<Member, $this>
+     */
+    public function member(): BelongsTo
+    {
+        return $this->belongsTo(Member::class);
+    }
+
+    /**
+     * @return BelongsTo<JournalEntry, $this>
+     */
+    public function journalEntry(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class);
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * The entry that undoes this one, if any (reverses_entry_id is unique).
+     *
+     * @return HasOne<AdvanceLedgerEntry, $this>
+     */
+    public function reversal(): HasOne
+    {
+        return $this->hasOne(self::class, 'reverses_entry_id');
     }
 
     /**
