@@ -15,6 +15,7 @@ enum AdvanceEntryKind: string implements HasLabel
     case FeeWaiver = 'fee_waiver';
     case ExitTransfer = 'exit_transfer';
     case ExitSettlement = 'exit_settlement';
+    case Opening = 'opening';
 
     public function getLabel(): string
     {

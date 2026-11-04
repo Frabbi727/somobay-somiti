@@ -28,6 +28,7 @@ return [
         'fee_waiver' => 'Waived fee returned',
         'exit_transfer' => 'Savings moved in on exit',
         'exit_settlement' => 'Paid into exit settlement',
+        'opening' => 'Opening balance',
     ],
     'field' => [
         'member' => 'Member',
