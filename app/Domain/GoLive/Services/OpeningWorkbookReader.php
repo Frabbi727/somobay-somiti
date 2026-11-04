@@ -8,6 +8,7 @@ use App\Domain\GoLive\Data\OpeningWorkbook;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Throwable;
 
@@ -17,6 +18,11 @@ use Throwable;
  */
 final class OpeningWorkbookReader
 {
+    /**
+     * Columns where a number can only be a date Excel stored as a serial (a pasted real date).
+     */
+    private const DATE_COLUMNS = ['joined_on', 'invested_on', 'matures_on'];
+
     public function read(string $absolutePath): OpeningWorkbook
     {
         try {
@@ -68,7 +74,7 @@ final class OpeningWorkbookReader
             $values = [];
 
             foreach ($columns as $column) {
-                $values[$column] = trim($this->cell($sheet, $positions[$column], $row));
+                $values[$column] = trim($this->cell($sheet, $positions[$column], $row, in_array($column, self::DATE_COLUMNS, true)));
             }
 
             if (implode('', $values) !== '') {
@@ -79,9 +85,13 @@ final class OpeningWorkbookReader
         return $rows;
     }
 
-    private function cell(Worksheet $sheet, int $column, int $row): string
+    private function cell(Worksheet $sheet, int $column, int $row, bool $isDate = false): string
     {
         $value = $sheet->getCell([$column, $row])->getValue();
+
+        if ($isDate && (is_int($value) || is_float($value))) {
+            return ExcelDate::excelToDateTimeObject($value)->format('Y-m-d');
+        }
 
         return is_scalar($value) ? (string) $value : '';
     }

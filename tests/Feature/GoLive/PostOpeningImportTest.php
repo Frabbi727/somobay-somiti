@@ -108,6 +108,19 @@ it('hands over to the normal cycle: go-live dues are generated and settled from 
     assertBooksTieOut();
 });
 
+it('keeps the integrity checks clean with two opening investments on the same account', function (): void {
+    $sheet = goLiveSheet();
+    $sheet['investments'][] = [...$sheet['investments'][0], 'name' => 'Janata FDR', 'institution' => 'Janata Bank', 'instrument_no' => 'FDR-10', 'principal' => '10000'];
+
+    app(PostOpeningImport::class)($this->admin, goLiveDraft($sheet));
+
+    expect(Investment::query()->count())->toBe(2)
+        ->and(Investment::query()->distinct()->count('journal_entry_id'))->toBe(2)
+        ->and(glBalance('1301'))->toBe(-3500000);
+
+    assertBooksTieOut();
+});
+
 it('lets an opening investment be reversed on its own, leaving the rest of the opening untouched', function (): void {
     app(PostOpeningImport::class)($this->admin, goLiveDraft(goLiveSheet()));
 

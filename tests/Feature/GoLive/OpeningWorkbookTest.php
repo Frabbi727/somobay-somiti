@@ -6,6 +6,7 @@ use App\Domain\GoLive\Data\OpeningWorkbook;
 use App\Domain\GoLive\Services\OpeningWorkbookReader;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
@@ -39,6 +40,18 @@ it('passes a number Excel stored with extra decimals through unrounded so valida
     $path = openingWorkbookFile(['members' => [['member_no' => 'M-0001', 'savings' => 1005.2500001]]]);
 
     expect(app(OpeningWorkbookReader::class)->read($path)->members[0]['savings'])->toBe('1005.2500001');
+});
+
+it('reads a date pasted as a real Excel date as YYYY-MM-DD', function (): void {
+    $path = openingWorkbookFile([
+        'members' => [['member_no' => 'M-0001', 'joined_on' => ExcelDate::PHPToExcel('2020-07-01')]],
+        'investments' => [['type' => 'fixed_deposit', 'invested_on' => ExcelDate::PHPToExcel('2025-01-10'), 'matures_on' => ExcelDate::PHPToExcel('2027-01-10')]],
+    ]);
+
+    $book = app(OpeningWorkbookReader::class)->read($path);
+
+    expect($book->members[0]['joined_on'])->toBe('2020-07-01')
+        ->and($book->investments[0])->toMatchArray(['invested_on' => '2025-01-10', 'matures_on' => '2027-01-10']);
 });
 
 it('round-trips through toArray/fromArray', function (): void {
