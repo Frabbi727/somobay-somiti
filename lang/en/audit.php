@@ -39,8 +39,11 @@ return [
         'backup_restored' => 'Backup restored',
         'restore_check_passed' => 'Restore test passed',
         'restore_check_failed' => 'Restore test failed',
+        'opening_import_uploaded' => 'Opening import uploaded',
+        'opening_import_posted' => 'Opening balances posted',
     ],
     'module' => [
+        'golive' => 'Go-live import',
         'default' => 'General',
         'auth' => 'Sign-in',
         'users' => 'Users',

@@ -45,6 +45,7 @@ return [
     ],
     'sheet' => ['members' => 'Members', 'society' => 'Society', 'investments' => 'Investments'],
     'errors' => [
+        'already_posted' => 'The opening balances are already posted. Use the normal pages (members, shares, vouchers) to correct anything.',
         'member_no_format' => 'Member numbers look like M-0001.',
         'duplicate_member_no' => 'Member number :no appears more than once in the sheet.',
         'duplicate_mobile' => 'Mobile :mobile appears more than once in the sheet.',

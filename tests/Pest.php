@@ -51,6 +51,7 @@ use Database\Seeders\RoleSeeder;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -639,4 +640,16 @@ function memberRow(array $overrides = []): array
         'savings' => '12000', 'advance' => '', 'arrears_deposit' => '', 'arrears_fees' => '',
         ...$overrides,
     ];
+}
+
+/**
+ * Stores a go-live workbook with the given rows on the (faked) local disk and returns its path.
+ *
+ * @param  array<string, list<array<string, string|int|float|null>>>  $rows
+ */
+function storeOpeningFile(array $rows, string $name = 'sheet.xlsx'): string
+{
+    Storage::disk('local')->put('opening-imports/'.$name, (string) file_get_contents(openingWorkbookFile($rows)));
+
+    return 'opening-imports/'.$name;
 }

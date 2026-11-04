@@ -39,8 +39,11 @@ return [
         'backup_restored' => 'ব্যাকআপ পুনরুদ্ধার',
         'restore_check_passed' => 'পুনরুদ্ধার পরীক্ষা সফল',
         'restore_check_failed' => 'পুনরুদ্ধার পরীক্ষা ব্যর্থ',
+        'opening_import_uploaded' => 'প্রারম্ভিক আমদানি আপলোড',
+        'opening_import_posted' => 'প্রারম্ভিক জের পোস্ট',
     ],
     'module' => [
+        'golive' => 'চালু-করার আমদানি',
         'default' => 'সাধারণ',
         'auth' => 'লগইন',
         'users' => 'ব্যবহারকারী',
