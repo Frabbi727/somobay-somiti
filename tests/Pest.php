@@ -14,6 +14,7 @@ use App\Domain\Contributions\Data\PaymentData;
 use App\Domain\Contributions\Enums\DueType;
 use App\Domain\Contributions\Models\Due;
 use App\Domain\Contributions\Models\Payment;
+use App\Domain\GoLive\Services\OpeningTemplate;
 use App\Domain\Integrity\InvariantChecker;
 use App\Domain\Investments\Data\InvestmentData;
 use App\Domain\Members\Actions\CreateMember;
@@ -51,6 +52,8 @@ use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Tests\TestCase;
 
 /*
@@ -588,4 +591,32 @@ function investmentRule(Closure $callback): ?string
     }
 
     return null;
+}
+
+/**
+ * Writes the go-live template with the given rows (keyed by sheet, data from row 3) to a temp
+ * file and returns its path.
+ *
+ * @param  array<string, list<array<string, string|int|float|null>>>  $rows
+ */
+function openingWorkbookFile(array $rows): string
+{
+    $path = tempnam(sys_get_temp_dir(), 'opening').'.xlsx';
+    file_put_contents($path, app(OpeningTemplate::class)->binary());
+    $book = IOFactory::load($path);
+
+    foreach ($rows as $sheet => $list) {
+        $worksheet = $book->getSheetByName(OpeningTemplate::SHEETS[$sheet]);
+
+        foreach ($list as $index => $row) {
+            foreach ($row as $column => $value) {
+                $col = array_search($column, OpeningTemplate::COLUMNS[$sheet], true) + 1;
+                $worksheet?->getCell([$col, $index + 3])->setValue($value);
+            }
+        }
+    }
+
+    (new Xlsx($book))->save($path);
+
+    return $path;
 }
