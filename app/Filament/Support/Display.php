@@ -76,8 +76,9 @@ final class Display
      */
     public static function monthShort(YearMonth $month): string
     {
+        // Bangla names are already short, and cutting them splits a letter ("এপ্রিল" → "এপ্").
         return self::isBangla()
-            ? mb_substr(BanglaDate::monthName($month->month), 0, 3)
+            ? BanglaDate::monthName($month->month)
             : $month->firstDay()->format('M');
     }
 

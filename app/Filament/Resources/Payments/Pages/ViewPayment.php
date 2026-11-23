@@ -30,11 +30,14 @@ final class ViewPayment extends ViewRecord
 
     protected function getHeaderActions(): array
     {
+        // After a status change, reload the page so the status and the buttons match the payment.
+        $reload = fn (Payment $record) => $this->redirect(self::getResource()::getUrl('view', ['record' => $record]));
+
         return [
-            PaymentActions::approve(),
-            PaymentActions::reject(),
-            PaymentActions::cancel(),
-            PaymentActions::reverse(),
+            PaymentActions::approve()->after($reload),
+            PaymentActions::reject()->after($reload),
+            PaymentActions::cancel()->after($reload),
+            PaymentActions::reverse()->after($reload),
             PaymentActions::receipt(),
         ];
     }

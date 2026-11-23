@@ -153,7 +153,8 @@ it('reverses an approved payment from its page', function (): void {
 
     Livewire::test(ViewPayment::class, ['record' => $payment->getRouteKey()])
         ->callAction('reverse', data: ['reason' => 'Duplicate entry', 'confirm_text' => 'RV-2026-27-000001'])
-        ->assertHasNoActionErrors();
+        ->assertHasNoActionErrors()
+        ->assertRedirect(PaymentResource::getUrl('view', ['record' => $payment]));   // page shows the new status
 
     expect($payment->fresh()?->status)->toBe(PaymentStatus::Reversed);
     assertBooksTieOut();

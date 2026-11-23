@@ -47,9 +47,15 @@ final class SmsTemplateSeeder extends Seeder
         ];
     }
 
-    public function run(): void
+    /**
+     * Every template's default [bn, en] text. The 2026_11_23_000006 migration reads the receipt
+     * text from here.
+     *
+     * @return array<string, array{0: string, 1: string}>
+     */
+    public static function defaults(): array
     {
-        $defaults = [
+        return [
             SmsTemplateKey::Welcome->value => [
                 '{name}, {somiti}-এ স্বাগতম। আপনার সদস্য নং {member_no}। পোর্টাল: {portal_url}',
                 'Welcome to {somiti}, {name}. Member no. {member_no}. Portal: {portal_url}',
@@ -77,8 +83,11 @@ final class SmsTemplateSeeder extends Seeder
             ...self::paymentOutcomes(),
             ...self::paymentRecorded(),
         ];
+    }
 
-        foreach ($defaults as $key => [$bn, $en]) {
+    public function run(): void
+    {
+        foreach (self::defaults() as $key => [$bn, $en]) {
             SmsTemplate::query()->firstOrCreate(['key' => $key], ['body_bn' => $bn, 'body_en' => $en, 'is_active' => true]);
         }
     }
