@@ -29,6 +29,8 @@ What the audit of October 2026 found, what was fixed on branch `ux-roles-approva
 | President thresholds, quorums, required resolutions and year-end choices could only be changed in the server config | Settings › Financial settings: one person proposes with a reason, someone else approves; history kept, applies without a deploy, year-end choices frozen while a year-end waits |
 | Member home screen showed only outstanding, savings and advance | Also total billed, paid, waived, this month's due, earlier months' due and the monthly deposit for the member's shares (portal and app API) |
 | An advance refund made by mistake could not be undone | **Collections › Advance Refunds** lists every refund; someone other than whoever made it (with *Reverse advance refunds*) reverses it with a mirror voucher, and the member gets the advance back. Refused once the member has exited |
+| Two identical expense/transfer/investment/top-up submissions arriving together could fail with a raw database error | The second waits, then gets the first record back (lock on the submission key inside the transaction) |
+| An unused `viewReports` permission check | Removed (`opening.import` is now used by the go-live import) |
 
 ## Data to check on the live system (one-off)
 
@@ -50,12 +52,10 @@ It also lists any dividend lines already posted to members after they exited. **
 | 5 | Retroactive rate corrections (BR-7 adjustment dues) not built | none now (refused) | **Decision:** whether needed |
 | 6 | Pro-rata dividend for the exit year | none now (decided: no dividend) | revisit only if bylaws require |
 | 7 | Refundable share capital (3101) not in the exit settlement (BR-22) | depends on bylaws | **Decision** |
-| 9 | Idempotency check in record expense/transfer/investment runs before the transaction (database unique key is the backstop) | rare duplicate error message | move inside a locked transaction |
 | 10 | Registration chain stuck if nobody active holds a step's role | applications wait forever | now visible ("nobody can approve"); reminder goes to nobody — president must fix roles |
 | 11 | Cash book page uses the collections area and member statement uses cash reports, unlike `Area.php` | who sees two reports differs from the permissions page wording | **Decision:** move them or update the wording |
 | 13 | Dashboard "collected this month" counts by receipt date; reports count by voucher date or due month | figures differ when payments are reversed later | explained on the tile and in `financial-calculation-rules.md` |
 | 14 | Exited/inactive member reactivated: no dues for the months inactive | missing dues | **Decision:** policy for reactivation |
-| 17 | `viewReports` gate and `opening.import` permission are unused | confusion only | remove |
 
 ## Operational risks (from the roadmap)
 

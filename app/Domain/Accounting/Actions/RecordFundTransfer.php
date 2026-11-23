@@ -31,19 +31,23 @@ final class RecordFundTransfer
     {
         Gate::forUser($actor)->authorize('create', FundTransfer::class);
 
-        $existing = FundTransfer::query()->where('idempotency_key', $data->idempotencyKey)->first();
+        return $this->causer->withCauser($actor, fn (): FundTransfer => DB::transaction(function () use ($actor, $data): FundTransfer {
+            // One submission per idempotency key at a time: a retry that arrives while the first is
+            // still running waits here, then finds and returns the same record instead of colliding.
+            DB::select('SELECT pg_advisory_xact_lock(hashtext(?))', ['fund-transfer:'.$data->idempotencyKey]);
 
-        if ($existing !== null) {
-            if ($existing->from_method !== $data->from || $existing->to_method !== $data->to || ! $existing->amount_poisha->equals($data->amount)) {
-                throw DomainRuleViolation::because('transfers.errors.idempotency_conflict');
+            $existing = FundTransfer::query()->where('idempotency_key', $data->idempotencyKey)->first();
+
+            if ($existing !== null) {
+                if ($existing->from_method !== $data->from || $existing->to_method !== $data->to || ! $existing->amount_poisha->equals($data->amount)) {
+                    throw DomainRuleViolation::because('transfers.errors.idempotency_conflict');
+                }
+
+                return $existing;
             }
 
-            return $existing;
-        }
+            $this->assertValid($data);
 
-        $this->assertValid($data);
-
-        return $this->causer->withCauser($actor, fn (): FundTransfer => DB::transaction(function () use ($actor, $data): FundTransfer {
             $number = (int) DB::scalar("SELECT nextval('transfer_no_seq')");
 
             $record = FundTransfer::query()->create([

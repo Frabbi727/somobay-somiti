@@ -34,18 +34,20 @@ final class RecordInvestmentTopUp
 
     public function __invoke(User $actor, Investment $investment, InvestmentTopUpData $data): InvestmentTopUp
     {
-        $existing = InvestmentTopUp::query()->where('idempotency_key', $data->idempotencyKey)->first();
-
-        if ($existing !== null) {
-            if ($existing->investment_id !== $investment->id || ! $existing->amount_poisha->equals($data->amount)) {
-                throw DomainRuleViolation::because('investments.errors.idempotency_conflict');
-            }
-
-            return $existing;
-        }
-
         return $this->causer->withCauser($actor, fn (): InvestmentTopUp => DB::transaction(function () use ($actor, $investment, $data): InvestmentTopUp {
+            // One submission per idempotency key at a time, so a retry returns the first top-up.
+            DB::select('SELECT pg_advisory_xact_lock(hashtext(?))', ['investment-top-up:'.$data->idempotencyKey]);
             $locked = Investment::query()->whereKey($investment->getKey())->lockForUpdate()->firstOrFail();
+
+            $existing = InvestmentTopUp::query()->where('idempotency_key', $data->idempotencyKey)->first();
+
+            if ($existing !== null) {
+                if ($existing->investment_id !== $locked->id || ! $existing->amount_poisha->equals($data->amount)) {
+                    throw DomainRuleViolation::because('investments.errors.idempotency_conflict');
+                }
+
+                return $existing;
+            }
 
             if ($locked->status !== InvestmentStatus::Active) {
                 throw DomainRuleViolation::because('investments.errors.top_up_not_active', ['number' => $locked->investment_no]);
