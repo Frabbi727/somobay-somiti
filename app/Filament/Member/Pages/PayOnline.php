@@ -15,6 +15,7 @@ use App\Filament\Support\ChangeSummary;
 use App\Filament\Support\Display;
 use App\Filament\Support\DomainActionRunner;
 use App\Models\User;
+use App\Support\Money\Money;
 use App\Support\Time\YearMonth;
 use BackedEnum;
 use Carbon\CarbonImmutable;
@@ -134,9 +135,9 @@ final class PayOnline extends Page
                 [],
                 [
                     'method' => PaymentMethod::tryFrom((string) ($this->data['method'] ?? '')),
-                    'amount' => '৳ '.($this->data['amount'] ?? ''),
+                    'amount' => is_string($this->data['amount'] ?? null) ? Money::tryOfTaka($this->data['amount']) : null,
                     'trx' => strtoupper((string) ($this->data['trx_id'] ?? '')),
-                    'date' => $this->data['received_on'] ?? null,
+                    'date' => is_string($this->data['received_on'] ?? null) && $this->data['received_on'] !== '' ? CarbonImmutable::parse($this->data['received_on']) : null,
                 ],
             ),
             showOld: false,

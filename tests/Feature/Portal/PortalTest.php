@@ -23,6 +23,7 @@ use App\Filament\Member\Pages\Profile;
 use App\Filament\Member\Pages\Statement;
 use App\Filament\Member\Widgets\MemberPositionWidget;
 use App\Filament\Member\Widgets\RecentPaymentsWidget;
+use App\Filament\Support\Display;
 use App\Reports\ReceiptDocument;
 use App\Support\Bangla\BanglaNumber;
 use App\Support\Money\Money;
@@ -241,6 +242,18 @@ it('lets a member report a bKash payment with a screenshot for approval', functi
 
     // A different user approves it; the member who submitted can't.
     expect(app(PortalAccounts::class)->forMember($this->alice)->can('approve', $payment))->toBeFalse();
+});
+
+it('shows the amount and date in the submit dialog the way the portal shows money and dates', function (): void {
+    Storage::fake('local');
+    actAsMember($this, $this->alice);
+
+    Livewire::test(PayOnline::class)
+        ->fillForm(['method' => 'bkash', 'amount' => '1240', 'trx_id' => 'BKX12345Q', 'received_on' => '2026-07-05', 'proof_path' => UploadedFile::fake()->image('bkash.png')])
+        ->mountAction('submit')
+        ->assertMountedActionModalSee(Display::money(Money::ofTaka('1240')))
+        ->assertMountedActionModalSee(Display::date(CarbonImmutable::parse('2026-07-05')))
+        ->assertMountedActionModalDontSee('2026-07-05');
 });
 
 it('requires a screenshot and never lets a member report for someone else', function (): void {
