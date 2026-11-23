@@ -23,6 +23,8 @@ return [
         'governance' => 'Meetings and resolutions',
         'year_end' => 'Year-end (Cooperative Societies Act 2001, s.34)',
         'year_end_help' => 'Have your auditor confirm these. The legal minimum and maximum of each fund cannot be changed here. They cannot change while a prepared year-end waits for approval.',
+        'joining' => 'Late joiners',
+        'joining_help' => 'New members pay every month from the society\'s start, plus a fairness charge. Example: 5 back months × ৳1,000 = ৳5,000; at 10% the entry premium is ৳500 (society income, not savings). No late fines on back months.',
     ],
     'field' => [
         'expense_president_threshold' => 'Expenses that need the president, from',
@@ -45,6 +47,9 @@ return [
         'changes' => 'Changes',
         'proposed_by' => 'Proposed by',
         'decided_by' => 'Decided by',
+        'back_dues_enabled' => 'Bill new members from the society\'s start month',
+        'entry_premium' => 'Entry premium',
+        'entry_premium_help' => 'A percentage of the back-month deposits only. 0 means no premium.',
     ],
     'statutory_base' => [
         'net_profit' => 'the whole net profit',
@@ -84,5 +89,6 @@ return [
         'reminder_days' => 'Reminder days must be between 0 and :max.',
         'quorum_range' => 'A quorum must be more than 0% and at most 100%.',
         'year_end_in_progress' => 'A prepared year-end is waiting for approval. Year-end choices can change after it is posted or discarded.',
+        'entry_premium_range' => 'The entry premium must be between 0% and :max.',
     ],
 ];

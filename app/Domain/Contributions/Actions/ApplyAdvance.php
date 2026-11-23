@@ -77,7 +77,7 @@ final class ApplyAdvance
             ->where('member_id', $member->id)
             ->where('status', DueStatus::Open)
             ->where('outstanding_poisha', '>', 0)
-            ->where('due_date', '<=', $date->endOfMonth()->toDateString())
+            // Same rule as a payment's approval: any open due may be settled, oldest month first.
             ->orderBy('month')
             ->orderBy('id')
             ->lockForUpdate()

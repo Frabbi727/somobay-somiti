@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Members\Schemas;
 
+use App\Domain\Contributions\BackDues\BackDuesPlanner;
 use App\Domain\Geo\Data\PostalAddress;
 use App\Domain\Members\Enums\MaritalStatus;
 use App\Domain\Members\Enums\RegistrationDocument;
@@ -12,7 +13,9 @@ use App\Domain\Members\Models\Nominee;
 use App\Domain\Members\Models\NomineeRelation;
 use App\Domain\Members\Services\ShareChanger;
 use App\Domain\Members\Terms\Models\MembershipTerms;
+use App\Domain\Settings\Services\FinancialSettings;
 use App\Filament\Forms\PersonFields;
+use App\Filament\Resources\Members\Support\BackDuesPreview;
 use App\Support\Contact\MobileNumber;
 use App\Support\Money\Bps;
 use App\Support\Time\YearMonth;
@@ -31,6 +34,7 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Illuminate\Support\HtmlString;
 
 final class MemberForm
 {
@@ -103,6 +107,7 @@ final class MemberForm
                             ->integer()
                             ->minValue(1)
                             ->default(1)
+                            ->live(onBlur: true)
                             ->required($creating),
                         TextInput::make('effective_from')
                             ->label(__('members.member.effective_from'))
@@ -110,7 +115,25 @@ final class MemberForm
                             ->type('month')
                             ->regex('/^\d{4}-\d{2}$/')
                             ->default(fn (): string => (string) app(ShareChanger::class)->firstOpenMonth())
+                            ->live(onBlur: true)
                             ->required($creating),
+                        TextInput::make('dues_start_month')
+                            ->label(__('members.member.dues_start_month'))
+                            ->helperText(__('members.member.dues_start_month_help'))
+                            ->type('month')
+                            ->regex('/^\d{4}-\d{2}$/')
+                            ->default(fn (): string => (string) app(BackDuesPlanner::class)->defaultDuesStart(app(ShareChanger::class)->firstOpenMonth()))
+                            ->visible(fn (?Member $record): bool => $record === null && app(FinancialSettings::class)->current()->backDuesEnabled)
+                            ->live(onBlur: true),
+                        TextEntry::make('back_dues_preview')
+                            ->label(__('members.back_dues.heading'))
+                            ->state(fn (Get $get): HtmlString => BackDuesPreview::html([
+                                'shares' => $get('shares'),
+                                'effective_from' => $get('effective_from'),
+                                'dues_start_month' => $get('dues_start_month'),
+                            ]))
+                            ->visible(fn (?Member $record): bool => $record === null && app(FinancialSettings::class)->current()->backDuesEnabled)
+                            ->columnSpanFull(),
                     ]),
                 Section::make(__('members.member.documents_section'))
                     ->columnSpanFull()

@@ -6,7 +6,9 @@ namespace App\Domain\Contributions\Services;
 
 use App\Domain\Contributions\Enums\DueStatus;
 use App\Domain\Contributions\Enums\DueType;
+use App\Domain\Contributions\Enums\PaymentStatus;
 use App\Domain\Contributions\Models\Due;
+use App\Domain\Contributions\Models\Payment;
 use App\Domain\Members\Models\Member;
 use App\Domain\Settings\Services\RateResolver;
 use App\Support\Money\Money;
@@ -37,17 +39,47 @@ final class PaymentPreviewer
     }
 
     /**
-     * @return array{allocations: list<array{due: Due, amount: Money}>, to_dues: Money, remainder: Money, covers_through: ?YearMonth}
+     * What this amount is expected to settle. The member's other pending payments are approved
+     * first in the usual case, so they are counted first: this payment's share is the allocation of
+     * (pending + amount) minus the allocation of pending alone (allocation is greedy in a fixed
+     * order, so the difference is exact). Final on approval, against the dues open then.
+     *
+     * @return array{allocations: list<array{due: Due, amount: Money}>, to_dues: Money, remainder: Money, covers_through: ?YearMonth, pending_count: int, pending_total: Money}
      */
     public function preview(Member $member, Money $amount): array
     {
-        ['allocations' => $allocations, 'remainder' => $remainder] = $this->engine->allocate($amount, $this->openDues($member));
+        $dues = $this->openDues($member);
+        $pending = Payment::query()->where('member_id', $member->id)->where('status', PaymentStatus::Pending)->get();
+        $pendingTotal = Money::sum($pending->map(fn (Payment $payment): Money => $payment->amount_poisha)->all());
+
+        $before = $this->engine->allocate($pendingTotal, $dues);
+        $after = $this->engine->allocate($pendingTotal->plus($amount), $dues);
+
+        $already = [];
+
+        foreach ($before['allocations'] as ['due' => $due, 'amount' => $applied]) {
+            $already[$due->id] = $applied;
+        }
+
+        $allocations = [];
+
+        foreach ($after['allocations'] as ['due' => $due, 'amount' => $applied]) {
+            $share = $applied->minus($already[$due->id] ?? Money::zero());
+
+            if ($share->isPositive()) {
+                $allocations[] = ['due' => $due, 'amount' => $share];
+            }
+        }
+
+        $remainder = $after['remainder']->minus($before['remainder']);
 
         return [
             'allocations' => $allocations,
             'to_dues' => $amount->minus($remainder),
             'remainder' => $remainder,
             'covers_through' => $remainder->isPositive() ? $this->coversThrough($member, $remainder) : null,
+            'pending_count' => $pending->count(),
+            'pending_total' => $pendingTotal,
         ];
     }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Contributions\Actions;
 
+use App\Domain\Contributions\Enums\DueOrigin;
 use App\Domain\Contributions\Enums\DueStatus;
 use App\Domain\Contributions\Enums\DueType;
 use App\Domain\Contributions\Events\LateFeesApplied;
@@ -47,7 +48,7 @@ final class ApplyLateFees
                     ->where('member_id', $memberId)
                     ->whereIn('type', [DueType::Deposit, DueType::ServiceCharge, DueType::Registration, DueType::LateFee])
                     ->whereNotIn('status', [DueStatus::Cancelled])
-                    ->where('opening', false)
+                    ->where('origin', DueOrigin::Regular)
                     ->orderBy('id')
                     ->lockForUpdate()
                     ->get();
@@ -145,7 +146,7 @@ final class ApplyLateFees
             ->where('m.status', '!=', MemberStatus::Exited->value)
             ->whereIn('d.type', [DueType::Deposit->value, DueType::ServiceCharge->value, DueType::Registration->value])
             ->where('d.status', DueStatus::Open->value)
-            ->where('d.opening', false)
+            ->where('d.origin', DueOrigin::Regular->value)
             ->where('d.outstanding_poisha', '>', 0)
             ->where('d.due_date', '<', $today->toDateString())
             ->distinct()

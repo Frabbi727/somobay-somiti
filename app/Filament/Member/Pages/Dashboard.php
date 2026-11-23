@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Filament\Member\Pages;
 
-use App\Domain\Members\Portal\MemberSummary;
+use App\Domain\Members\Portal\MemberPosition;
 use App\Filament\Member\Concerns\ScopedToMember;
-use App\Filament\Member\Widgets\MemberStatsWidget;
+use App\Filament\Member\Widgets\MemberPositionWidget;
 use App\Filament\Member\Widgets\PaymentAlertsWidget;
 use App\Filament\Member\Widgets\RecentPaymentsWidget;
 use Filament\Actions\Action;
@@ -33,7 +33,7 @@ final class Dashboard extends BaseDashboard
 
     public function getWidgets(): array
     {
-        return [PaymentAlertsWidget::class, MemberStatsWidget::class, RecentPaymentsWidget::class];
+        return [PaymentAlertsWidget::class, MemberPositionWidget::class, RecentPaymentsWidget::class];
     }
 
     public function getColumns(): int
@@ -50,7 +50,7 @@ final class Dashboard extends BaseDashboard
                 ->icon(Heroicon::OutlinedBanknotes)
                 ->color('success')
                 ->url(PayOnline::getUrl())
-                ->visible(fn (): bool => app(MemberSummary::class)->for(self::member())['outstanding']->isPositive()),
+                ->visible(fn (): bool => app(MemberPosition::class)->for(self::member())->outstanding->isPositive()),
         ];
     }
 }

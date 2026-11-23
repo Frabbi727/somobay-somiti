@@ -51,6 +51,7 @@ final class ReversePayment
         private readonly MonthlyDueBuilder $builder,
         private readonly RateResolver $rates,
         private readonly GeneratedMonths $generated,
+        private readonly ApplyAdvance $applyAdvance,
     ) {}
 
     public function __invoke(User $actor, Payment $payment, string $reason): Payment
@@ -121,6 +122,10 @@ final class ReversePayment
                 'reversal_reason' => $reason,
                 'reversal_journal_entry_id' => $reversal->id,
             ])->save();
+
+            // Months the reversal reopened are paid from any advance the member still holds, so an
+            // advance is never left sitting next to unpaid dues.
+            ($this->applyAdvance)([$member->id]);
 
             $this->notifier->paymentOutcome($locked, 'reversed');
 

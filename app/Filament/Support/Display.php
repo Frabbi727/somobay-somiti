@@ -57,6 +57,30 @@ final class Display
         return $money?->format(app()->getLocale()) ?? '—';
     }
 
+    /**
+     * Money without ".00" when there are no poisha (৳ ২৭,০০০), for member-facing screens.
+     */
+    public static function moneyShort(?Money $money): string
+    {
+        if ($money === null) {
+            return '—';
+        }
+
+        $text = self::money($money);
+
+        return $money->poisha % 100 === 0 ? (string) preg_replace('/[.][0০]{2}$/u', '', $text) : $text;
+    }
+
+    /**
+     * A short month name for the month strip ("নভে", "Nov").
+     */
+    public static function monthShort(YearMonth $month): string
+    {
+        return self::isBangla()
+            ? mb_substr(BanglaDate::monthName($month->month), 0, 3)
+            : $month->firstDay()->format('M');
+    }
+
     public static function digits(int|string $value): string
     {
         return self::isBangla() ? BanglaNumber::digits($value) : (string) $value;

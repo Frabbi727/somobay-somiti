@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Member\Pages;
 
+use App\Domain\Contributions\Enums\DueOrigin;
 use App\Domain\Contributions\Enums\DueStatus;
 use App\Domain\Contributions\Enums\DueType;
 use App\Domain\Contributions\Models\Due;
@@ -59,15 +60,20 @@ final class Dues extends Page implements HasTable
             ->defaultSort(fn (Builder $query): Builder => $query->orderByDesc('month')->orderBy('id'))
             ->columns([
                 TextColumn::make('month')->label(__('dues.month'))->formatStateUsing(fn (Due $record): string => Display::yearMonth($record->month))->sortable(),
-                TextColumn::make('type')->label(__('dues.type'))->badge()->color('gray'),
+                TextColumn::make('type')->label(__('dues.type'))->badge()->color('gray')
+                    ->description(fn (Due $record): ?string => $record->origin === DueOrigin::Regular ? null : $record->origin->getLabel()),
                 $money('amount_poisha', __('dues.amount')),
                 $money('paid_poisha', __('dues.paid')),
                 $money('outstanding_poisha', __('dues.outstanding'))->weight('bold'),
                 TextColumn::make('due_date')->label(__('dues.due_date'))->formatStateUsing(fn (Due $record): string => Display::date($record->due_date))->visibleFrom('md'),
-                TextColumn::make('status')->label(__('dues.status_label'))->badge(),
+                TextColumn::make('status')->label(__('dues.status_label'))->badge()
+                    // An open due with money on it is "part paid", not just "open".
+                    ->formatStateUsing(fn (Due $record): string => $record->status === DueStatus::Open && $record->paid_poisha->isPositive()
+                        ? __('portal.month_state.partly_paid')
+                        : $record->status->getLabel()),
             ])
             ->filters([
-                SelectFilter::make('status')->label(__('dues.status_label'))->options(DueStatus::class)->default(DueStatus::Open->value),
+                SelectFilter::make('status')->label(__('dues.status_label'))->options(DueStatus::class),
                 SelectFilter::make('type')->label(__('dues.type'))->options(DueType::class),
             ])
             ->emptyStateHeading(__('portal.dues.none'))

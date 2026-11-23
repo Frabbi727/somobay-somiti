@@ -28,9 +28,9 @@ beforeEach(function (): void {
     $cashier = userWithRole(Role::Cashier)->id;
 
     DB::statement(<<<SQL
-        INSERT INTO members (member_no, name_bn, name_en, mobile, joined_on, status, created_by, created_at, updated_at)
+        INSERT INTO members (member_no, name_bn, name_en, mobile, joined_on, dues_start_month, status, created_by, created_at, updated_at)
         SELECT 'M-' || lpad(i::text, 4, '0'), 'সদস্য ' || i, 'Member ' || i, '017' || lpad(i::text, 8, '0'),
-               '2026-07-01', 'active', {$staff}, now(), now()
+               '2026-07-01', '2026-07-01', 'active', {$staff}, now(), now()
         FROM generate_series(1, 5000) AS i
         SQL);
 
@@ -48,9 +48,10 @@ beforeEach(function (): void {
         SQL);
 
     DB::statement(<<<SQL
-        INSERT INTO payments (member_id, method, amount_poisha, received_on, status, idempotency_key, recorded_by, created_at, updated_at)
+        INSERT INTO payments (member_id, method, amount_poisha, received_on, status, idempotency_key, recorded_by,
+                              outstanding_before_poisha, outstanding_after_poisha, other_owed_after_poisha, advance_after_poisha, created_at, updated_at)
         SELECT m.id, 'cash', 50000 + (i % 7) * 10000, '2026-07-05'::date + (i % 330), CASE WHEN i % 10 = 0 THEN 'pending' ELSE 'approved' END,
-               gen_random_uuid(), {$cashier}, now(), now()
+               gen_random_uuid(), {$cashier}, 0, 0, 0, 0, now(), now()
         FROM generate_series(1, 20000) AS i
         JOIN (SELECT id, row_number() OVER (ORDER BY id) AS n FROM members) AS m ON m.n = 1 + (i % 5000)
         SQL);

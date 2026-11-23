@@ -9,6 +9,7 @@ use App\Domain\Reporting\SomitiSnapshot;
 use App\Enums\Area;
 use App\Filament\Pages\Reports\DefaultersPage;
 use App\Filament\Resources\Members\MemberResource;
+use App\Filament\Resources\Payments\PaymentResource;
 use App\Filament\Support\Display;
 use App\Models\User;
 use App\Support\Time\YearMonth;
@@ -59,10 +60,22 @@ final class SomitiOverviewWidget extends StatsOverviewWidget
             return $stats;
         }
 
+        $pending = $snapshot->pendingPayments();
+
         return [
             ...$stats,
+            Stat::make(__('dashboard.billed_this_month'), Display::money($snapshot->billedFor($month)))->icon(Heroicon::OutlinedDocumentText)
+                ->description(__('dashboard.billed_this_month_help', ['month' => Display::yearMonth($month)])),
             Stat::make(__('dashboard.collected_this_month'), Display::money($snapshot->collectedIn($month)))->icon(Heroicon::OutlinedBanknotes)->color('success')
                 ->description(__('dashboard.collected_this_month_help', ['from' => Display::date($month->firstDay()), 'to' => Display::date($today)])),
+            Stat::make(__('dashboard.owed_now'), Display::money($snapshot->owedNow($today)))->icon(Heroicon::OutlinedExclamationCircle)
+                ->description(__('dashboard.owed_now_help', ['date' => Display::date($today)])),
+            Stat::make(__('dashboard.pending_payments'), Display::money($pending['total']))->icon(Heroicon::OutlinedClock)
+                ->color($pending['count'] > 0 ? 'warning' : 'gray')
+                ->description(__('dashboard.pending_payments_help', ['count' => Display::digits($pending['count'])]))
+                ->url(PaymentResource::getUrl()),
+            Stat::make(__('dashboard.advance_held'), Display::money($snapshot->balance(AccountCode::MEMBER_ADVANCE, credit: true)))->icon(Heroicon::OutlinedForward)
+                ->description(__('dashboard.balance_help', ['date' => Display::date($today)])),
             Stat::make(__('dashboard.member_savings'), Display::money($snapshot->balance(AccountCode::MEMBER_SAVINGS, credit: true)))->icon(Heroicon::OutlinedBuildingLibrary)
                 ->description(__('dashboard.balance_help', ['date' => Display::date($today)])),
             Stat::make(__('dashboard.cash_in_hand'), Display::money($snapshot->balance(AccountCode::CASH)))->icon(Heroicon::OutlinedWallet)

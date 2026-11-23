@@ -23,6 +23,7 @@ use App\Domain\Contributions\Services\AllocationEngine;
 use App\Domain\Contributions\Services\DuePosting;
 use App\Domain\Contributions\Services\PrepaidLocker;
 use App\Domain\Members\Models\Member;
+use App\Domain\Members\Portal\MemberPosition;
 use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Settings\Enums\AdvancePolicy;
 use App\Domain\Settings\Services\RateResolver;
@@ -55,6 +56,7 @@ final class ApprovePayment
         private readonly PostJournal $post,
         private readonly CauserResolver $causer,
         private readonly WorkflowNotifier $notifier,
+        private readonly MemberPosition $position,
     ) {}
 
     public function __invoke(User $actor, Payment $payment): Payment
@@ -71,6 +73,11 @@ final class ApprovePayment
             $member = Member::query()->whereKey($locked->member_id)->lockForUpdate()->firstOrFail();
             $month = YearMonth::fromDate($locked->received_on);
             $plan = $this->rates->find($month) ?? $this->rates->find(YearMonth::current());
+
+            if ($plan === null) {
+                throw DomainRuleViolation::because('members.errors.no_rate_plan', ['month' => (string) $month]);
+            }
+
             $policy = $plan->advance_policy ?? AdvancePolicy::ApplyAtCurrentRate;
 
             $openDues = Due::query()
@@ -84,7 +91,9 @@ final class ApprovePayment
 
             ['allocations' => $allocations, 'remainder' => $remainder] = $this->engine->allocate($locked->amount_poisha, $openDues);
 
-            if ($remainder->isPositive() && $policy === AdvancePolicy::LockPrepaidMonths && $plan !== null) {
+            $before = $this->position->for($member);
+
+            if ($remainder->isPositive() && $policy === AdvancePolicy::LockPrepaidMonths) {
                 $lastMonth = Due::query()->where('member_id', $member->id)->where('type', DueType::Deposit)
                     ->where('status', '!=', DueStatus::Cancelled)->max('month');
                 $after = $lastMonth === null ? $month : YearMonth::parse(substr((string) $lastMonth, 0, 10))->max($month);
@@ -124,7 +133,15 @@ final class ApprovePayment
                 ]);
             }
 
+            // The receipt prints these figures forever, whatever happens to the member later.
+            $after = $this->position->for($member);
+
             $locked->forceFill([
+                'outstanding_before_poisha' => $before->outstanding,
+                'outstanding_after_poisha' => $after->outstanding,
+                'other_owed_after_poisha' => $after->otherOwed,
+                'advance_after_poisha' => $after->advance,
+                'paid_through_after' => $after->paidThrough,
                 'status' => PaymentStatus::Approved,
                 'approved_by' => $actor->id,
                 'approved_at' => CarbonImmutable::now(),

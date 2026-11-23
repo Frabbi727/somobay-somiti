@@ -36,6 +36,9 @@ final class AccountCode
 
     public const string LATE_FEE_INCOME = '4121';
 
+    /** The fairness charge a late joiner pays on top of their back-month deposits. */
+    public const string ENTRY_PREMIUM_INCOME = '4141';
+
     /** Bank & wallet charges (transfer and cash-out fees). */
     public const string BANK_CHARGES = '5104';
 }

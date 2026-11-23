@@ -12,12 +12,14 @@ use App\Domain\Contributions\Models\Payment;
 use App\Domain\Contributions\Services\AdvanceLedger;
 use App\Domain\Contributions\Services\PaymentPreviewer;
 use App\Domain\Contributions\Services\SimilarPayments;
+use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Enums\Role;
 use App\Filament\Pages\Collections\AdvanceBalances;
 use App\Filament\Pages\Collections\CollectPayment;
 use App\Filament\Resources\Payments\Pages\ListPayments;
 use App\Filament\Resources\Payments\Pages\ViewPayment;
 use App\Filament\Resources\Payments\PaymentResource;
+use App\Filament\Support\PaymentMonths;
 use App\Reports\ReceiptDocument;
 use App\Support\Money\Money;
 use Carbon\CarbonImmutable;
@@ -51,6 +53,7 @@ function pendingPayment($test, string $taka = '1500'): Payment
 {
     return app(RecordPayment::class)($test->cashier, PaymentData::fromForm([
         'member_id' => $test->member->id, 'method' => 'cash', 'amount' => Money::ofTaka($taka), 'received_on' => '2026-07-05',
+        'duplicate_reason' => 'Paid again in the test',
     ]));
 }
 
@@ -183,7 +186,7 @@ it('shows the pending count on the menu and renders in Bangla', function (): voi
     $this->get(CollectPayment::getUrl())->assertOk()->assertSee('আদায় গ্রহণ');
 });
 
-it('warns when the same member already paid the same amount that day, without blocking', function (): void {
+it('asks for a reason when the same member already paid the same amount that day, and keeps it', function (): void {
     pendingPayment($this, '1220');
     $this->actingAs($this->cashier);
 
@@ -194,10 +197,22 @@ it('warns when the same member already paid the same amount that day, without bl
         ->assertDontSee(__('payments.duplicate.title'))
         ->fillForm(['amount' => '1,220'])
         ->callAction('record')
+        ->assertHasFormErrors(['duplicate_reason' => 'required'])
+        ->fillForm(['duplicate_reason' => 'Paid for his brother as well'])
+        ->callAction('record')
         ->assertHasNoFormErrors()
         ->assertNotified(__('payments.collect.saved', ['amount' => '৳ 1,220.00']));
 
-    expect(Payment::query()->where('status', PaymentStatus::Pending)->count())->toBe(2);
+    expect(Payment::query()->where('status', PaymentStatus::Pending)->count())->toBe(2)
+        ->and(Payment::query()->latest('id')->first()?->duplicate_reason)->toBe('Paid for his brother as well');
+});
+
+it('refuses a second same-day same-amount cash payment without a reason', function (): void {
+    pendingPayment($this, '1220');
+
+    expect(fn () => app(RecordPayment::class)($this->cashier, PaymentData::fromForm([
+        'member_id' => $this->member->id, 'method' => 'cash', 'amount' => Money::ofTaka('1220'), 'received_on' => '2026-07-05',
+    ])))->toThrow(DomainRuleViolation::class, __('payments.errors.duplicate_reason_required'));
 });
 
 it('ignores rejected, cancelled and other-day payments when looking for duplicates', function (): void {
@@ -250,4 +265,31 @@ it('counts only pending payments as selectable, following the filters', function
 
     expect(Livewire::test(ListPayments::class)->instance()->getAllSelectableTableRecordsCount())->toBe(1)
         ->and(Livewire::test(ListPayments::class)->filterTable('status', 'approved')->instance()->getAllSelectableTableRecordsCount())->toBe(0);
+});
+
+it('counts other pending payments first in the preview', function (): void {
+    // July: registration 200 + 1,020 = ৳1,220 open; a ৳1,000 payment is waiting for approval.
+    pendingPayment($this, '1000');
+
+    $preview = app(PaymentPreviewer::class)->preview($this->member, Money::ofTaka('500'));
+
+    expect($preview['pending_count'])->toBe(1)
+        ->and($preview['pending_total']->poisha)->toBe(100000)
+        ->and($preview['to_dues']->poisha)->toBe(22000)
+        ->and($preview['remainder']->poisha)->toBe(28000);
+});
+
+it('shows which months each payment paid', function (): void {
+    $payment = pendingPayment($this, '1500'); // registration 200 + July 1,020, ৳280 to advance
+    expect(PaymentMonths::describe($payment))->toBe(__('payments.for_months.pending'));
+
+    app(ApprovePayment::class)($this->accountant, $payment);
+
+    expect(PaymentMonths::describe($payment->fresh(['allocations.due'])))->toBe('July 2026 + ৳ 280 to advance');
+});
+
+it('tells the approver what approving now will settle', function (): void {
+    $payment = pendingPayment($this, '1500');
+
+    expect(PaymentMonths::onApproval($payment))->toBe(__('payments.for_months.on_approval', ['what' => 'July 2026 (৳ 1,220) + ৳ 280 to advance']));
 });

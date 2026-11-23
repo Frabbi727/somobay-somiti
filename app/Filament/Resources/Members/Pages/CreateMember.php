@@ -12,6 +12,7 @@ use App\Domain\Members\Terms\Enums\ConsentChannel;
 use App\Domain\Members\Terms\Models\MembershipTerms;
 use App\Filament\Concerns\ConfirmsWithTier;
 use App\Filament\Resources\Members\MemberResource;
+use App\Filament\Resources\Members\Support\BackDuesPreview;
 use App\Filament\Resources\Members\Support\MemberPresenter;
 use App\Filament\Support\ChangeSummary;
 use App\Filament\Support\DomainActionRunner;
@@ -44,6 +45,7 @@ final class CreateMember extends CreateRecord
                     $this->month(),
                 ),
             ),
+            description: fn (): ?string => BackDuesPreview::summary($this->data ?? []),
             showOld: false,
         )
             ->mountUsing(fn () => $this->form->validate())
@@ -65,6 +67,9 @@ final class CreateMember extends CreateRecord
                 ConsentChannel::Office,
                 (string) Str::uuid(),
             ),
+            duesStartMonth: is_string($data['dues_start_month'] ?? null) && preg_match('/^\d{4}-\d{2}$/', $data['dues_start_month']) === 1
+                ? YearMonth::parse($data['dues_start_month'])
+                : null,
         ));
     }
 

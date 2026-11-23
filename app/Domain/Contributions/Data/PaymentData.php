@@ -20,6 +20,8 @@ final readonly class PaymentData
         public ?string $trxId = null,
         public ?string $proofPath = null,
         public ?string $notes = null,
+        /** Why a same-day, same-amount cash/bank payment is recorded again (audit F-07). */
+        public ?string $duplicateReason = null,
     ) {}
 
     /**
@@ -44,6 +46,7 @@ final readonly class PaymentData
             trxId: ($trx = $text('trx_id')) === null ? null : strtoupper($trx),
             proofPath: $text('proof_path'),
             notes: $text('notes'),
+            duplicateReason: $text('duplicate_reason'),
         );
     }
 }

@@ -13,6 +13,8 @@ use App\Models\User;
 use App\Policies\PaymentPolicy;
 use App\Support\Money\Money;
 use App\Support\Money\MoneyCast;
+use App\Support\Time\YearMonth;
+use App\Support\Time\YearMonthCast;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
@@ -45,6 +47,12 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property string|null $reversal_reason
  * @property int|null $journal_entry_id
  * @property int|null $reversal_journal_entry_id
+ * @property Money|null $outstanding_before_poisha
+ * @property Money|null $outstanding_after_poisha
+ * @property Money|null $other_owed_after_poisha
+ * @property Money|null $advance_after_poisha
+ * @property YearMonth|null $paid_through_after
+ * @property string|null $duplicate_reason
  * @property-read Member $member
  * @property-read User $recorder
  * @property-read User|null $approver
@@ -111,6 +119,14 @@ final class Payment extends Model
     }
 
     /**
+     * Approved after receipt figures were frozen (older payments print live figures, labelled).
+     */
+    public function hasFrozenFigures(): bool
+    {
+        return $this->outstanding_after_poisha !== null;
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
@@ -125,6 +141,11 @@ final class Payment extends Model
             'rejected_at' => 'immutable_datetime',
             'cancelled_at' => 'immutable_datetime',
             'reversed_at' => 'immutable_datetime',
+            'outstanding_before_poisha' => MoneyCast::class,
+            'outstanding_after_poisha' => MoneyCast::class,
+            'other_owed_after_poisha' => MoneyCast::class,
+            'advance_after_poisha' => MoneyCast::class,
+            'paid_through_after' => YearMonthCast::class,
         ];
     }
 }

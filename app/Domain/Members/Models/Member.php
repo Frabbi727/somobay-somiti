@@ -9,9 +9,11 @@ use App\Domain\Members\Enums\Gender;
 use App\Domain\Members\Enums\MaritalStatus;
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Enums\RegistrationDocument;
+use App\Domain\Shared\Exceptions\ImmutableRecord;
 use App\Models\User;
 use App\Policies\MemberPolicy;
 use App\Support\Time\YearMonth;
+use App\Support\Time\YearMonthCast;
 use Carbon\CarbonImmutable;
 use Database\Factories\MemberFactory;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
@@ -41,6 +43,7 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property string|null $nid
  * @property CarbonImmutable|null $date_of_birth
  * @property string $mobile
+ * @property YearMonth $dues_start_month
  * @property string|null $email
  * @property string|null $address
  * @property Gender|null $gender
@@ -68,6 +71,16 @@ final class Member extends Model
     use HasFactory, LogsActivity, SoftDeletes;
 
     protected $guarded = [];
+
+    protected static function booted(): void
+    {
+        // The dues start month is fixed once set (a database trigger backs this up).
+        self::updating(function (self $member): void {
+            if ($member->isDirty('dues_start_month') && $member->getOriginal('dues_start_month') !== null) {
+                throw ImmutableRecord::for(self::class, $member->getKey());
+            }
+        });
+    }
 
     /**
      * @return HasMany<Nominee, $this>
@@ -159,6 +172,7 @@ final class Member extends Model
             'documents_received' => AsEnumCollection::of(RegistrationDocument::class),
             'date_of_birth' => 'immutable_date',
             'joined_on' => 'immutable_date',
+            'dues_start_month' => YearMonthCast::class,
             'deactivated_at' => 'immutable_datetime',
         ];
     }

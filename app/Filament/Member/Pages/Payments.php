@@ -9,6 +9,7 @@ use App\Domain\Contributions\Models\Payment;
 use App\Filament\Member\Concerns\ScopedToMember;
 use App\Filament\Member\Support\PaymentStatusNote;
 use App\Filament\Support\Display;
+use App\Filament\Support\PaymentMonths;
 use App\Reports\ReceiptDocument;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -49,13 +50,14 @@ final class Payments extends Page implements HasTable
     public function table(Table $table): Table
     {
         return $table
-            ->query(fn (): Builder => Payment::query()->where('member_id', self::member()->id)->with('journalEntry'))
+            ->query(fn (): Builder => Payment::query()->where('member_id', self::member()->id)->with(['journalEntry', 'allocations.due']))
             ->defaultSort(fn (Builder $query): Builder => $query->orderByDesc('received_on')->orderByDesc('id'))
             ->columns([
                 TextColumn::make('received_on')->label(__('payments.field.received_on'))->formatStateUsing(fn (Payment $record): string => Display::date($record->received_on))->sortable(),
                 TextColumn::make('method')->label(__('payments.field.method'))->badge()->color('gray'),
                 TextColumn::make('trx_id')->label(__('payments.field.trx_id'))->placeholder('—')->visibleFrom('md'),
                 TextColumn::make('amount_poisha')->label(__('payments.field.amount'))->formatStateUsing(fn (Payment $record): string => Display::money($record->amount_poisha))->alignment(Alignment::End)->weight('bold'),
+                TextColumn::make('for_months')->label(__('payments.field.for_months'))->state(fn (Payment $record): string => PaymentMonths::describe($record))->wrap(),
                 TextColumn::make('status')->label(__('payments.field.status'))->badge()->description(fn (Payment $record): ?string => PaymentStatusNote::for($record))->wrap(),
             ])
             ->filters([

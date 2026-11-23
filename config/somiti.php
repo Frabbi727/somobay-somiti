@@ -136,6 +136,18 @@ return [
     'approval_reminder_days' => (int) env('SOMITI_APPROVAL_REMINDER_DAYS', 3),
 
     /*
+    | Late joiners (design 2026-11-22): when enabled, a new member is billed the deposit and
+    | service charge of every month from the go-live month, plus an entry premium of this many
+    | basis points of the back-month deposits (1% = 100). Both are financial settings (maker-checker).
+    */
+
+    'back_dues' => [
+        'enabled' => (bool) env('SOMITI_BACK_DUES_ENABLED', false),
+        'entry_premium_bps' => 0,
+        'entry_premium_max_bps' => 5000,
+    ],
+
+    /*
     | Member portal and app: members sign in with mobile + the password the secretary sets for them.
     | Switch on to also offer sign-in by SMS code (needs an SMS gateway).
     */

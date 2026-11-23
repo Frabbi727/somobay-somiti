@@ -6,7 +6,7 @@ namespace App\Reports;
 
 use App\Domain\Contributions\Enums\AdvanceEntryKind;
 use App\Domain\Contributions\Models\Payment;
-use App\Domain\Contributions\Services\PaidThroughCalculator;
+use App\Domain\Members\Portal\MemberPosition;
 use App\Support\Money\Money;
 use App\Support\Pdf\PdfRenderer;
 use Illuminate\Support\Facades\URL;
@@ -19,7 +19,7 @@ final class ReceiptDocument
 {
     public function __construct(
         private readonly PdfRenderer $pdf,
-        private readonly PaidThroughCalculator $paidThrough,
+        private readonly MemberPosition $position,
     ) {}
 
     public function pdf(Payment $payment): string
@@ -34,8 +34,8 @@ final class ReceiptDocument
         return $this->pdf->render('reports.pdf.receipt', [
             'payment' => $payment,
             'held' => $held,
-            'paidThrough' => $this->paidThrough->for($payment->member),
-            'estimate' => $this->paidThrough->estimatedMonths($payment->member),
+            'frozen' => $payment->hasFrozenFigures(),
+            'live' => $payment->hasFrozenFigures() ? null : $this->position->for($payment->member),
             'heading' => __('payments.receipt.title'),
         ], 'P', __('payments.receipt.title'));
     }

@@ -49,6 +49,7 @@ final class ChartOfAccountsSeeder extends Seeder
         '4111' => ['Service Charge Income', 'সার্ভিস চার্জ আয়', AccountType::Income, false, false],
         '4121' => ['Late Fee Income', 'বিলম্ব ফি আয়', AccountType::Income, false, false],
         '4131' => ['Exit Fee Income', 'প্রত্যাহার ফি আয়', AccountType::Income, false, false],
+        '4141' => ['Entry Premium Income', 'প্রবেশ প্রিমিয়াম আয়', AccountType::Income, false, false],
         '4201' => ['Investment Profit', 'বিনিয়োগ মুনাফা', AccountType::Income, false, false],
         '4211' => ['Gain on Sale of Investments', 'বিনিয়োগ বিক্রয়ে লাভ', AccountType::Income, false, false],
         '5101' => ['Office & Stationery', 'অফিস ও স্টেশনারি খরচ', AccountType::Expense, false, false],

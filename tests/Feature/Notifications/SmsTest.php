@@ -74,11 +74,15 @@ it('texts a receipt when a payment is approved', function (): void {
     travelTo('2026-07-05');
     receivePayment($member, '610');
 
-    $body = collect($gateway->sent)->firstWhere(0, '01733333333')[1] ?? '';
+    $texts = collect($gateway->sent)->where(0, '01733333333')->pluck(1)->values();
 
-    expect($body)->toContain('৳ ৬১০.০০')
-        ->and($body)->toContain('RV-২০২৬-২৭-০০০০০১')
-        ->and($body)->toContain('জুলাই ২০২৬');
+    // First "recorded, waiting for approval", then the receipt with what is still owed.
+    expect($texts)->toHaveCount(2)
+        ->and($texts[0])->toContain('৳ ৬১০.০০')->toContain('অনুমোদনের অপেক্ষায়')
+        ->and($texts[1])->toContain('৳ ৬১০.০০')
+        ->and($texts[1])->toContain('RV-২০২৬-২৭-০০০০০১')
+        ->and($texts[1])->toContain('জুলাই ২০২৬')
+        ->and($texts[1])->toContain('বাকি: ৳ ০.০০');
 });
 
 it('sends the dues notice only to members who still owe after advances', function (): void {

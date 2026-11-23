@@ -21,7 +21,7 @@ use App\Filament\Member\Pages\Payments;
 use App\Filament\Member\Pages\PayOnline;
 use App\Filament\Member\Pages\Profile;
 use App\Filament\Member\Pages\Statement;
-use App\Filament\Member\Widgets\MemberStatsWidget;
+use App\Filament\Member\Widgets\MemberPositionWidget;
 use App\Filament\Member\Widgets\RecentPaymentsWidget;
 use App\Reports\ReceiptDocument;
 use App\Support\Bangla\BanglaNumber;
@@ -180,22 +180,25 @@ it('shows a member only their own money', function (): void {
     actAsMember($this, $this->alice);
 
     // Members see the portal in their language (Bangla by default).
-    Livewire::test(MemberStatsWidget::class)
-        ->assertSee('৳ ১,০০০.০০')       // savings (July deposit)
-        ->assertSee('৳ ১,৭৮০.০০')       // advance
-        ->assertSee('জুলাই ২০২৬');
+    Livewire::test(MemberPositionWidget::class)
+        ->assertSee('৳ ১,০০০')          // savings (July deposit), no ".00"
+        ->assertSee('৳ ১,৭৮০')          // advance
+        ->assertSee('জুলাই ২০২৬ পর্যন্ত মাসিক চাঁদা পরিশোধিত');
 
     $alicePayments = Payment::query()->where('member_id', $this->alice->id)->get();
     $bobPayments = Payment::query()->where('member_id', $this->bob->id)->get();
 
     Livewire::test(RecentPaymentsWidget::class)->assertCanSeeTableRecords($alicePayments)->assertCanNotSeeTableRecords($bobPayments);
     Livewire::test(Payments::class)->assertCanSeeTableRecords($alicePayments)->assertCanNotSeeTableRecords($bobPayments);
-    Livewire::test(Dues::class)->assertCountTableRecords(0);
+    Livewire::test(Dues::class)->filterTable('status', 'open')->assertCountTableRecords(0);
 
     actAsMember($this, $this->bob);
 
+    // Every month shows by default (the Alice check above set a saved "open" filter, so clear it).
     Livewire::test(Dues::class)
-        ->assertCanSeeTableRecords(Due::query()->where('member_id', $this->bob->id)->where('status', 'open')->get())
+        ->resetTableFilters()
+        ->assertSee(__('portal.month_state.partly_paid', [], 'bn'))   // Bob's ৳50 part-pays a due
+        ->assertCanSeeTableRecords(Due::query()->where('member_id', $this->bob->id)->get())
         ->assertCanNotSeeTableRecords(Due::query()->where('member_id', $this->alice->id)->get());
 });
 

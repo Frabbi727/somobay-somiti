@@ -7,6 +7,7 @@ namespace Database\Factories;
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Models\Member;
 use App\Models\User;
+use App\Support\Time\YearMonth;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\DB;
 
@@ -32,6 +33,7 @@ final class MemberFactory extends Factory
             'mobile' => '01'.fake()->randomElement(['3', '5', '6', '7', '8', '9']).fake()->unique()->numerify('########'),
             'status' => MemberStatus::Active,
             'joined_on' => '2026-07-01',
+            'dues_start_month' => YearMonth::parse('2026-07'),
             'created_by' => User::factory(),
         ];
     }

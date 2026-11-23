@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Contributions\BackDues\BackDuesPlanner;
 use App\Domain\Contributions\Models\Due;
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Models\Member;
@@ -14,6 +15,7 @@ use App\Filament\Resources\Members\Pages\ListMembers;
 use App\Filament\Resources\Members\Pages\ViewMember;
 use App\Filament\Resources\Members\Support\MemberPresenter;
 use App\Filament\Support\ChangeSummary;
+use App\Filament\Support\Display;
 use App\Support\Time\YearMonth;
 use Carbon\CarbonImmutable;
 use Filament\Actions\Testing\TestAction;
@@ -79,6 +81,40 @@ it('adds a member with shares, nominees and a photo', function (): void {
         ->and($member->photo_path)->not->toBeNull()
         ->and(Storage::disk('local')->exists((string) $member->photo_path))->toBeTrue()
         ->and(Due::query()->where('member_id', $member->id)->sole()->amount_poisha->poisha)->toBe(20000);
+});
+
+it('previews the late joiner\'s back-dues and bills exactly that total', function (): void {
+    config(['somiti.back_dues.enabled' => true, 'somiti.back_dues.entry_premium_bps' => 1000]);
+    $undo = Repeater::fake();
+    $plan = app(BackDuesPlanner::class)->plan(1, YearMonth::parse('2026-07'), YearMonth::parse('2026-10'));
+
+    Livewire::test(CreateMember::class)
+        ->assertSchemaStateSet(['dues_start_month' => '2026-07'])
+        ->fillForm([
+            'name_bn' => 'রহিম উদ্দিন',
+            'name_en' => 'Rahim Uddin',
+            'mobile' => '01712-345678',
+            'joined_on' => '2026-10-01',
+            'shares' => 1,
+            'effective_from' => '2026-10',
+            'dues_start_month' => '2026-07',
+            'gender' => 'male',
+            ...paperAddress('present'),
+            ...paperAddress('permanent'),
+            'terms_accepted' => true,
+            'nominees' => [nominee(['name' => 'Karim', 'relation_id' => relationId('son'), 'nid' => '1234567890', 'share_percent' => '100'])],
+        ])
+        ->assertSee(__('members.back_dues.total'))
+        ->assertSee(Display::moneyShort($plan->total()))
+        ->callAction(memberFormAction('create'))
+        ->assertHasNoFormErrors();
+
+    $undo();
+    $member = Member::query()->sole();
+
+    expect($plan->months)->toHaveCount(3)
+        ->and($member->dues_start_month->equals(YearMonth::parse('2026-07')))->toBeTrue()
+        ->and(Due::query()->where('member_id', $member->id)->get()->sum(fn (Due $due): int => $due->amount_poisha->poisha))->toBe($plan->total()->poisha);
 });
 
 it('rejects an invalid mobile before confirming', function (): void {

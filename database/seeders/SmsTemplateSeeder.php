@@ -32,6 +32,21 @@ final class SmsTemplateSeeder extends Seeder
         ];
     }
 
+    /**
+     * Also inserted by the 2026_11_23_000005 migration.
+     *
+     * @return array<string, array{0: string, 1: string}>
+     */
+    public static function paymentRecorded(): array
+    {
+        return [
+            SmsTemplateKey::PaymentRecorded->value => [
+                '{name}, {date} তারিখে আপনার {amount} জমা নেওয়া হয়েছে, অনুমোদনের অপেক্ষায়। অনুমোদনের পর রসিদ এসএমএস পাবেন। -{somiti}',
+                '{name}, {amount} taken on {date} is recorded and waiting for approval. You will get a receipt SMS once it is approved. -{somiti}',
+            ],
+        ];
+    }
+
     public function run(): void
     {
         $defaults = [
@@ -44,8 +59,8 @@ final class SmsTemplateSeeder extends Seeder
                 '{name}, your {month} instalment is {amount}, due by {due_date}. -{somiti}',
             ],
             SmsTemplateKey::PaymentApproved->value => [
-                '{name}, {amount} গ্রহণ করা হয়েছে, রসিদ {voucher}। পরিশোধিত: {paid_through} পর্যন্ত। -{somiti}',
-                '{name}, {amount} received, receipt {voucher}. Paid through {paid_through}. -{somiti}',
+                '{name}, {amount} গ্রহণ করা হয়েছে, রসিদ {voucher}। পরিশোধিত: {paid_through} পর্যন্ত। বাকি: {owed}। -{somiti}',
+                '{name}, {amount} received, receipt {voucher}. Paid through {paid_through}. Still owed: {owed}. -{somiti}',
             ],
             SmsTemplateKey::LoginCode->value => [
                 '{somiti} লগইন কোড: {code}। {minutes} মিনিট বৈধ। কাউকে জানাবেন না।',
@@ -60,6 +75,7 @@ final class SmsTemplateSeeder extends Seeder
                 '{somiti}: sorry, your membership registration was not accepted. Reason: {reason}. Please contact the office.',
             ],
             ...self::paymentOutcomes(),
+            ...self::paymentRecorded(),
         ];
 
         foreach ($defaults as $key => [$bn, $en]) {

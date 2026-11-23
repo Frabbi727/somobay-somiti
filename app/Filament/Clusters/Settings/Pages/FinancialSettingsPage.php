@@ -142,6 +142,14 @@ final class FinancialSettingsPage extends Page implements HasActions, HasSchemas
                     ->columnSpanFull()
                     ->live(),
             ]),
+            Section::make(__('financial_settings.section.joining'))
+                ->description(__('financial_settings.section.joining_help'))
+                ->columns(3)
+                ->columnSpanFull()
+                ->schema([
+                    Toggle::make('back_dues_enabled')->label(__('financial_settings.field.back_dues_enabled'))->live(),
+                    $percent('entry_premium')->helperText(__('financial_settings.field.entry_premium_help')),
+                ]),
             Section::make(__('financial_settings.section.year_end'))
                 ->description(__('financial_settings.section.year_end_help'))
                 ->columns(3)

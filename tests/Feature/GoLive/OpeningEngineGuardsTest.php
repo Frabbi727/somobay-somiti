@@ -9,6 +9,7 @@ use App\Domain\Accounting\Data\JournalLineData;
 use App\Domain\Accounting\Enums\VoucherType;
 use App\Domain\Contributions\Actions\ApplyLateFees;
 use App\Domain\Contributions\Actions\GenerateMonthlyDues;
+use App\Domain\Contributions\Enums\DueOrigin;
 use App\Domain\Contributions\Enums\DueStatus;
 use App\Domain\Contributions\Enums\DueType;
 use App\Domain\Contributions\Models\Due;
@@ -40,7 +41,7 @@ afterEach(fn () => CarbonImmutable::setTestNow());
 
 function openingGuardMember(User $admin): Member
 {
-    return Member::query()->create([...memberData()->toAttributes(), 'member_no' => 'M-0001', 'status' => MemberStatus::Active, 'created_by' => $admin->id]);
+    return Member::query()->create([...memberData()->toAttributes(), 'member_no' => 'M-0001', 'status' => MemberStatus::Active, 'dues_start_month' => YearMonth::parse('2026-07'), 'created_by' => $admin->id]);
 }
 
 it('opens a share lot in a month with no rate plan and charges no registration fee', function (): void {
@@ -70,7 +71,7 @@ it('never charges a late fee on opening arrears', function (): void {
     Due::query()->create([
         'member_id' => $member->id, 'month' => YearMonth::parse('2026-06'), 'type' => DueType::Deposit, 'share_lot_id' => $lot->id,
         'adjustment_seq' => 0, 'rate_plan_id' => $plan->id, 'snapshot' => $plan->snapshot(), 'amount_poisha' => Money::ofTaka('1500'),
-        'paid_poisha' => Money::zero(), 'due_date' => '2026-06-30', 'status' => DueStatus::Open, 'opening' => true,
+        'paid_poisha' => Money::zero(), 'due_date' => '2026-06-30', 'status' => DueStatus::Open, 'origin' => DueOrigin::Opening,
     ]);
 
     expect(app(ApplyLateFees::class)()['count'])->toBe(0);

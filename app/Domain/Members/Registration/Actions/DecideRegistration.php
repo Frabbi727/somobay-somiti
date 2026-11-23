@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Members\Registration\Actions;
 
+use App\Domain\Contributions\BackDues\BackDuesPlanner;
 use App\Domain\Members\Actions\CreateMember;
 use App\Domain\Members\Portal\MemberTokens;
 use App\Domain\Members\Registration\Enums\MemberApplicationStatus;
@@ -38,6 +39,7 @@ final class DecideRegistration
         private readonly MemberTokens $tokens,
         private readonly CauserResolver $causer,
         private readonly WorkflowNotifier $workflow,
+        private readonly BackDuesPlanner $backDues,
     ) {}
 
     public function __invoke(
@@ -134,7 +136,7 @@ final class DecideRegistration
         // Closed first, so the mobile is no longer "invited" when the member rules check it.
         $application->forceFill(['status' => MemberApplicationStatus::Approved, 'current_step' => null, 'decided_at' => CarbonImmutable::now()])->save();
 
-        $member = ($this->createMember)($actor, $data, $count, $effectiveFrom, $application->user);
+        $member = ($this->createMember)($actor, $data, $count, $effectiveFrom, $application->user, duesStartMonth: $this->backDues->defaultDuesStart($effectiveFrom));
 
         $application->forceFill(['member_id' => $member->id])->save();
         $this->tokens->revokeAccessTokens($application->user);

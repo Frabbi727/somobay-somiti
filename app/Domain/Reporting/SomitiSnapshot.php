@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Reporting;
 
+use App\Domain\Contributions\Enums\DueStatus;
 use App\Domain\Contributions\Enums\PaymentStatus;
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Models\Member;
@@ -37,6 +38,43 @@ final class SomitiSnapshot
             ->where('status', PaymentStatus::Approved->value)
             ->whereBetween('received_on', [$month->firstDay()->toDateString(), $month->lastDay()->toDateString()])
             ->sum('amount_poisha'));
+    }
+
+    /**
+     * Everything billed for a month (all due types), whether paid yet or not; waived and cancelled
+     * dues are left out.
+     */
+    public function billedFor(YearMonth $month): Money
+    {
+        return Money::ofPoisha((int) DB::table('dues')
+            ->where('month', $month->toDateString())
+            ->whereNotIn('status', [DueStatus::Waived->value, DueStatus::Cancelled->value])
+            ->sum('amount_poisha'));
+    }
+
+    /**
+     * What members owe today: the unpaid part of open dues already due (due date on or before today).
+     * Months not yet due are not counted.
+     */
+    public function owedNow(CarbonImmutable $today): Money
+    {
+        return Money::ofPoisha((int) DB::table('dues')
+            ->where('status', DueStatus::Open->value)
+            ->where('due_date', '<=', $today->toDateString())
+            ->sum(DB::raw('amount_poisha - paid_poisha')));
+    }
+
+    /**
+     * Payments recorded but not yet approved.
+     *
+     * @return array{count: int, total: Money}
+     */
+    public function pendingPayments(): array
+    {
+        $row = DB::table('payments')->where('status', PaymentStatus::Pending->value)
+            ->selectRaw('count(*) as n, coalesce(sum(amount_poisha), 0) as total')->first();
+
+        return ['count' => (int) ($row->n ?? 0), 'total' => Money::ofPoisha((int) ($row->total ?? 0))];
     }
 
     /**
