@@ -243,7 +243,8 @@ final class FinancialSettingsPage extends Page implements HasActions, HasSchemas
             expected: fn (FinancialSettingsVersion $record): string => (string) $record->id,
             submitLabel: __('financial_settings.actions.approve'),
             description: fn (FinancialSettingsVersion $record): string => __('financial_settings.actions.approve_description', [
-                'changes' => strip_tags(str_replace('<br>', '; ', $this->describeChanges($record, against: app(FinancialSettings::class)->current()))),
+                // Plain text: the dialog escapes it again, so undo the table's HTML escaping here.
+                'changes' => html_entity_decode(strip_tags(str_replace('<br>', '; ', $this->describeChanges($record, against: app(FinancialSettings::class)->current()))), ENT_QUOTES | ENT_HTML5),
             ]),
         );
     }
