@@ -53,7 +53,15 @@ final class CancelBackDues
                 throw DomainRuleViolation::because('dues.errors.no_back_dues');
             }
 
-            if ($dues->contains(fn (Due $due): bool => $due->paid_poisha->isPositive())) {
+            // Any money on any back-due blocks the cancel, including months already fully paid
+            // (settled, so no longer open): cancelling only the rest would leave a half-billed member.
+            $anythingPaid = Due::query()
+                ->where('member_id', $locked->id)
+                ->where('origin', DueOrigin::BackDues)
+                ->where('paid_poisha', '>', 0)
+                ->exists();
+
+            if ($anythingPaid) {
                 throw DomainRuleViolation::because('dues.errors.back_dues_paid');
             }
 

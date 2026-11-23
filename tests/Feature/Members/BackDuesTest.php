@@ -18,6 +18,7 @@ use App\Domain\Members\Terms\Enums\ConsentChannel;
 use App\Domain\Members\Terms\Models\MembershipTerms;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Enums\Role;
+use App\Filament\Resources\Members\Pages\ViewMember;
 use App\Models\User;
 use App\Support\Money\Money;
 use App\Support\Time\YearMonth;
@@ -182,10 +183,28 @@ it('cancels unpaid back-dues by a second person, with a reason, and keeps the du
         ->and(Activity::query()->where('event', 'back_dues_cancelled')->sole()->properties['reason'])->toBe('Wrong start month');
 });
 
-it('refuses to cancel back-dues once anything is paid', function (): void {
+it('shows the cancel back-dues button only while nothing is paid', function (): void {
+    Filament\Facades\Filament::setCurrentPanel('admin');
     $member = lateJoiner();
-    receivePayment($member, '100');
+    $this->actingAs(userWithRole(Role::Accountant));
+    $page = fn () => Livewire\Livewire::test(ViewMember::class, ['record' => $member->getRouteKey()]);
+
+    $page()->assertActionVisible('cancelBackDues');
+
+    receivePayment($member, '1020');   // the whole first back month: settled
+
+    $page()->assertActionHidden('cancelBackDues');
+});
+
+it('refuses to cancel back-dues once anything is paid', function (string $paid): void {
+    $member = lateJoiner();
+    receivePayment($member, $paid);
 
     expect(fn () => app(CancelBackDues::class)(userWithRole(Role::Accountant), $member, 'Wrong start month'))
         ->toThrow(DomainRuleViolation::class, __('dues.errors.back_dues_paid'));
-});
+
+    expect(Due::query()->where('member_id', $member->id)->where('status', 'cancelled')->count())->toBe(0);
+})->with([
+    'part of the first month' => ['100'],
+    'the whole first month (settled, no longer open)' => ['1020'],
+]);

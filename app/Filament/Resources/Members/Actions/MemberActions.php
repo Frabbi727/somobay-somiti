@@ -188,13 +188,14 @@ final class MemberActions
 
     private static function unpaidBackDues(Member $member): Money
     {
-        $dues = Due::query()->where('member_id', $member->id)->where('origin', DueOrigin::BackDues)->where('status', DueStatus::Open)->get();
+        $backDues = Due::query()->where('member_id', $member->id)->where('origin', DueOrigin::BackDues)->get();
 
-        if ($dues->contains(fn (Due $due): bool => $due->paid_poisha->isPositive())) {
+        // Same rule as CancelBackDues: any money on any back-due (paid months included) hides the button.
+        if ($backDues->contains(fn (Due $due): bool => $due->paid_poisha->isPositive())) {
             return Money::zero();
         }
 
-        return Money::sum($dues->map(fn (Due $due): Money => $due->amount_poisha)->all());
+        return Money::sum($backDues->where('status', DueStatus::Open)->map(fn (Due $due): Money => $due->amount_poisha)->all());
     }
 
     public static function reactivate(): Action
