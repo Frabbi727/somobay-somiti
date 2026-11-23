@@ -100,6 +100,9 @@
                             : __('payments.collect.to_advance_plain', ['amount' => Display::money($preview['remainder'])]) }}
                     @endif
                 </p>
+                @if ($preview['pending_count'] > 0)
+                    <p class="muted">{{ __('payments.collect.pending_counted', ['count' => Display::digits($preview['pending_count']), 'amount' => Display::money($preview['pending_total'])]) }}</p>
+                @endif
                 <p class="muted">{{ __('payments.collect.preview_note') }}</p>
             @endif
         </x-filament::section>

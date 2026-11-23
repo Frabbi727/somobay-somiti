@@ -9,11 +9,11 @@ use App\Domain\Contributions\Data\PaymentData;
 use App\Domain\Contributions\Enums\PaymentMethod;
 use App\Domain\Contributions\Models\Payment;
 use App\Domain\Contributions\Services\AdvanceLedger;
-use App\Domain\Contributions\Services\PaidThroughCalculator;
 use App\Domain\Contributions\Services\PaymentPreviewer;
 use App\Domain\Contributions\Services\SimilarPayments;
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Models\Member;
+use App\Domain\Members\Portal\MemberPosition;
 use App\Filament\Concerns\ConfirmsWithTier;
 use App\Filament\Forms\Components\MoneyInput;
 use App\Filament\Navigation\NavGroup;
@@ -122,6 +122,7 @@ final class CollectPayment extends Page
                 DatePicker::make('received_on')
                     ->label(__('payments.field.received_on'))
                     ->native(false)
+                    ->live()
                     ->required(),
                 TextInput::make('trx_id')
                     ->label(__('payments.field.trx_id'))
@@ -137,6 +138,14 @@ final class CollectPayment extends Page
                     ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp', 'application/pdf'])
                     ->maxSize((int) config('somiti.max_proof_kb')),
                 Textarea::make('notes')->label(__('payments.field.notes'))->rows(2),
+                Textarea::make('duplicate_reason')
+                    ->label(__('payments.field.duplicate_reason'))
+                    ->helperText(__('payments.field.duplicate_reason_help'))
+                    ->rows(2)
+                    ->minLength(5)
+                    ->visible(fn (Get $get): bool => $this->method($get('method'))?->needsTrxId() !== true && $this->similarPayments()->isNotEmpty())
+                    ->required(fn (Get $get): bool => $this->method($get('method'))?->needsTrxId() !== true && $this->similarPayments()->isNotEmpty())
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -161,7 +170,7 @@ final class CollectPayment extends Page
             'clearThrough' => collect($previewer->clearThrough($openDues))->keyBy(fn (array $row): string => $row['month']->toDateString()),
             'similar' => $this->similarPayments(),
             'advance' => app(AdvanceLedger::class)->balance($member->id),
-            'paidThrough' => app(PaidThroughCalculator::class)->for($member),
+            'paidThrough' => app(MemberPosition::class)->paidThroughOf($member),
             'preview' => $amount === null ? null : $previewer->preview($member, $amount),
         ];
     }

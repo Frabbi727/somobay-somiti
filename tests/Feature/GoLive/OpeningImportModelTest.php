@@ -9,7 +9,6 @@ use App\Enums\Role;
 use App\Support\Time\YearMonth;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 function draftImport(array $overrides = []): OpeningImport
 {
@@ -38,10 +37,10 @@ it('never changes or deletes a posted import', function (): void {
         ->and(fn () => $import->delete())->toThrow(ImmutableRecord::class);
 });
 
-it('accepts opening kinds and the opening flag on dues', function (): void {
+it('accepts opening kinds and the opening origin on dues', function (): void {
     expect(DB::selectOne("SELECT pg_get_constraintdef(oid) AS def FROM pg_constraint WHERE conname = 'advance_entries_kind_valid'")->def)->toContain("'opening'")
         ->and(DB::selectOne("SELECT pg_get_constraintdef(oid) AS def FROM pg_constraint WHERE conname = 'investment_ledger_kind_valid'")->def)->toContain("'opening'")
-        ->and(Schema::hasColumn('dues', 'opening'))->toBeTrue();
+        ->and(DB::selectOne("SELECT pg_get_constraintdef(oid) AS def FROM pg_constraint WHERE conname = 'dues_origin_valid'")->def)->toContain("'opening'");
 });
 
 it('lets staff see the import and only permitted roles upload or post', function (Role $role, bool $may): void {

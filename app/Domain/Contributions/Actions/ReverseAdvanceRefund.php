@@ -30,6 +30,7 @@ final class ReverseAdvanceRefund
         private readonly ReverseJournal $reverseJournal,
         private readonly AdvanceLedger $advances,
         private readonly CauserResolver $causer,
+        private readonly ApplyAdvance $applyAdvance,
     ) {}
 
     public function __invoke(User $actor, AdvanceLedgerEntry $refund, string $reason): AdvanceLedgerEntry
@@ -61,11 +62,16 @@ final class ReverseAdvanceRefund
             $voucher = JournalEntry::query()->findOrFail($locked->journal_entry_id);
             $reversal = ($this->reverseJournal)($actor, $voucher, $reason, onBehalfOfOwner: true);
 
-            return $this->advances->append($member->id, AdvanceEntryKind::Reversal, $locked->delta_poisha->negated(), [
+            $entry = $this->advances->append($member->id, AdvanceEntryKind::Reversal, $locked->delta_poisha->negated(), [
                 'journal_entry_id' => $reversal->id,
                 'reverses_entry_id' => $locked->id,
                 'created_by' => $actor->id,
             ]);
+
+            // The money is back in the advance: settle any open dues with it straight away.
+            ($this->applyAdvance)([$member->id]);
+
+            return $entry;
         }, attempts: 3));
     }
 }

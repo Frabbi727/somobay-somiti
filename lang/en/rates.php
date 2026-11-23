@@ -83,6 +83,7 @@ return [
         'service_charge' => 'Service charge',
         'registration' => 'Registration fee',
         'deposit' => 'Deposit',
+        'entry_premium' => 'Entry premium',
     ],
     'actions' => [
         'create' => 'New rate plan',

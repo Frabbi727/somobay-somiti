@@ -6,6 +6,7 @@ use App\Domain\Accounting\Actions\OpenFiscalYear;
 use App\Domain\Accounting\Models\JournalEntry;
 use App\Domain\Contributions\Actions\ApplyAdvance;
 use App\Domain\Contributions\Actions\GenerateMonthlyDues;
+use App\Domain\Contributions\Enums\DueOrigin;
 use App\Domain\Contributions\Enums\DueType;
 use App\Domain\Contributions\Models\Due;
 use App\Domain\Contributions\Services\AdvanceLedger;
@@ -71,8 +72,8 @@ it('posts members, shares, arrears, advance, investments and balanced opening vo
         ->and($rahim->sharesIn(YearMonth::parse('2019-02')))->toBe(0)
         ->and(Due::query()->where('type', DueType::Registration)->count())->toBe(0)
         ->and(app(AdvanceLedger::class)->balance($rahim->id)->poisha)->toBe(250000)
-        ->and(Due::query()->where('member_id', $karim->id)->where('opening', true)->get()->map(fn (Due $due): int => $due->amount_poisha->poisha)->sort()->values()->all())->toBe([6000, 150000])
-        ->and(Due::query()->where('opening', true)->first()?->month->equals(YearMonth::parse('2026-06')))->toBeTrue()
+        ->and(Due::query()->where('member_id', $karim->id)->where('origin', DueOrigin::Opening)->get()->map(fn (Due $due): int => $due->amount_poisha->poisha)->sort()->values()->all())->toBe([6000, 150000])
+        ->and(Due::query()->where('origin', DueOrigin::Opening)->first()?->month->equals(YearMonth::parse('2026-06')))->toBeTrue()
         ->and($investment->status)->toBe(InvestmentStatus::Active)
         ->and($investment->name)->toBe('Sonali FDR')
         ->and($investment->journal_entry_id)->not->toBe($entry->id)

@@ -83,6 +83,7 @@ return [
         'service_charge' => 'সার্ভিস চার্জ',
         'registration' => 'ভর্তি ফি',
         'deposit' => 'জমা',
+        'entry_premium' => 'প্রবেশ প্রিমিয়াম',
     ],
     'actions' => [
         'create' => 'নতুন হার পরিকল্পনা',

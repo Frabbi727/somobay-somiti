@@ -205,6 +205,19 @@ it('feeds the year-end defaults, and freezes year-end choices while a year-end w
     CarbonImmutable::setTestNow();
 });
 
+it('shows the changes in the approve dialog as plain text, escaped only once', function (): void {
+    Filament::setCurrentPanel('admin');
+    app()->setLocale('en');
+    $version = proposeSettings($this->accountant, ['back_dues_enabled' => true]);
+
+    $this->actingAs($this->president);
+
+    // The label "Bill new members from the society's start month" has an apostrophe.
+    Livewire::test(FinancialSettingsPage::class)
+        ->mountAction(TestAction::make('approveSettings')->table($version))
+        ->assertMountedActionModalSee("They apply at once: Bill new members from the society's start month: No → Yes");
+});
+
 it('is proposed and approved from the settings page', function (): void {
     Filament::setCurrentPanel('admin');
     app()->setLocale('en');

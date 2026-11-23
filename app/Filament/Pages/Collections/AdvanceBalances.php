@@ -8,8 +8,8 @@ use App\Domain\Contributions\Actions\ApplyAdvance;
 use App\Domain\Contributions\Actions\RefundAdvance;
 use App\Domain\Contributions\Enums\PaymentMethod;
 use App\Domain\Contributions\Models\AdvanceLedgerEntry;
-use App\Domain\Contributions\Services\PaidThroughCalculator;
 use App\Domain\Members\Models\Member;
+use App\Domain\Members\Portal\MemberPosition;
 use App\Enums\Area;
 use App\Filament\Concerns\ConfirmsWithTier;
 use App\Filament\Forms\Components\MoneyInput;
@@ -94,12 +94,12 @@ final class AdvanceBalances extends Page implements HasActions, HasSchemas, HasT
                 TextColumn::make('paid_through')
                     ->label(__('payments.field.paid_through'))
                     ->state(function (Member $record): string {
-                        $month = app(PaidThroughCalculator::class)->for($record);
+                        $month = app(MemberPosition::class)->paidThroughOf($record);
 
                         return $month === null ? __('payments.field.not_paid_yet') : Display::yearMonth($month);
                     })
                     ->description(fn (Member $record): string => __('payments.field.estimate', [
-                        'count' => Display::digits(app(PaidThroughCalculator::class)->estimatedMonths($record)),
+                        'count' => Display::digits(app(MemberPosition::class)->advanceCoversMonthsOf($record)),
                     ])),
             ])
             ->recordActions([$this->refundAction()])

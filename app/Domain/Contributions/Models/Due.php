@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Contributions\Models;
 
+use App\Domain\Contributions\Enums\DueOrigin;
 use App\Domain\Contributions\Enums\DueStatus;
 use App\Domain\Contributions\Enums\DueType;
 use App\Domain\Members\Models\Member;
@@ -41,6 +42,7 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property int|null $parent_due_id
  * @property bool $prepaid_locked
  * @property DueStatus $status
+ * @property DueOrigin $origin
  * @property string|null $note
  * @property-read Member $member
  * @property-read RatePlan $ratePlan
@@ -100,6 +102,7 @@ final class Due extends Model
         return [
             'month' => YearMonthCast::class,
             'type' => DueType::class,
+            'origin' => DueOrigin::class,
             'adjustment_seq' => 'integer',
             'snapshot' => 'array',
             'amount_poisha' => MoneyCast::class,

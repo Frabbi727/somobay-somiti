@@ -23,6 +23,7 @@ use App\Domain\Members\Models\Member;
 use App\Enums\Role;
 use App\Models\User;
 use App\Support\Money\Money;
+use App\Support\Time\YearMonth;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -58,6 +59,7 @@ final class DemoBooksSeeder extends Seeder
                 'name_en' => "Demo Member {$number}",
                 'status' => MemberStatus::Active,
                 'joined_on' => '2026-07-01',
+                'dues_start_month' => YearMonth::parse('2026-07'),
                 'created_by' => $accountant->id,
             ]);
         }

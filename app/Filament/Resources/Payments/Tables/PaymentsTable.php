@@ -10,6 +10,7 @@ use App\Domain\Contributions\Models\Payment;
 use App\Filament\Pages\Collections\CollectPayment;
 use App\Filament\Resources\Payments\Actions\PaymentActions;
 use App\Filament\Support\Display;
+use App\Filament\Support\PaymentMonths;
 use App\Support\Money\Money;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -28,7 +29,7 @@ final class PaymentsTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with(['member', 'recorder', 'journalEntry']))
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with(['member', 'recorder', 'journalEntry', 'allocations.due']))
             ->defaultSort(fn (Builder $query): Builder => $query->orderByDesc('received_on')->orderByDesc('id'))
             ->columns([
                 TextColumn::make('received_on')
@@ -46,6 +47,10 @@ final class PaymentsTable
                     ->alignment(Alignment::End)
                     ->weight('bold')
                     ->summarize(Sum::make()->label(__('journal.line.total'))->formatStateUsing(fn (mixed $state): string => Display::money(Money::ofPoisha((int) $state)))),
+                TextColumn::make('for_months')
+                    ->label(__('payments.field.for_months'))
+                    ->state(fn (Payment $record): string => PaymentMonths::describe($record))
+                    ->wrap(),
                 TextColumn::make('trx_id')->label(__('payments.field.trx_id'))->searchable()->placeholder('—')->visibleFrom('md'),
                 TextColumn::make('status')->label(__('payments.field.status'))->badge(),
                 TextColumn::make('journalEntry.voucher_no')

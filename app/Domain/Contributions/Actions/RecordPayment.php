@@ -8,8 +8,12 @@ use App\Domain\Contributions\Data\PaymentData;
 use App\Domain\Contributions\Enums\PaymentMethod;
 use App\Domain\Contributions\Enums\PaymentStatus;
 use App\Domain\Contributions\Models\Payment;
+use App\Domain\Contributions\Services\SimilarPayments;
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Models\Member;
+use App\Domain\Notifications\Enums\SmsTemplateKey;
+use App\Domain\Notifications\Services\SmsFormat;
+use App\Domain\Notifications\Services\SmsSender;
 use App\Domain\Notifications\Services\WorkflowNotifier;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
@@ -29,6 +33,8 @@ final class RecordPayment
     public function __construct(
         private readonly CauserResolver $causer,
         private readonly WorkflowNotifier $notifier,
+        private readonly SimilarPayments $similar,
+        private readonly SmsSender $sms,
     ) {}
 
     public function __invoke(User $actor, PaymentData $data): Payment
@@ -53,6 +59,10 @@ final class RecordPayment
             $this->assertValid($data);
             $this->assertMemberSubmission($actor, $data);
 
+            // Serialise entries for one member so two identical cash entries cannot both pass the check.
+            DB::select('SELECT pg_advisory_xact_lock(hashtext(?))', ['payment-member:'.$data->memberId]);
+            $duplicateReason = $this->duplicateReason($data);
+
             $payment = Payment::query()->create([
                 'member_id' => $data->memberId,
                 'method' => $data->method,
@@ -63,13 +73,45 @@ final class RecordPayment
                 'status' => PaymentStatus::Pending,
                 'idempotency_key' => $data->idempotencyKey,
                 'notes' => $data->notes,
+                'duplicate_reason' => $duplicateReason,
                 'recorded_by' => $actor->id,
             ]);
 
             $this->notifier->waiting($payment);
 
+            // Cash taken by staff: tell the member at once that the money is on record (a member's
+            // own bKash/Nagad report needs no such message).
+            if ($actor->isStaff()) {
+                $member = Member::query()->findOrFail($data->memberId);
+                $this->sms->template(SmsTemplateKey::PaymentRecorded, $member->mobile, [
+                    'name' => $member->name_bn,
+                    'amount' => SmsFormat::money($payment->amount_poisha),
+                    'date' => SmsFormat::date($payment->received_on),
+                ], $member, 'payment:'.$payment->id.':recorded', $payment);
+            }
+
             return $payment;
         }, attempts: 3));
+    }
+
+    /**
+     * A cash or bank payment with the same member, amount and date as a pending or approved one is
+     * most often typed twice. It is accepted only with a written reason, kept on the payment.
+     * (bKash/Nagad duplicates are already refused by their unique TrxID.)
+     */
+    private function duplicateReason(PaymentData $data): ?string
+    {
+        if ($data->method->needsTrxId() || $this->similar->to($data->memberId, $data->amount, $data->receivedOn)->isEmpty()) {
+            return null;
+        }
+
+        $reason = trim((string) $data->duplicateReason);
+
+        if (mb_strlen($reason) < 5) {
+            throw DomainRuleViolation::because('payments.errors.duplicate_reason_required');
+        }
+
+        return $reason;
     }
 
     /**

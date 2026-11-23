@@ -10,7 +10,7 @@ Build it as a Laravel 13 + Filament 5 modular monolith. Three rules sit at its c
 - **Advance payments:** money paid ahead is held as a wallet in liability account 2111 Member Advance and auto-applied, oldest due first, whenever dues are generated.
   - Recommended default: apply the advance at whatever rate is current when the due is generated, and any shortfall becomes due.
   - An optional "lock prepaid months" policy creates the future dues at payment time with the old rate frozen.
-  - "Paid through month X" is calculated, never stored.
+  - "Paid through month X" is calculated live (`MemberPosition`); only a payment's receipt keeps a frozen copy from its approval.
 - **Penny accuracy and UX:** no floats anywhere; percentages are stored in basis points; rounding happens only at named points; every split uses a largest-remainder allocator.
   - Database constraints, invariant tests and a nightly integrity job prove that the trial balance and every sub-ledger tie out to the poisha.
   - Every create/edit/delete/approve/reverse shows a Filament confirmation, scaled by risk: a simple confirm, a confirm with a diff of changes, or typed confirmation for financial and destructive actions.
@@ -96,8 +96,10 @@ Bangladesh's cooperative sector is large: the International Co-operative Allianc
 
 **Collections & advance**
 - BR-12: Payments go `pending → approved | rejected`; only approved payments post. Approver ≠ creator.
-- BR-13: An approved payment is allocated to open dues oldest first; within a month the order is late_fee → service_charge → registration → deposit (configurable). Any remainder goes to Member Advance (2111).
-- BR-14: When dues are generated, the advance balance is auto-applied, oldest open due first.
+- BR-13: An approved payment is allocated to open dues oldest first; within a month the order is late_fee → service_charge → registration → deposit (configurable). The entry premium is not in a plan's order and always settles right after registration. Any remainder goes to Member Advance (2111).
+- BR-14: When dues are generated, the advance balance is auto-applied, oldest open due first. Every reversal (payment or advance refund) re-applies the member's advance at once, so advance never sits next to open dues of a generated month (nightly `StrandedAdvance` check).
+- BR-14a (late joiners, 2026-11): each member has a fixed `dues_start_month`, no earlier than the society's first month (the go-live month, or else the first approved rate plan) and no later than the share start month. When the `back_dues_enabled` financial setting is on, every month from the dues start month to the month before the shares start is billed at joining: deposit and service charge at that month's own rate (origin `back_dues`, due on the joining date, never fined). The registration fee is charged once, and an entry premium of `entry_premium` basis points of the back deposits (rounded HALF_UP once) goes to 4141 Entry Premium Income. Back deposits go to savings (2101) but earn no dividend for months before the shares start. Unpaid back-dues can be cancelled (T3, someone other than the member's creator, with a reason); the dues start month never changes.
+- BR-14b: a second cash/bank payment with the same member, amount and date as a pending or approved one needs a written reason (`duplicate_reason`), shown to the approver.
 - BR-15: Advance-vs-rate-change policy is configurable (§5.4); the default is `apply_at_current_rate`.
 - BR-16: Advance is refundable on exit, or on approved request (PV: Dr 2111 / Cr Cash).
 
@@ -278,11 +280,13 @@ Default recognition: deposits and fees are recognised **when settled**. Dues are
 |-------|-------|--------|
 | Payment to current dues (৳1,000 deposit + ৳20 service) | 1101/1121 ৳1,020 | 2101 ৳1,000; 4111 ৳20 |
 | Advance portion | 1101/1121 | 2111 |
-| Advance auto-applied to dues | 2111 | 2101 / 4111 / 4101 / 4121 by due type |
+| Advance auto-applied to dues | 2111 | 2101 / 4111 / 4101 / 4121 / 4141 by due type |
 | Advance refund (PV) | 2111 | 1101/1111 |
 | Reversal | mirror of the original lines (`reverses_id`) | |
 
-"Paid through" = the latest month M with every due ≤ M fully settled. With a remaining advance, the portal also shows "আনুমানিক আরও N মাস (বর্তমান হারে)", labelled as an estimate.
+"Paid through" = the latest month M such that every **deposit and service-charge** due for M and every earlier month is settled, waived or cancelled. Late fees, registration fees and the entry premium never move it; they are shown as "other amounts owed". There is one definition, `MemberPosition`, used by the portal, the mobile API, the collect page, the receipt and the SMS. With a remaining advance, the portal also shows "আনুমানিক আরও N মাস (বর্তমান হারে)", labelled as an estimate.
+
+At approval, each payment freezes the receipt figures (owed before, owed after, other owed, advance after, paid through). Receipts print these figures, the database refuses to change them, and the nightly `ReceiptFigures` check confirms they add up.
 
 ---
 
@@ -494,7 +498,7 @@ Acceptance:
 
 ### Phase 1 — Accounting core (week 2)
 **P1.S1 Chart of accounts and fiscal years**
-> Implement accounts (type, normal_balance, is_control, requires_member, active) seeded with 1101, 1111, 1121, 1122, 1201, 13xx, 2101, 2111, 2201, 2211, 2301, 3101, 3201, 3901, 4101, 4111, 4121, 4201, 5xxx. FiscalYear 1 Jul–30 Jun with 12 lockable periods. Thin Filament resources; FY close is T3.
+> Implement accounts (type, normal_balance, is_control, requires_member, active) seeded with 1101, 1111, 1121, 1122, 1201, 13xx, 2101, 2111, 2201, 2211, 2301, 3101, 3201, 3901, 4101, 4111, 4121, 4131, 4141, 4201, 5xxx. FiscalYear 1 Jul–30 Jun with 12 lockable periods. Thin Filament resources; FY close is T3.
 
 Acceptance: an account with lines can't be deleted; the FY boundary math is tested.
 

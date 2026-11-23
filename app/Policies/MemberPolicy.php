@@ -58,6 +58,14 @@ final class MemberPolicy
         return $member->status !== MemberStatus::Exited && $user->may(Permission::MembersPortalPassword);
     }
 
+    /**
+     * Cancel a late joiner's unpaid back-dues (the Action also refuses the member's creator).
+     */
+    public function cancelBackDues(User $user, Member $member): bool
+    {
+        return $member->status !== MemberStatus::Exited && $user->may(Permission::DuesWaive);
+    }
+
     public function delete(User $user, Member $member): bool
     {
         return false;

@@ -298,6 +298,8 @@ function receivePayment(Member $member, string $taka, string $method = 'cash', ?
         'amount' => Money::ofTaka($taka),
         'received_on' => CarbonImmutable::now('Asia/Dhaka')->toDateString(),
         'trx_id' => $trx,
+        // Scenario tests often take the same amount twice in a day on purpose.
+        'duplicate_reason' => 'Second payment in the test',
     ]));
 
     return app(ApprovePayment::class)(userWithRole(Role::Accountant), $payment);

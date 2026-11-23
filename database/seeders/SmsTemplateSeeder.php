@@ -32,9 +32,30 @@ final class SmsTemplateSeeder extends Seeder
         ];
     }
 
-    public function run(): void
+    /**
+     * Also inserted by the 2026_11_23_000005 migration.
+     *
+     * @return array<string, array{0: string, 1: string}>
+     */
+    public static function paymentRecorded(): array
     {
-        $defaults = [
+        return [
+            SmsTemplateKey::PaymentRecorded->value => [
+                '{name}, {date} তারিখে আপনার {amount} জমা নেওয়া হয়েছে, অনুমোদনের অপেক্ষায়। অনুমোদনের পর রসিদ এসএমএস পাবেন। -{somiti}',
+                '{name}, {amount} taken on {date} is recorded and waiting for approval. You will get a receipt SMS once it is approved. -{somiti}',
+            ],
+        ];
+    }
+
+    /**
+     * Every template's default [bn, en] text. The 2026_11_23_000006 migration reads the receipt
+     * text from here.
+     *
+     * @return array<string, array{0: string, 1: string}>
+     */
+    public static function defaults(): array
+    {
+        return [
             SmsTemplateKey::Welcome->value => [
                 '{name}, {somiti}-এ স্বাগতম। আপনার সদস্য নং {member_no}। পোর্টাল: {portal_url}',
                 'Welcome to {somiti}, {name}. Member no. {member_no}. Portal: {portal_url}',
@@ -44,8 +65,8 @@ final class SmsTemplateSeeder extends Seeder
                 '{name}, your {month} instalment is {amount}, due by {due_date}. -{somiti}',
             ],
             SmsTemplateKey::PaymentApproved->value => [
-                '{name}, {amount} গ্রহণ করা হয়েছে, রসিদ {voucher}। পরিশোধিত: {paid_through} পর্যন্ত। -{somiti}',
-                '{name}, {amount} received, receipt {voucher}. Paid through {paid_through}. -{somiti}',
+                '{name}, {amount} গ্রহণ করা হয়েছে, রসিদ {voucher}। পরিশোধিত: {paid_through} পর্যন্ত। বাকি: {owed}। -{somiti}',
+                '{name}, {amount} received, receipt {voucher}. Paid through {paid_through}. Still owed: {owed}. -{somiti}',
             ],
             SmsTemplateKey::LoginCode->value => [
                 '{somiti} লগইন কোড: {code}। {minutes} মিনিট বৈধ। কাউকে জানাবেন না।',
@@ -60,9 +81,13 @@ final class SmsTemplateSeeder extends Seeder
                 '{somiti}: sorry, your membership registration was not accepted. Reason: {reason}. Please contact the office.',
             ],
             ...self::paymentOutcomes(),
+            ...self::paymentRecorded(),
         ];
+    }
 
-        foreach ($defaults as $key => [$bn, $en]) {
+    public function run(): void
+    {
+        foreach (self::defaults() as $key => [$bn, $en]) {
             SmsTemplate::query()->firstOrCreate(['key' => $key], ['body_bn' => $bn, 'body_en' => $en, 'is_active' => true]);
         }
     }

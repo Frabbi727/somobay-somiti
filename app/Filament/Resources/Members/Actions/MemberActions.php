@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Members\Actions;
 
+use App\Domain\Contributions\Actions\CancelBackDues;
+use App\Domain\Contributions\Enums\DueOrigin;
+use App\Domain\Contributions\Enums\DueStatus;
+use App\Domain\Contributions\Models\Due;
 use App\Domain\Members\Actions\ChangeShares;
 use App\Domain\Members\Actions\DeactivateMember;
 use App\Domain\Members\Actions\ReactivateMember;
@@ -16,6 +20,7 @@ use App\Filament\Concerns\ConfirmsWithTier;
 use App\Filament\Support\Display;
 use App\Filament\Support\DomainActionRunner;
 use App\Models\User;
+use App\Support\Money\Money;
 use App\Support\Time\YearMonth;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
@@ -149,6 +154,48 @@ final class MemberActions
                 Textarea::make('reason')->label(__('members.actions.reason'))->required()->minLength(5)->rows(2),
             ],
         );
+    }
+
+    /**
+     * Visible while the member has open back-dues with nothing paid; T3 with a reason.
+     */
+    public static function cancelBackDues(): Action
+    {
+        $action = Action::make('cancelBackDues')
+            ->label(__('members.actions.cancel_back_dues'))
+            ->tooltip(__('members.actions.cancel_back_dues'))
+            ->icon(Heroicon::OutlinedXCircle)
+            ->color('danger')
+            ->authorize('cancelBackDues')
+            ->visible(fn (Member $record): bool => self::unpaidBackDues($record)->isPositive())
+            ->action(function (Member $record, array $data): void {
+                $count = DomainActionRunner::run(fn (User $actor): int => app(CancelBackDues::class)($actor, $record, (string) ($data['reason'] ?? '')));
+
+                Notification::make()->title(__('members.notifications.back_dues_cancelled', ['count' => Display::digits($count), 'member' => $record->displayName()]))->success()->send();
+            });
+
+        return self::tier3(
+            $action,
+            heading: fn (Member $record): string => __('members.actions.cancel_back_dues_heading', ['member' => $record->displayName()]),
+            expected: fn (Member $record): string => $record->member_no,
+            submitLabel: fn (Member $record): string => __('members.actions.cancel_back_dues_submit', ['member' => $record->member_no]),
+            description: fn (Member $record): string => __('members.actions.cancel_back_dues_description', ['amount' => Display::moneyShort(self::unpaidBackDues($record))]),
+            fields: [
+                Textarea::make('reason')->label(__('members.actions.reason'))->required()->minLength(5)->rows(2),
+            ],
+        );
+    }
+
+    private static function unpaidBackDues(Member $member): Money
+    {
+        $backDues = Due::query()->where('member_id', $member->id)->where('origin', DueOrigin::BackDues)->get();
+
+        // Same rule as CancelBackDues: any money on any back-due (paid months included) hides the button.
+        if ($backDues->contains(fn (Due $due): bool => $due->paid_poisha->isPositive())) {
+            return Money::zero();
+        }
+
+        return Money::sum($backDues->where('status', DueStatus::Open)->map(fn (Due $due): Money => $due->amount_poisha)->all());
     }
 
     public static function reactivate(): Action

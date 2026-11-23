@@ -58,6 +58,13 @@ final class AllocationEngine
         $order = $due->snapshot['allocation_order'] ?? DueType::defaultAllocationOrder();
         $position = array_search($due->type->value, is_array($order) ? $order : [], true);
 
-        return $position === false ? 99 : (int) $position;
+        if ($position !== false) {
+            return 10 * (int) $position;
+        }
+
+        // The entry premium is never in a plan's order: it settles right after the registration fee.
+        $registration = array_search(DueType::Registration->value, is_array($order) ? $order : [], true);
+
+        return $registration === false ? 1000 : 10 * (int) $registration + 5;
     }
 }

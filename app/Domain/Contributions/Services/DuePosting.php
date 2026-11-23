@@ -28,6 +28,7 @@ final class DuePosting
             DueType::ServiceCharge => AccountCode::SERVICE_CHARGE_INCOME,
             DueType::Registration => AccountCode::REGISTRATION_FEE_INCOME,
             DueType::LateFee => AccountCode::LATE_FEE_INCOME,
+            DueType::EntryPremium => AccountCode::ENTRY_PREMIUM_INCOME,
         };
     }
 

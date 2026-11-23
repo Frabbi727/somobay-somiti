@@ -10,6 +10,7 @@ use App\Domain\Accounting\Enums\VoucherType;
 use App\Domain\Accounting\Models\JournalEntry;
 use App\Domain\Accounting\Services\Accounts;
 use App\Domain\Contributions\Enums\AdvanceEntryKind;
+use App\Domain\Contributions\Enums\DueOrigin;
 use App\Domain\Contributions\Enums\DueStatus;
 use App\Domain\Contributions\Enums\DueType;
 use App\Domain\Contributions\Models\Due;
@@ -156,6 +157,7 @@ final class PostOpeningImport
             ...$row->member->toAttributes(),
             'member_no' => $row->memberNo,
             'status' => MemberStatus::Active,
+            'dues_start_month' => $arrearsMonth->next(),
             'created_by' => $actor->id,
         ]);
 
@@ -179,7 +181,7 @@ final class PostOpeningImport
                 'paid_poisha' => Money::zero(),
                 'due_date' => $arrearsMonth->lastDay()->toDateString(),
                 'status' => DueStatus::Open,
-                'opening' => true,
+                'origin' => DueOrigin::Opening,
                 'note' => 'Opening arrears',
             ]);
         }

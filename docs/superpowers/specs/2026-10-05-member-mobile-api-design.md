@@ -30,7 +30,7 @@ architecture (GetX modules, Dio `ApiClient`, `UIState`, translations) is unchang
 | Capability | Web source | API |
 |------------|------------|-----|
 | Sign in with mobile + password, or SMS code when enabled | `Filament/Member/Pages/Auth/MemberLogin`, `LoginCodes`, `PortalAccounts` | `auth/*` |
-| Dashboard: savings, advance, outstanding, paid-through, months the advance covers, shares, recent payments | `Member/Pages/Dashboard`, `MemberSummary`, `RecentPaymentsWidget` | `dashboard/summary` |
+| Dashboard: owe now, coming up, other owed, paid total, pending, advance, savings, paid-through, months the advance covers, 12-month strip, shares, recent payments | `Member/Pages/Dashboard`, `MemberPosition`, `RecentPaymentsWidget` | `dashboard/summary` |
 | Dues list (filter status/type) | `Member/Pages/Dues` | `dues` |
 | Payments list, receipt PDF for approved ones | `Member/Pages/Payments`, `ReceiptDocument` | `payments`, `payments/{id}`, `payments/{id}/receipt` |
 | Pay online (bKash/Nagad, amount, TrxID, date, proof) → pending | `Member/Pages/PayOnline`, `RecordPayment` | `POST payments` |
@@ -82,7 +82,7 @@ idempotency conflict (`payments.errors.idempotency_conflict`), 422 validation or
 | POST | `auth/logout` | access | revokes this access token and its refresh token |
 | GET | `auth/me` | access | member number, name, status — a cheap session check at app start |
 | GET | `config/somiti-info` | — | names bn/en, display name, address, phone, email, registration no., `logo_url` (signed, 1 h) or null, `otp_enabled` |
-| GET | `dashboard/summary` | access | `MemberSummary` fields + `pay_now_visible` + latest 5 payments + member name/number |
+| GET | `dashboard/summary` | access | `MemberPosition` fields (since 2026-11): `owe_now`, `coming_up`, `other_owed`, `paid_total`, `pending_total`, `pending_count`, `monthly_amount`, `months` (12 × `{month, state, owed}`; state is one of paid, partly_paid, unpaid, not_due_yet, waived, cancelled, before_start, not_billed), plus `savings`, `advance`, `outstanding`, `paid_through`, `advance_months_estimate`, `shares`, `pay_now_visible`, latest 5 payments and member name/number. The older keys `monthly_deposit`, `billed`, `paid`, `waived`, `due_this_month` and `due_earlier` stay for one app release |
 | GET | `dues` | access | `status`, `type` filters; default `status=open`; ordered month desc, id |
 | GET | `payments` | access | `status` filter; ordered received_on desc |
 | GET | `payments/{id}` | access | 404 unless the member's; includes allocations (due month, type, amount) and advance part |

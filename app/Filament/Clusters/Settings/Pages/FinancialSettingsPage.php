@@ -142,6 +142,14 @@ final class FinancialSettingsPage extends Page implements HasActions, HasSchemas
                     ->columnSpanFull()
                     ->live(),
             ]),
+            Section::make(__('financial_settings.section.joining'))
+                ->description(__('financial_settings.section.joining_help'))
+                ->columns(3)
+                ->columnSpanFull()
+                ->schema([
+                    Toggle::make('back_dues_enabled')->label(__('financial_settings.field.back_dues_enabled'))->live(),
+                    $percent('entry_premium')->helperText(__('financial_settings.field.entry_premium_help')),
+                ]),
             Section::make(__('financial_settings.section.year_end'))
                 ->description(__('financial_settings.section.year_end_help'))
                 ->columns(3)
@@ -235,7 +243,8 @@ final class FinancialSettingsPage extends Page implements HasActions, HasSchemas
             expected: fn (FinancialSettingsVersion $record): string => (string) $record->id,
             submitLabel: __('financial_settings.actions.approve'),
             description: fn (FinancialSettingsVersion $record): string => __('financial_settings.actions.approve_description', [
-                'changes' => strip_tags(str_replace('<br>', '; ', $this->describeChanges($record, against: app(FinancialSettings::class)->current()))),
+                // Plain text: the dialog escapes it again, so undo the table's HTML escaping here.
+                'changes' => html_entity_decode(strip_tags(str_replace('<br>', '; ', $this->describeChanges($record, against: app(FinancialSettings::class)->current()))), ENT_QUOTES | ENT_HTML5),
             ]),
         );
     }

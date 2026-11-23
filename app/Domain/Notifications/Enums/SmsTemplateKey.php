@@ -16,6 +16,7 @@ enum SmsTemplateKey: string implements HasLabel
     case RegistrationRejected = 'registration_rejected';
     case PaymentRejected = 'payment_rejected';
     case PaymentReversed = 'payment_reversed';
+    case PaymentRecorded = 'payment_recorded';
 
     /**
      * Placeholders the template may use.
@@ -27,7 +28,8 @@ enum SmsTemplateKey: string implements HasLabel
         return match ($this) {
             self::Welcome => ['name', 'member_no', 'somiti', 'portal_url'],
             self::DuesGenerated => ['name', 'month', 'amount', 'due_date', 'somiti'],
-            self::PaymentApproved => ['name', 'amount', 'voucher', 'paid_through', 'somiti'],
+            self::PaymentApproved => ['name', 'amount', 'voucher', 'paid_through', 'owed', 'somiti'],
+            self::PaymentRecorded => ['name', 'amount', 'date', 'somiti'],
             self::LoginCode => ['code', 'minutes', 'somiti'],
             self::RegistrationReturned => ['reason', 'somiti', 'portal_url'],
             self::RegistrationRejected => ['reason', 'somiti'],

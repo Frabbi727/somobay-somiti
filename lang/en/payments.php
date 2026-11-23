@@ -31,6 +31,9 @@ return [
         'opening' => 'Opening balance',
     ],
     'field' => [
+        'for_months' => 'For months',
+        'duplicate_reason' => 'Reason for a second payment',
+        'duplicate_reason_help' => 'The same amount was already recorded for this member today. Say why this is a separate payment (e.g. "paid for his brother as well").',
         'member' => 'Member',
         'method' => 'Method',
         'amount' => 'Amount',
@@ -57,6 +60,7 @@ return [
         'title' => 'Collect Payment',
         'pick_member' => 'Choose a member to see their dues.',
         'preview' => 'What this payment will settle',
+        'pending_counted' => ':count payment(s) of :amount still waiting for approval are counted first.',
         'preview_note' => 'Final allocation happens on approval, against the dues open then.',
         'to_dues' => ':amount to current dues',
         'to_advance' => ':amount held as advance → covers through :month at current rates (estimate)',
@@ -67,6 +71,7 @@ return [
         'clear_through_note' => 'Payments always settle the oldest dues first. To pay a month, the member also clears every month before it: click an amount to fill it in.',
     ],
     'duplicate' => [
+        'reason_given' => 'Reason given for the second payment: :reason.',
         'title' => 'Possible duplicate payment',
         'body' => 'This member already has a payment of the same amount on the same day. Check it is not the same money entered twice.',
         'recorded_by' => 'recorded by :name at :time',
@@ -104,6 +109,11 @@ return [
         'apply_advance_heading' => 'Apply members\' advances to their open dues?',
         'advance_applied' => ':amount applied for :count member(s)',
     ],
+    'for_months' => [
+        'on_approval' => 'Approving now settles: :what.',
+        'pending' => 'Decided on approval',
+        'advance' => ':amount to advance',
+    ],
     'receipt' => [
         'title' => 'Money Receipt',
         'received_from' => 'Received from',
@@ -111,6 +121,13 @@ return [
         'for' => 'For',
         'total' => 'Total received',
         'signature' => 'Received by',
+        'as_at_receipt' => 'Figures as at this receipt',
+        'as_at_print' => 'Figures as at the print date (payment approved before receipts were frozen)',
+        'owed_before' => 'Owed before this payment',
+        'received' => 'Received now',
+        'owed_after' => 'Still owed after this payment',
+        'other_owed' => 'Of which fines/fees',
+        'advance_after' => 'Advance held after this payment',
     ],
     'advances' => [
         'title' => 'Advance Balances',
@@ -133,6 +150,7 @@ return [
         'reversed' => 'Refund of :amount to :member reversed; the advance is back',
     ],
     'errors' => [
+        'duplicate_reason_required' => 'A payment of this amount for this member on this date is already recorded. If this is really a second payment, write why in "Reason for a second payment".',
         'reverse_own_approval' => 'You approved this payment, so someone else must reverse it. Ask another committee member who is allowed to reverse it.',
         'reverse_after_exit' => 'This member has exited and their settlement already used this payment, so it cannot be reversed. Nothing was changed.',
         'member_submission' => 'Members can report only bKash or Nagad payments.',

@@ -51,6 +51,9 @@ return [
         'waived' => 'Late fee waived',
     ],
     'errors' => [
+        'cancel_own_back_dues' => 'Someone other than the person who added this member must cancel the back-dues.',
+        'back_dues_paid' => 'Some of these back-dues are already paid, so they cannot be cancelled. Reverse the payment first.',
+        'no_back_dues' => 'This member has no open back-dues.',
         'before_go_live' => 'Dues before the go-live month (:go_live) are not generated; :month is covered by the opening balances.',
         'already_running' => 'Dues for :month are being generated right now. Try again in a minute.',
         'too_far_ahead' => 'Dues can be generated only up to :limit (not :month).',
@@ -64,5 +67,10 @@ return [
         'settled' => 'Settled',
         'cancelled' => 'Cancelled',
         'waived' => 'Waived',
+    ],
+    'origin' => [
+        'regular' => 'Monthly',
+        'opening' => 'Opening arrears',
+        'back_dues' => 'From joining',
     ],
 ];

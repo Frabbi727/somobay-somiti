@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Members\Actions;
 
+use App\Domain\Contributions\BackDues\BackDuesPlanner;
+use App\Domain\Contributions\BackDues\BackDuesWriter;
 use App\Domain\Members\Data\MemberData;
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Events\MemberJoined;
@@ -17,6 +19,7 @@ use App\Domain\Members\Terms\Models\TermsAcceptance;
 use App\Domain\Members\Terms\Services\TermsGate;
 use App\Models\User;
 use App\Support\Time\YearMonth;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Spatie\Activitylog\Support\CauserResolver;
@@ -34,25 +37,34 @@ final class CreateMember
         private readonly PortalAccounts $portal,
         private readonly TermsGate $terms,
         private readonly CauserResolver $causer,
+        private readonly BackDuesPlanner $backDues,
+        private readonly BackDuesWriter $backDuesWriter,
     ) {}
 
-    public function __invoke(User $actor, MemberData $data, int $shares, YearMonth $effectiveFrom, ?User $portalUser = null, ?TermsConsent $consent = null): Member
+    /**
+     * @param  YearMonth|null  $duesStartMonth  bill from this month (late joiner); null = the share start month
+     */
+    public function __invoke(User $actor, MemberData $data, int $shares, YearMonth $effectiveFrom, ?User $portalUser = null, ?TermsConsent $consent = null, ?YearMonth $duesStartMonth = null): Member
     {
         Gate::forUser($actor)->authorize('create', Member::class);
         $this->rules->assertValid($data);
+        $duesStart = $duesStartMonth ?? $effectiveFrom;
 
-        return $this->causer->withCauser($actor, fn (): Member => DB::transaction(function () use ($actor, $data, $shares, $effectiveFrom, $portalUser, $consent): Member {
+        return $this->causer->withCauser($actor, fn (): Member => DB::transaction(function () use ($actor, $data, $shares, $effectiveFrom, $portalUser, $consent, $duesStart): Member {
+            $backDues = $this->backDues->plan($shares, $duesStart, $effectiveFrom);
             $number = (int) DB::scalar("SELECT nextval('member_no_seq')");
 
             $member = Member::query()->create([
                 ...$data->toAttributes(),
                 'member_no' => sprintf('M-%04d', $number),
                 'status' => MemberStatus::Active,
+                'dues_start_month' => $duesStart,
                 'created_by' => $actor->id,
             ]);
 
             $this->nominees->replace($member, $data->nominees);
-            $this->shares->increase($actor, $member, $shares, $effectiveFrom, 'Joined');
+            $lot = $this->shares->increase($actor, $member, $shares, $effectiveFrom, 'Joined');
+            $this->backDuesWriter->write($actor, $member, $lot, $backDues, CarbonImmutable::now(YearMonth::TIMEZONE));
             $this->portal->forMember($member, $portalUser);
 
             if ($consent !== null) {

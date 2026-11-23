@@ -43,6 +43,10 @@ final readonly class FinancialSettingsData
         public Bps $developmentFund,
         public Bps $badDebtFund,
         public Bps $otherFunds,
+        /** Late joiners are billed every month from the go-live month (design 2026-11-22 §2). */
+        public bool $backDuesEnabled = false,
+        /** Fairness charge on a late joiner's back-month deposits; society income (4141). */
+        public ?Bps $entryPremium = null,
     ) {}
 
     public static function fromConfig(): self
@@ -81,7 +85,14 @@ final readonly class FinancialSettingsData
             developmentFund: Bps::of($int('development_fund', config('somiti.year_end.development_fund.default'))),
             badDebtFund: Bps::of($int('bad_debt_fund', $badDebtDefault)),
             otherFunds: Bps::of($int('other_funds', config('somiti.year_end.other_funds.default'))),
+            backDuesEnabled: is_bool($stored['back_dues_enabled'] ?? null) ? $stored['back_dues_enabled'] : (bool) config('somiti.back_dues.enabled'),
+            entryPremium: Bps::of($int('entry_premium', config('somiti.back_dues.entry_premium_bps'))),
         );
+    }
+
+    public function entryPremiumRate(): Bps
+    {
+        return $this->entryPremium ?? Bps::of(0);
     }
 
     /**
@@ -108,6 +119,8 @@ final readonly class FinancialSettingsData
             developmentFund: $percent('development_fund'),
             badDebtFund: $percent('bad_debt_fund'),
             otherFunds: $percent('other_funds'),
+            backDuesEnabled: (bool) ($form['back_dues_enabled'] ?? false),
+            entryPremium: $percent('entry_premium'),
         );
     }
 
@@ -130,6 +143,8 @@ final readonly class FinancialSettingsData
             'development_fund' => $this->developmentFund->toPercentString(),
             'bad_debt_fund' => $this->badDebtFund->toPercentString(),
             'other_funds' => $this->otherFunds->toPercentString(),
+            'back_dues_enabled' => $this->backDuesEnabled,
+            'entry_premium' => $this->entryPremiumRate()->toPercentString(),
         ];
     }
 
@@ -152,6 +167,8 @@ final readonly class FinancialSettingsData
             'development_fund' => $this->developmentFund->value,
             'bad_debt_fund' => $this->badDebtFund->value,
             'other_funds' => $this->otherFunds->value,
+            'back_dues_enabled' => $this->backDuesEnabled,
+            'entry_premium' => $this->entryPremiumRate()->value,
         ];
     }
 
@@ -183,6 +200,8 @@ final readonly class FinancialSettingsData
             'development_fund' => $percent($this->developmentFund),
             'bad_debt_fund' => $percent($this->badDebtFund),
             'other_funds' => $percent($this->otherFunds),
+            'back_dues_enabled' => $this->backDuesEnabled ? __('common.yes') : __('common.no'),
+            'entry_premium' => $percent($this->entryPremiumRate()),
         ];
     }
 

@@ -32,6 +32,15 @@ final class FinancialSettingsRules
             }
         }
 
+        $premiumMax = (int) config('somiti.back_dues.entry_premium_max_bps');
+        $premium = $data->entryPremiumRate()->value;
+
+        if ($premium < 0 || $premium > $premiumMax) {
+            throw DomainRuleViolation::because('financial_settings.errors.entry_premium_range', [
+                'max' => Bps::of($premiumMax)->format(app()->getLocale()),
+            ]);
+        }
+
         $rates = ['reserve' => $data->reserve, 'development_fund' => $data->developmentFund, 'bad_debt_fund' => $data->badDebtFund, 'other_funds' => $data->otherFunds];
 
         foreach ($rates as $key => $rate) {

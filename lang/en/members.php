@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 return [
     'member' => [
+        'dues_start_month' => 'Monthly dues start from',
+        'dues_start_month_help' => 'Usually the society\'s first month. Every month before the shares start is billed now, at that month\'s rate, with no late fines.',
         'singular' => 'Member',
         'plural' => 'Members',
         'member_no' => 'Member no.',
@@ -35,7 +37,7 @@ return [
         'shares' => 'Shares',
         'shares_now' => 'Shares now',
         'effective_from' => 'Shares count from',
-        'effective_from_help' => 'The first month this member pays the monthly deposit.',
+        'effective_from_help' => 'The first month the shares count: monthly billing and dividends start here.',
         'deactivation_reason' => 'Deactivation reason',
         'personal_section' => 'Personal details',
         'contact_section' => 'Contact',
@@ -104,6 +106,10 @@ return [
         'exited' => 'Exited',
     ],
     'actions' => [
+        'cancel_back_dues' => 'Cancel back-dues',
+        'cancel_back_dues_heading' => 'Cancel the back-dues of :member?',
+        'cancel_back_dues_submit' => 'Cancel back-dues of :member',
+        'cancel_back_dues_description' => 'Every unpaid month from before the shares started and the entry premium (:amount) are cancelled. Use this only when the dues start month was wrong. You cannot do this for a member you added yourself.',
         'set_portal_password' => 'Set portal password',
         'set_portal_password_heading' => 'Set the portal password for :member?',
         'set_portal_password_description' => 'The member signs in at the member portal with their mobile number and this password, and can change it from their profile.',
@@ -129,6 +135,7 @@ return [
         'reason' => 'Reason',
     ],
     'notifications' => [
+        'back_dues_cancelled' => ':count back-due(s) of :member cancelled',
         'portal_password_set' => 'Portal password set for :member. They sign in with mobile :mobile.',
         'created' => ':member added',
         'saved' => ':member saved',
@@ -148,7 +155,21 @@ return [
         'add' => 'Add relation',
         'edit' => 'Edit relation',
     ],
+    'back_dues' => [
+        'heading' => 'Billed at joining',
+        'none' => 'No earlier months: dues start with the shares.',
+        'intro' => ':count earlier month(s) from :from, at each month\'s rate:',
+        'month_amounts' => 'deposit :deposit + service :service',
+        'registration' => 'Registration fee (once)',
+        'premium' => 'Entry premium (:rate of the back deposits)',
+        'total' => 'Total to pay at joining',
+        'note' => 'Back deposits go to the member\'s savings but earn no dividend for months before the shares start. The premium is society income.',
+        'summary' => 'Billed at joining: :total (includes :count earlier month(s)).',
+    ],
     'errors' => [
+        'dues_start_after_shares' => 'The dues start month cannot be after the share start month (:month).',
+        'dues_start_before_society' => 'The dues start month cannot be before the society\'s first month (:month).',
+        'back_dues_disabled' => 'Billing new members for earlier months is switched off. Turn on "Late joiners" in Financial settings first.',
         'field_too_long' => 'A name or the profession is too long (at most 255 characters).',
         'gender_required' => "Choose the member's gender.",
         'passport_format' => 'The passport number may only have letters and digits (6–20).',

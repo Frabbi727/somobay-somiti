@@ -9,7 +9,7 @@ use App\Domain\Contributions\Enums\DueType;
 use App\Domain\Contributions\Enums\PaymentStatus;
 use App\Domain\Contributions\Models\Due;
 use App\Domain\Contributions\Services\AdvanceLedger;
-use App\Domain\Contributions\Services\PaidThroughCalculator;
+use App\Domain\Members\Portal\MemberPosition;
 use App\Enums\Role;
 use App\Support\Money\Money;
 use Carbon\CarbonImmutable;
@@ -40,7 +40,7 @@ function simplePlan(string $month, string $unit, string $policy = 'apply_at_curr
 
 function paidThrough($member): ?string
 {
-    $month = app(PaidThroughCalculator::class)->for($member);
+    $month = app(MemberPosition::class)->paidThroughOf($member);
 
     return $month === null ? null : (string) $month;
 }
@@ -55,7 +55,7 @@ it('1. holds ৳2,500 of a ৳3,000 July payment and settles August–December f
 
     expect(depositDues($member))->toBe(['2026-07' => [50000, 50000]])
         ->and(app(AdvanceLedger::class)->balance($member->id)->poisha)->toBe(250000)
-        ->and(app(PaidThroughCalculator::class)->estimatedMonths($member))->toBe(5);
+        ->and(app(MemberPosition::class)->advanceCoversMonthsOf($member))->toBe(5);
 
     foreach (['2026-08', '2026-09', '2026-10', '2026-11', '2026-12'] as $month) {
         generateMonth($month);

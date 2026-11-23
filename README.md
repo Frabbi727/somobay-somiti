@@ -34,14 +34,16 @@ composer test && composer analyse && composer format:check
 
 ```bash
 
-cd /home/techreal/shomiti.techrealify.com
-git pull --rebase origin production
-php artisan down
-php artisan migrate --force
-php artisan optimize
-php artisan optimize:clear
-php artisan config:cache
-php artisan storage:link --force
-php artisan up
-php artisan queue:work
+ cd /home/techreal/shomiti.techrealify.com
+    git pull --rebase origin production
+    composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+    npm ci && npm run build
+    php artisan down --retry=60
+    php artisan migrate --force
+    php artisan optimize:clear
+    php artisan optimize:clear
+    php artisan filament:optimize
+    php artisan storage:link --force
+    php artisan queue:restart
+    php artisan up
 ```

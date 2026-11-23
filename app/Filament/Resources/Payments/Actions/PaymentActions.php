@@ -15,6 +15,7 @@ use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Filament\Concerns\ConfirmsWithTier;
 use App\Filament\Support\Display;
 use App\Filament\Support\DomainActionRunner;
+use App\Filament\Support\PaymentMonths;
 use App\Models\User;
 use App\Reports\ReceiptDocument;
 use App\Support\Money\Money;
@@ -57,10 +58,20 @@ final class PaymentActions
             submitLabel: fn (Payment $record): string => __('payments.actions.approve_submit', ['amount' => Display::money($record->amount_poisha)]),
             description: function (Payment $record): string {
                 $similar = app(SimilarPayments::class)->toPayment($record)->count();
+                $parts = [];
 
-                return $similar === 0
-                    ? __('payments.actions.approve_description')
-                    : __('payments.duplicate.approve', ['count' => $similar]).' '.__('payments.actions.approve_description');
+                if ($similar > 0) {
+                    $parts[] = __('payments.duplicate.approve', ['count' => $similar]);
+                }
+
+                if ($record->duplicate_reason !== null) {
+                    $parts[] = __('payments.duplicate.reason_given', ['reason' => $record->duplicate_reason]);
+                }
+
+                $parts[] = PaymentMonths::onApproval($record);
+                $parts[] = __('payments.actions.approve_description');
+
+                return implode(' ', $parts);
             },
         );
     }

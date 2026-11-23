@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Accounting\Actions\OpenFiscalYear;
-use App\Domain\Members\Portal\MemberSummary;
+use App\Domain\Members\Portal\MemberPosition;
 use App\Enums\Role;
 use App\Support\Money\Money;
 use Carbon\CarbonImmutable;
@@ -35,24 +35,27 @@ afterEach(function (): void {
 it('splits what is owed into this month and earlier months, and the totals add up', function (): void {
     receivePayment($this->member, '1500');
 
-    $summary = app(MemberSummary::class)->for($this->member);
+    $summary = app(MemberPosition::class)->for($this->member);
 
-    expect($summary['billed']->poisha)->toBe(300000)
-        ->and($summary['paid']->poisha)->toBe(150000)
-        ->and($summary['waived']->poisha)->toBe(0)
-        ->and($summary['due_earlier']->poisha)->toBe(50000)
-        ->and($summary['due_this_month']->poisha)->toBe(100000)
-        ->and($summary['outstanding']->poisha)->toBe(150000)
-        ->and($summary['billed']->minus($summary['paid'])->minus($summary['waived'])->equals($summary['outstanding']))->toBeTrue()
-        ->and($summary['monthly_deposit']?->poisha)->toBe(100000);
+    expect($summary->billed->poisha)->toBe(300000)
+        ->and($summary->paidOnDues->poisha)->toBe(150000)
+        ->and($summary->paidTotal->poisha)->toBe(150000)
+        ->and($summary->waived->poisha)->toBe(0)
+        ->and($summary->dueEarlier->poisha)->toBe(50000)
+        ->and($summary->dueThisMonth->poisha)->toBe(100000)
+        ->and($summary->outstanding->poisha)->toBe(150000)
+        ->and($summary->billed->minus($summary->paidOnDues)->minus($summary->waived)->equals($summary->outstanding))->toBeTrue()
+        ->and($summary->oweNow->plus($summary->comingUp)->equals($summary->outstanding))->toBeTrue()
+        ->and($summary->monthlyDeposit?->poisha)->toBe(100000)
+        ->and($summary->monthlyAmount?->poisha)->toBe(100000);
 });
 
 it('sends the same totals to the app', function (): void {
-    $summary = app(MemberSummary::class)->for($this->member);
+    $summary = app(MemberPosition::class)->for($this->member);
 
     $this->withToken(memberToken($this->member))->getJson('/api/v1/dashboard/summary')
         ->assertOk()
-        ->assertJsonPath('data.billed.poisha', $summary['billed']->poisha)
+        ->assertJsonPath('data.billed.poisha', $summary->billed->poisha)
         ->assertJsonPath('data.paid.poisha', 0)
         ->assertJsonPath('data.due_this_month.poisha', 100000)
         ->assertJsonPath('data.due_earlier.poisha', 200000)

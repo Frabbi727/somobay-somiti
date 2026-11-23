@@ -22,6 +22,7 @@ return [
         'registration_rejected' => 'নিবন্ধন বাতিল',
         'payment_rejected' => 'পেমেন্ট গৃহীত হয়নি',
         'payment_reversed' => 'পেমেন্ট বাতিল',
+        'payment_recorded' => 'পেমেন্ট রেকর্ড (অনুমোদনের অপেক্ষায়)',
     ],
     'log' => [
         'singular' => 'এসএমএস',

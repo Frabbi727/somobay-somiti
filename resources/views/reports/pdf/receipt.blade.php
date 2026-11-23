@@ -59,13 +59,32 @@
         </tfoot>
     </table>
 
-    <p style="margin-top: 12px;">
-        <strong>{{ __('payments.field.paid_through') }}:</strong>
-        {{ $paidThrough === null ? __('payments.field.not_paid_yet') : Display::yearMonth($paidThrough) }}
-        @if ($estimate > 0)
-            · {{ __('payments.field.estimate', ['count' => Display::digits($estimate)]) }}
-        @endif
-    </p>
+    @php
+        // Frozen at approval for every payment approved since 2026-11; older ones show today's figures, labelled.
+        $before = $frozen ? $payment->outstanding_before_poisha : null;
+        $after = $frozen ? $payment->outstanding_after_poisha : $live?->outstanding;
+        $other = $frozen ? $payment->other_owed_after_poisha : $live?->otherOwed;
+        $advanceAfter = $frozen ? $payment->advance_after_poisha : $live?->advance;
+        $through = $frozen ? $payment->paid_through_after : $live?->paidThrough;
+    @endphp
+
+    <table class="rpt" style="margin-top: 12px;">
+        <thead>
+            <tr><th colspan="2">{{ $frozen ? __('payments.receipt.as_at_receipt') : __('payments.receipt.as_at_print') }}</th></tr>
+        </thead>
+        <tbody>
+            @if ($before !== null)
+                <tr><td>{{ __('payments.receipt.owed_before') }}</td><td class="num">{{ Display::money($before) }}</td></tr>
+            @endif
+            <tr><td>{{ __('payments.receipt.received') }}</td><td class="num">{{ Display::money($payment->amount_poisha) }}</td></tr>
+            <tr><td><strong>{{ __('payments.receipt.owed_after') }}</strong></td><td class="num"><strong>{{ Display::money($after) }}</strong></td></tr>
+            @if ($other !== null && $other->isPositive())
+                <tr><td>{{ __('payments.receipt.other_owed') }}</td><td class="num">{{ Display::money($other) }}</td></tr>
+            @endif
+            <tr><td>{{ __('payments.receipt.advance_after') }}</td><td class="num">{{ Display::money($advanceAfter) }}</td></tr>
+            <tr><td>{{ __('payments.field.paid_through') }}</td><td class="num">{{ $through === null ? __('payments.field.not_paid_yet') : Display::yearMonth($through) }}</td></tr>
+        </tbody>
+    </table>
 
     <table width="100%" style="margin-top: 40px; font-size: 9pt;">
         <tr>

@@ -22,6 +22,7 @@ return [
         'registration_rejected' => 'Registration rejected',
         'payment_rejected' => 'Payment not accepted',
         'payment_reversed' => 'Payment cancelled',
+        'payment_recorded' => 'Payment recorded (waiting for approval)',
     ],
     'log' => [
         'singular' => 'SMS',

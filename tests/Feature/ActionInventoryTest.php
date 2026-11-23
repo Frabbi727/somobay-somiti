@@ -60,7 +60,7 @@ function expectedTiers(): array
 
         // T3: financial, destructive or bulk.
         'approve' => 'T3', 'reject' => 'T3', 'reverse' => 'T3', 'post' => 'T3', 'close' => 'T3',
-        'unlock' => 'T3', 'waive' => 'T3', 'delete' => 'T3', 'cancel' => 'T3', 'deactivate' => 'T3',
+        'unlock' => 'T3', 'waive' => 'T3', 'delete' => 'T3', 'cancel' => 'T3', 'deactivate' => 'T3', 'cancelBackDues' => 'T3',
         'refund' => 'T3', 'bulkApprove' => 'T3', 'savePermissions' => 'T3', 'backupNow' => 'T3', 'uploadRestore' => 'T3', 'applyLateFees' => 'T3', 'applyAdvance' => 'T3',
         'sendBack' => 'T3',
 

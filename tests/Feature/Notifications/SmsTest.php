@@ -74,11 +74,35 @@ it('texts a receipt when a payment is approved', function (): void {
     travelTo('2026-07-05');
     receivePayment($member, '610');
 
-    $body = collect($gateway->sent)->firstWhere(0, '01733333333')[1] ?? '';
+    $texts = collect($gateway->sent)->where(0, '01733333333')->pluck(1)->values();
 
-    expect($body)->toContain('৳ ৬১০.০০')
-        ->and($body)->toContain('RV-২০২৬-২৭-০০০০০১')
-        ->and($body)->toContain('জুলাই ২০২৬');
+    // First "recorded, waiting for approval", then the receipt with what is still owed.
+    expect($texts)->toHaveCount(2)
+        ->and($texts[0])->toContain('৳ ৬১০.০০')->toContain('অনুমোদনের অপেক্ষায়')
+        ->and($texts[1])->toContain('৳ ৬১০.০০')
+        ->and($texts[1])->toContain('RV-২০২৬-২৭-০০০০০১')
+        ->and($texts[1])->toContain('জুলাই ২০২৬')
+        ->and($texts[1])->toContain('বাকি: ৳ ০.০০');
+});
+
+it('adds "still owed" to an unedited receipt SMS on upgrade, but keeps an edited one', function (): void {
+    $this->seed(SmsTemplateSeeder::class);
+    $key = SmsTemplateKey::PaymentApproved->value;
+    $oldEn = '{name}, {amount} received, receipt {voucher}. Paid through {paid_through}. -{somiti}';
+    DB::table('sms_templates')->where('key', $key)->update([
+        'body_bn' => 'আমাদের নিজের লেখা: {name}, {amount}, {voucher}। -{somiti}',   // edited by the society
+        'body_en' => $oldEn,                                                       // still the old default
+    ]);
+
+    $migration = require database_path('migrations/2026_11_23_000006_add_owed_to_payment_receipt_sms.php');
+    $migration->up();
+
+    $row = DB::table('sms_templates')->where('key', $key)->first();
+    expect($row->body_en)->toBe(SmsTemplateSeeder::defaults()[$key][1])->toContain('{owed}')
+        ->and($row->body_bn)->toBe('আমাদের নিজের লেখা: {name}, {amount}, {voucher}। -{somiti}');
+
+    $migration->down();
+    expect(DB::table('sms_templates')->where('key', $key)->value('body_en'))->toBe($oldEn);
 });
 
 it('sends the dues notice only to members who still owe after advances', function (): void {

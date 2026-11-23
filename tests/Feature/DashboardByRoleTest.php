@@ -9,6 +9,7 @@ use App\Domain\Contributions\Actions\ApprovePayment;
 use App\Domain\Contributions\Actions\RecordPayment;
 use App\Domain\Contributions\Actions\RejectPayment;
 use App\Domain\Contributions\Data\PaymentData;
+use App\Domain\Contributions\Models\Due;
 use App\Domain\Contributions\Models\Payment;
 use App\Domain\Members\Models\Member;
 use App\Domain\Members\Portal\PortalAccounts;
@@ -26,6 +27,7 @@ use App\Filament\Member\Pages\Dashboard as MemberDashboard;
 use App\Filament\Pages\Dashboard;
 use App\Models\User;
 use App\Support\Money\Money;
+use App\Support\Time\YearMonth;
 use Carbon\CarbonImmutable;
 use Database\Seeders\ChartOfAccountsSeeder;
 use Filament\Facades\Filament;
@@ -142,6 +144,28 @@ it('counts overdue members by the same rule as the Defaulters report', function 
     expect(app(SomitiSnapshot::class)->membersOverdue($today))
         ->toBe(count(app(MemberReports::class)->defaulters($today)))
         ->toBeGreaterThan(0);
+});
+
+it('shows this month’s billed, owed-now, pending and advance figures on the dashboard', function (): void {
+    generateMonth('2026-07');
+    generateMonth('2026-08');
+    $billedJuly = Money::ofPoisha((int) Due::query()->where('month', '2026-07-01')->sum('amount_poisha'));
+
+    travelTo('2026-07-20');            // July is due, August is not
+    receivePayment($this->member, '300');
+    pendingCash($this->cashier, $this->member, '50');
+    $snapshot = app(SomitiSnapshot::class);
+
+    expect($snapshot->billedFor(YearMonth::parse('2026-07'))->equals($billedJuly))->toBeTrue()
+        // Only July counts as owed now: billed July minus the ৳300 paid; August is not due yet.
+        ->and($snapshot->owedNow(CarbonImmutable::now('Asia/Dhaka'))->equals($billedJuly->minus(Money::ofTaka('300'))))->toBeTrue()
+        ->and($snapshot->pendingPayments()['count'])->toBe(1)
+        ->and($snapshot->pendingPayments()['total']->equals(Money::ofTaka('50')))->toBeTrue();
+
+    $this->actingAs($this->accountant)->get(Dashboard::getUrl())
+        ->assertSee(__('dashboard.owed_now', [], 'bn'))
+        ->assertSee(__('dashboard.pending_payments', [], 'bn'))
+        ->assertSee(__('dashboard.advance_held', [], 'bn'));
 });
 
 it('gives each role its own quick buttons and widgets', function (): void {

@@ -37,6 +37,7 @@ final class ViewMember extends ViewRecord
             MemberActions::setPortalPassword(),
             MemberActions::deactivate(),
             MemberActions::reactivate(),
+            MemberActions::cancelBackDues(),
         ];
     }
 }
