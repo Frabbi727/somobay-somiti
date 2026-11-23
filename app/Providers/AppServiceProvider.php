@@ -166,7 +166,6 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(PaymentApproved::class, SendPaymentReceiptSms::class);
         Event::listen(MemberJoined::class, SendWelcomeSms::class);
 
-        Gate::define('viewReports', fn (User $user): bool => $user->isStaff());
         Gate::define('generateDues', fn (User $user): bool => $user->may(Permission::DuesGenerate));
         Gate::define('refundAdvance', fn (User $user): bool => $user->may(Permission::AdvanceRefund));
         Gate::define('runIntegrityChecks', fn (User $user): bool => $user->may(Permission::IntegrityRun));

@@ -33,19 +33,23 @@ final class RecordExpense
     {
         Gate::forUser($actor)->authorize('create', Expense::class);
 
-        $existing = Expense::query()->where('idempotency_key', $data->idempotencyKey)->first();
+        return $this->causer->withCauser($actor, fn (): Expense => DB::transaction(function () use ($actor, $data): Expense {
+            // One submission per idempotency key at a time: a retry that arrives while the first is
+            // still running waits here, then finds and returns the same record instead of colliding.
+            DB::select('SELECT pg_advisory_xact_lock(hashtext(?))', ['expense:'.$data->idempotencyKey]);
 
-        if ($existing !== null) {
-            if ($existing->account_id !== $data->accountId || ! $existing->amount_poisha->equals($data->amount)) {
-                throw DomainRuleViolation::because('expenses.errors.idempotency_conflict');
+            $existing = Expense::query()->where('idempotency_key', $data->idempotencyKey)->first();
+
+            if ($existing !== null) {
+                if ($existing->account_id !== $data->accountId || ! $existing->amount_poisha->equals($data->amount)) {
+                    throw DomainRuleViolation::because('expenses.errors.idempotency_conflict');
+                }
+
+                return $existing;
             }
 
-            return $existing;
-        }
+            $this->assertValid($data);
 
-        $this->assertValid($data);
-
-        return $this->causer->withCauser($actor, fn (): Expense => DB::transaction(function () use ($actor, $data): Expense {
             $number = (int) DB::scalar("SELECT nextval('expense_no_seq')");
 
             $record = Expense::query()->create([

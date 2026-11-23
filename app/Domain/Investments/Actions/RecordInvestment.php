@@ -37,19 +37,23 @@ final class RecordInvestment
     {
         Gate::forUser($actor)->authorize('create', Investment::class);
 
-        $existing = Investment::query()->where('idempotency_key', $data->idempotencyKey)->first();
+        return $this->causer->withCauser($actor, fn (): Investment => DB::transaction(function () use ($actor, $data): Investment {
+            // One submission per idempotency key at a time: a retry that arrives while the first is
+            // still running waits here, then finds and returns the same record instead of colliding.
+            DB::select('SELECT pg_advisory_xact_lock(hashtext(?))', ['investment:'.$data->idempotencyKey]);
 
-        if ($existing !== null) {
-            if ($existing->type !== $data->type || ! $existing->principal_poisha->equals($data->principal)) {
-                throw DomainRuleViolation::because('investments.errors.idempotency_conflict');
+            $existing = Investment::query()->where('idempotency_key', $data->idempotencyKey)->first();
+
+            if ($existing !== null) {
+                if ($existing->type !== $data->type || ! $existing->principal_poisha->equals($data->principal)) {
+                    throw DomainRuleViolation::because('investments.errors.idempotency_conflict');
+                }
+
+                return $existing;
             }
 
-            return $existing;
-        }
+            $this->assertValid($data);
 
-        $this->assertValid($data);
-
-        return $this->causer->withCauser($actor, fn (): Investment => DB::transaction(function () use ($actor, $data): Investment {
             $this->resolutions->assertNotUsedElsewhere(ResolutionSubject::Investment, $data->resolutionId);
 
             $number = (int) DB::scalar("SELECT nextval('investment_no_seq')");
