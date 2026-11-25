@@ -10,6 +10,8 @@ use App\Enums\Role;
 use App\Filament\Resources\MemberApplications\Pages\ListMemberApplications;
 use App\Filament\Resources\MemberApplications\Pages\ViewMemberApplication;
 use App\Filament\Resources\Members\Pages\ListMembers;
+use App\Filament\Support\Display;
+use App\Support\Money\Money;
 use App\Support\Time\YearMonth;
 use Database\Seeders\SmsTemplateSeeder;
 use Filament\Facades\Filament;
@@ -114,8 +116,8 @@ it('starts the final approval in the first month without dues', function (): voi
     Livewire::test(ViewMemberApplication::class, ['record' => $application->getRouteKey()])
         ->mountAction('approve')
         ->assertSchemaStateSet(['effective_from' => '2026-08'], 'mountedActionSchema0')
-        ->fillForm(['effective_from' => '2026-07'])
-        ->assertMountedActionModalSee(__('members.errors.month_generated', ['month' => '2026-07', 'latest' => '2026-07']))
+        ->fillForm(['shares' => 1, 'effective_from' => '2026-07'])
+        ->assertMountedActionModalSee(__('members.late_entry.summary', ['months' => 'July 2026', 'total' => Display::money(Money::ofTaka('510'))]))
         ->fillForm(['effective_from' => '2026-08', 'confirm_text' => '01811111111'])
         ->callMountedAction()
         ->assertHasNoActionErrors();

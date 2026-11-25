@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace App\Domain\Members\Services;
 
+use App\Domain\Accounting\Enums\FiscalYearStatus;
+use App\Domain\Accounting\Models\FiscalYear;
+use App\Domain\Accounting\Services\FiscalCalendar;
 use App\Domain\Contributions\Services\RegistrationFees;
+use App\Domain\GoLive\Services\GoLiveMonth;
 use App\Domain\Members\Enums\ShareChangeType;
 use App\Domain\Members\Models\Member;
 use App\Domain\Members\Models\ShareLot;
@@ -14,14 +18,18 @@ use App\Domain\Settings\Exceptions\NoRatePlanForMonth;
 use App\Domain\Settings\Models\RatePlan;
 use App\Domain\Settings\Services\RateResolver;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
+use App\Domain\YearEnd\Models\YearEnd;
 use App\Models\User;
 use App\Support\Time\YearMonth;
+use Carbon\CarbonImmutable;
 
 /**
  * Applies share changes inside the caller's transaction, with the member row already locked.
  *
  * BR-1: changes take effect from a stated month, never in a month that already has dues, and
- * never before the member's latest change (history is only ever extended).
+ * never before the member's latest change (history is only ever extended). A new member's first
+ * lot is the exception: it may start in a month that already has dues (late data entry), as long
+ * as that month's year is still open; their missing dues for those months are created separately.
  */
 final class ShareChanger
 {
@@ -30,12 +38,57 @@ final class ShareChanger
         private readonly RegistrationFees $fees,
         private readonly RateResolver $rates,
         private readonly GeneratedMonths $generated,
+        private readonly GoLiveMonth $goLive,
     ) {}
 
     public function increase(User $actor, Member $member, int $shares, YearMonth $from, ?string $reason = null): ShareLot
     {
         $this->assertCount($shares);
         $this->assertMonthAllowed($member, $from);
+
+        return $this->addLot($actor, $member, $shares, $from, $reason);
+    }
+
+    /**
+     * A new member's first lot. Unlike increase(), it may start in a month that already has dues.
+     */
+    public function join(User $actor, Member $member, int $shares, YearMonth $from): ShareLot
+    {
+        $this->assertCount($shares);
+        $this->assertJoinMonthAllowed($from);
+        $latest = $this->generated->latest();
+        $enteredLate = $latest !== null && $from->isSameOrBefore($latest);
+
+        return $this->addLot($actor, $member, $shares, $from, 'Joined', $enteredLate ? CarbonImmutable::now(YearMonth::TIMEZONE) : null);
+    }
+
+    /**
+     * Where a new member's shares may start: not before go-live, not in a closed fiscal year or one
+     * whose year-end (dividend) is already prepared, and only where a rate plan exists.
+     */
+    public function assertJoinMonthAllowed(YearMonth $from): void
+    {
+        $goLive = $this->goLive->get();
+
+        if ($goLive !== null && $from->isBefore($goLive)) {
+            throw DomainRuleViolation::because('members.errors.join_before_go_live', ['month' => (string) $goLive]);
+        }
+
+        $fiscalYear = FiscalYear::query()->where('start_year', FiscalCalendar::startYearFor($from))->first();
+
+        if ($fiscalYear !== null && $fiscalYear->status === FiscalYearStatus::Closed) {
+            throw DomainRuleViolation::because('members.errors.join_year_closed', ['year' => $fiscalYear->code]);
+        }
+
+        if ($fiscalYear !== null && YearEnd::query()->where('fiscal_year_id', $fiscalYear->id)->exists()) {
+            throw DomainRuleViolation::because('members.errors.join_year_end', ['year' => $fiscalYear->code]);
+        }
+
+        $this->planFor($from);
+    }
+
+    private function addLot(User $actor, Member $member, int $shares, YearMonth $from, ?string $reason, ?CarbonImmutable $feeDueOn = null): ShareLot
+    {
         $plan = $this->planFor($from);
 
         $lot = ShareLot::query()->create([
@@ -45,7 +98,7 @@ final class ShareChanger
             'created_by' => $actor->id,
         ]);
 
-        $this->fees->chargeNewLot($lot, $plan);
+        $this->fees->chargeNewLot($lot, $plan, $feeDueOn);
         $this->record($actor, $member, ShareChangeType::Increase, $shares, $from, $reason);
 
         return $lot;
@@ -163,14 +216,6 @@ final class ShareChanger
         $generated = $this->generated->latest();
 
         return $generated === null ? YearMonth::current() : YearMonth::current()->max($generated->next());
-    }
-
-    /**
-     * The last month that already has dues; no share change may start in or before it.
-     */
-    public function latestGeneratedMonth(): ?YearMonth
-    {
-        return $this->generated->latest();
     }
 
     public function planFor(YearMonth $month): RatePlan

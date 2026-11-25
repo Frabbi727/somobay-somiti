@@ -56,7 +56,7 @@ return [
         'password_confirmation' => 'Confirm password',
         'requested_shares' => 'Shares requested',
         'shares' => 'Shares',
-        'effective_from' => 'Shares start from (month)',
+        'effective_from' => 'Joined the somiti in',
         'reason' => 'Reason',
         'current_step' => 'Waiting for',
         'submitted_at' => 'Submitted',

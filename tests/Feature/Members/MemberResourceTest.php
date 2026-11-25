@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Contributions\BackDues\BackDuesPlanner;
+use App\Domain\Contributions\Enums\DueType;
 use App\Domain\Contributions\Models\Due;
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Models\Member;
@@ -16,6 +17,7 @@ use App\Filament\Resources\Members\Pages\ViewMember;
 use App\Filament\Resources\Members\Support\MemberPresenter;
 use App\Filament\Support\ChangeSummary;
 use App\Filament\Support\Display;
+use App\Support\Money\Money;
 use App\Support\Time\YearMonth;
 use Carbon\CarbonImmutable;
 use Filament\Actions\Testing\TestAction;
@@ -43,6 +45,41 @@ function memberFormAction(string $name): TestAction
 {
     return TestAction::make($name)->schemaComponent('form-actions', 'content');
 }
+
+it('adds a member entered late, showing the already-billed months first', function (): void {
+    onboard(1, '2026-07', ['mobile' => '01700000001']);
+
+    foreach (['2026-07', '2026-08', '2026-09', '2026-10'] as $month) {
+        generateMonth($month);
+    }
+
+    CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-10-03 10:00:00', 'Asia/Dhaka'));
+    $undo = Repeater::fake();
+
+    Livewire::test(CreateMember::class)
+        ->fillForm([
+            'name_bn' => 'রহিম উদ্দিন',
+            'name_en' => 'Rahim Uddin',
+            'mobile' => '01712-345678',
+            'joined_on' => '2026-09-01',
+            'shares' => 2,
+            'effective_from' => '2026-09',
+            'gender' => 'male',
+            ...paperAddress('present'),
+            ...paperAddress('permanent'),
+            'terms_accepted' => true,
+            'nominees' => [nominee(['name' => 'Karim', 'relation_id' => relationId('son'), 'nid' => '1234567890', 'share_percent' => '100'])],
+        ])
+        ->assertSee(__('members.late_entry.summary', ['months' => 'September 2026, October 2026', 'total' => Display::money(Money::ofTaka('2040'))]))
+        ->callAction(memberFormAction('create'))
+        ->assertHasNoFormErrors();
+
+    $undo();
+    $member = Member::query()->where('mobile', '01712345678')->sole();
+
+    expect((string) $member->shareLots()->sole()->effective_from)->toBe('2026-09')
+        ->and(Due::query()->where('member_id', $member->id)->where('type', DueType::Deposit)->count())->toBe(2);
+});
 
 it('adds a member with shares, nominees and a photo', function (): void {
     Storage::fake('local');

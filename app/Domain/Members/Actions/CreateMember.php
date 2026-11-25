@@ -6,6 +6,7 @@ namespace App\Domain\Members\Actions;
 
 use App\Domain\Contributions\BackDues\BackDuesPlanner;
 use App\Domain\Contributions\BackDues\BackDuesWriter;
+use App\Domain\Contributions\LateEntry\LateEntryDues;
 use App\Domain\Members\Data\MemberData;
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Events\MemberJoined;
@@ -17,16 +18,20 @@ use App\Domain\Members\Services\ShareChanger;
 use App\Domain\Members\Terms\Data\TermsConsent;
 use App\Domain\Members\Terms\Models\TermsAcceptance;
 use App\Domain\Members\Terms\Services\TermsGate;
+use App\Domain\Settings\Contracts\GeneratedMonths;
+use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use App\Support\Time\YearMonth;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Spatie\Activitylog\Support\CauserResolver;
 
 /**
  * Onboarding (W1): creates the member (M-0001, M-0002, …), their nominees and first share lot,
- * and charges the registration fee for those shares at the effective month's rate.
+ * and charges the registration fee for those shares at the effective month's rate. A member
+ * entered late gets the regular dues of months already generated from their share start.
  */
 final class CreateMember
 {
@@ -39,6 +44,8 @@ final class CreateMember
         private readonly CauserResolver $causer,
         private readonly BackDuesPlanner $backDues,
         private readonly BackDuesWriter $backDuesWriter,
+        private readonly LateEntryDues $lateEntryDues,
+        private readonly GeneratedMonths $generated,
     ) {}
 
     /**
@@ -50,6 +57,24 @@ final class CreateMember
         $this->rules->assertValid($data);
         $duesStart = $duesStartMonth ?? $effectiveFrom;
 
+        // A dues run for the next month reads its members when it starts and is recorded only when
+        // it ends: a member added in between would get neither that run's dues nor late-entry ones.
+        $running = $this->generated->latest()?->next();
+        $lock = $running === null ? null : Cache::lock('dues:'.$running, 600);
+
+        if ($lock !== null && ! $lock->get()) {
+            throw DomainRuleViolation::because('dues.errors.already_running', ['month' => (string) $running]);
+        }
+
+        try {
+            return $this->create($actor, $data, $shares, $effectiveFrom, $portalUser, $consent, $duesStart);
+        } finally {
+            $lock?->release();
+        }
+    }
+
+    private function create(User $actor, MemberData $data, int $shares, YearMonth $effectiveFrom, ?User $portalUser, ?TermsConsent $consent, YearMonth $duesStart): Member
+    {
         return $this->causer->withCauser($actor, fn (): Member => DB::transaction(function () use ($actor, $data, $shares, $effectiveFrom, $portalUser, $consent, $duesStart): Member {
             $backDues = $this->backDues->plan($shares, $duesStart, $effectiveFrom);
             $number = (int) DB::scalar("SELECT nextval('member_no_seq')");
@@ -63,8 +88,10 @@ final class CreateMember
             ]);
 
             $this->nominees->replace($member, $data->nominees);
-            $lot = $this->shares->increase($actor, $member, $shares, $effectiveFrom, 'Joined');
-            $this->backDuesWriter->write($actor, $member, $lot, $backDues, CarbonImmutable::now(YearMonth::TIMEZONE));
+            $lot = $this->shares->join($actor, $member, $shares, $effectiveFrom);
+            $enteredOn = CarbonImmutable::now(YearMonth::TIMEZONE);
+            $this->backDuesWriter->write($actor, $member, $lot, $backDues, $enteredOn);
+            $this->lateEntryDues->write($actor, $member, $effectiveFrom, $enteredOn);
             $this->portal->forMember($member, $portalUser);
 
             if ($consent !== null) {

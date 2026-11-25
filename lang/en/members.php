@@ -5,7 +5,7 @@ declare(strict_types=1);
 return [
     'member' => [
         'dues_start_month' => 'Monthly dues start from',
-        'dues_start_month_help' => 'Usually the society\'s first month. Every month before the shares start is billed now, at that month\'s rate, with no late fines.',
+        'dues_start_month_help' => 'Months before the joining month are billed as back-dues plus the entry premium. It starts at the somiti\'s first month; set it to the joining month to bill only from when they joined.',
         'singular' => 'Member',
         'plural' => 'Members',
         'member_no' => 'Member no.',
@@ -36,8 +36,8 @@ return [
         'joined_on' => 'Joined on',
         'shares' => 'Shares',
         'shares_now' => 'Shares now',
-        'effective_from' => 'Shares count from',
-        'effective_from_help' => 'The first month the shares count: monthly billing and dividends start here.',
+        'effective_from' => 'Joined the somiti in',
+        'effective_from_help' => 'The month this member really joined. If you are entering them later, still pick their real joining month; months already billed are added as normal dues.',
         'deactivation_reason' => 'Deactivation reason',
         'personal_section' => 'Personal details',
         'contact_section' => 'Contact',
@@ -155,6 +155,9 @@ return [
         'add' => 'Add relation',
         'edit' => 'Edit relation',
     ],
+    'late_entry' => [
+        'summary' => 'Already billed for :months: these will be added as normal dues of :total.',
+    ],
     'back_dues' => [
         'heading' => 'Billed at joining',
         'none' => 'No earlier months: dues start with the shares.',
@@ -200,6 +203,9 @@ return [
         'too_few_shares_left' => 'The member has :current shares; at least one must remain. Use an exit to close the membership.',
         'same_month_change' => 'Shares acquired in :month cannot also be reduced in :month.',
         'month_generated' => 'Dues already exist up to :latest, so shares cannot change from :month.',
+        'join_before_go_live' => 'Shares cannot start before the society\'s first month in the app (:month).',
+        'join_year_closed' => 'Fiscal year :year is closed, so a new member\'s shares cannot start in it.',
+        'join_year_end' => 'The year-end for :year has already been prepared, so a new member\'s shares cannot start in it.',
         'before_last_change' => 'The last share change was from :last; a new change must start in that month or later (not :month).',
         'no_rate_plan' => 'There is no approved rate plan for :month yet. Approve one first.',
         'not_active' => 'Member :member is not active. Reactivate the member first if this is really needed.',
