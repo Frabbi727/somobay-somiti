@@ -13,10 +13,9 @@ use App\Domain\Members\Registration\Enums\MemberApplicationStatus;
 use App\Domain\Members\Registration\Enums\RegistrationDecisionType;
 use App\Domain\Members\Registration\Models\MemberApplication;
 use App\Domain\Members\Services\ShareChanger;
-use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Filament\Concerns\ConfirmsWithTier;
 use App\Filament\Resources\Members\MemberResource;
-use App\Filament\Resources\Members\Support\LateEntryPreview;
+use App\Filament\Resources\Members\Support\JoiningBillPreview;
 use App\Filament\Support\Display;
 use App\Filament\Support\DomainActionRunner;
 use App\Models\User;
@@ -31,6 +30,7 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\HtmlString;
 
 final class RegistrationActions
 {
@@ -133,10 +133,9 @@ final class RegistrationActions
                     ->required($final)
                     ->visible($final)
                     ->live(onBlur: true),
-                TextEntry::make('fee_summary')
-                    ->hiddenLabel()
-                    ->state(fn (Get $get): string => self::feeSummary($get('shares'), $get('effective_from')))
-                    ->weight('bold')
+                TextEntry::make('joining_bill')
+                    ->label(__('members.back_dues.heading'))
+                    ->state(fn (Get $get): HtmlString => JoiningBillPreview::html(['shares' => $get('shares'), 'effective_from' => $get('effective_from')]))
                     ->visible($final),
             ],
         );
@@ -238,34 +237,6 @@ final class RegistrationActions
             ->color('gray')
             ->visible(fn (MemberApplication $record): bool => $record->member_id !== null && (bool) auth()->user()?->can('view', $record->member))
             ->url(fn (MemberApplication $record): string => MemberResource::getUrl('view', ['record' => $record->member_id]));
-    }
-
-    /**
-     * "Registration fee due: ৳ 300.00" for the shares and month chosen on the final approval, plus
-     * the already-billed months a late-entered member will owe.
-     */
-    public static function feeSummary(mixed $shares, mixed $from): string
-    {
-        $count = is_numeric($shares) ? (int) $shares : 0;
-
-        if (! is_string($from) || preg_match('/^\d{4}-\d{2}$/', $from) !== 1 || $count < 1) {
-            return '';
-        }
-
-        try {
-            $month = YearMonth::parse($from);
-            app(ShareChanger::class)->assertJoinMonthAllowed($month);
-
-            $fee = app(ShareChanger::class)->planFor($month)->registration_fee_per_share_poisha->multipliedByInt($count);
-
-            return trim(__('members.actions.registration_fee_summary', ['amount' => Display::money($fee)]).' '.LateEntryPreview::summary($count, $from));
-        } catch (DomainRuleViolation $violation) {
-            return $violation->getMessage();
-        } catch (\Throwable $exception) {
-            report($exception);
-
-            return __('errors.preview_unavailable');
-        }
     }
 
     private static function name(MemberApplication $application): string

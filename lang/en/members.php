@@ -5,7 +5,7 @@ declare(strict_types=1);
 return [
     'member' => [
         'dues_start_month' => 'Monthly dues start from',
-        'dues_start_month_help' => 'Months before the joining month are billed as back-dues plus the entry premium. It starts at the somiti\'s first month; set it to the joining month to bill only from when they joined.',
+        'dues_start_month_help' => 'Normally the joining month. Pick an earlier month only for a new person who must also pay for months before they joined: those are billed as back-dues plus the entry premium.',
         'singular' => 'Member',
         'plural' => 'Members',
         'member_no' => 'Member no.',
@@ -155,19 +155,19 @@ return [
         'add' => 'Add relation',
         'edit' => 'Edit relation',
     ],
-    'late_entry' => [
-        'summary' => 'Already billed for :months: these will be added as normal dues of :total.',
-    ],
     'back_dues' => [
         'heading' => 'Billed at joining',
-        'none' => 'No earlier months: dues start with the shares.',
-        'intro' => ':count earlier month(s) from :from, at each month\'s rate:',
+        'none' => 'Monthly dues start with the joining month.',
+        'before_heading' => 'Before joining (back-dues)',
+        'billed_heading' => 'Already billed (normal dues)',
         'month_amounts' => 'deposit :deposit + service :service',
         'registration' => 'Registration fee (once)',
-        'premium' => 'Entry premium (:rate of the back deposits)',
+        'premium_label' => 'Entry premium',
+        'premium_detail' => ':rate of the back-dues deposits',
         'total' => 'Total to pay at joining',
-        'note' => 'Back deposits go to the member\'s savings but earn no dividend for months before the shares start. The premium is society income.',
-        'summary' => 'Billed at joining: :total (includes :count earlier month(s)).',
+        'note' => 'Back-dues deposits go to the member\'s savings but earn no dividend for months before joining. The premium is society income.',
+        'billed_note' => 'Already-billed months are the member\'s normal dues from the joining month: they count for dividends and carry no late fee for the late entry.',
+        'summary' => 'To pay at joining: :total.',
     ],
     'errors' => [
         'dues_start_after_shares' => 'The dues start month cannot be after the share start month (:month).',

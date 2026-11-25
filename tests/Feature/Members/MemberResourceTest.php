@@ -70,7 +70,10 @@ it('adds a member entered late, showing the already-billed months first', functi
             'terms_accepted' => true,
             'nominees' => [nominee(['name' => 'Karim', 'relation_id' => relationId('son'), 'nid' => '1234567890', 'share_percent' => '100'])],
         ])
-        ->assertSee(__('members.late_entry.summary', ['months' => 'September 2026, October 2026', 'total' => Display::money(Money::ofTaka('2040'))]))
+        ->assertSee(__('members.back_dues.billed_heading'))
+        ->assertSee(Display::moneyShort(Money::ofTaka('1020')))
+        ->assertSee(Display::moneyShort(Money::ofTaka('2240')))
+        ->assertDontSee(__('members.back_dues.before_heading'))
         ->callAction(memberFormAction('create'))
         ->assertHasNoFormErrors();
 
@@ -79,6 +82,39 @@ it('adds a member entered late, showing the already-billed months first', functi
 
     expect((string) $member->shareLots()->sole()->effective_from)->toBe('2026-09')
         ->and(Due::query()->where('member_id', $member->id)->where('type', DueType::Deposit)->count())->toBe(2);
+});
+
+it('starts monthly dues with the joining month and keeps them in step', function (): void {
+    config(['somiti.back_dues.enabled' => true]);
+
+    Livewire::test(CreateMember::class)
+        ->assertSchemaStateSet(['effective_from' => '2026-10', 'dues_start_month' => '2026-10'])
+        ->fillForm(['effective_from' => '2026-09'])
+        ->assertSchemaStateSet(['dues_start_month' => '2026-09'])
+        ->fillForm(['dues_start_month' => '2026-07', 'effective_from' => '2026-08'])
+        ->assertSchemaStateSet(['dues_start_month' => '2026-07']);
+});
+
+it('shows one total for back-dues and already-billed months', function (): void {
+    config(['somiti.back_dues.enabled' => true, 'somiti.back_dues.entry_premium_bps' => 1000]);
+    onboard(1, '2026-07', ['mobile' => '01700000001']);
+
+    foreach (['2026-07', '2026-08', '2026-09', '2026-10'] as $month) {
+        generateMonth($month);
+    }
+
+    CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-10-03 10:00:00', 'Asia/Dhaka'));
+
+    // Back Jul–Aug ৳1,020 + premium ৳100 + already billed Sep–Oct ৳1,020 + registration ৳100.
+    Livewire::test(CreateMember::class)
+        ->fillForm(['shares' => 1, 'effective_from' => '2026-09', 'dues_start_month' => '2026-07'])
+        ->assertSeeInOrder([
+            __('members.back_dues.before_heading'), 'July 2026', 'August 2026',
+            __('members.back_dues.billed_heading'), 'September 2026', 'October 2026',
+            __('members.back_dues.registration'),
+            __('members.back_dues.total'),
+        ])
+        ->assertSee(Display::moneyShort(Money::ofTaka('2240')));
 });
 
 it('adds a member with shares, nominees and a photo', function (): void {
@@ -126,7 +162,7 @@ it('previews the late joiner\'s back-dues and bills exactly that total', functio
     $plan = app(BackDuesPlanner::class)->plan(1, YearMonth::parse('2026-07'), YearMonth::parse('2026-10'));
 
     Livewire::test(CreateMember::class)
-        ->assertSchemaStateSet(['dues_start_month' => '2026-07'])
+        ->assertSchemaStateSet(['dues_start_month' => '2026-10'])
         ->fillForm([
             'name_bn' => 'রহিম উদ্দিন',
             'name_en' => 'Rahim Uddin',

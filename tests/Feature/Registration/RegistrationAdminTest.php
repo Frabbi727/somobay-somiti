@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Contributions\Enums\DueOrigin;
 use App\Domain\Members\Models\Member;
 use App\Domain\Members\Registration\Actions\SubmitRegistration;
 use App\Domain\Members\Registration\Enums\MemberApplicationStatus;
@@ -117,7 +118,8 @@ it('starts the final approval in the first month without dues', function (): voi
         ->mountAction('approve')
         ->assertSchemaStateSet(['effective_from' => '2026-08'], 'mountedActionSchema0')
         ->fillForm(['shares' => 1, 'effective_from' => '2026-07'])
-        ->assertMountedActionModalSee(__('members.late_entry.summary', ['months' => 'July 2026', 'total' => Display::money(Money::ofTaka('510'))]))
+        ->assertMountedActionModalSee(__('members.back_dues.billed_heading'))
+        ->assertMountedActionModalSee(Display::moneyShort(Money::ofTaka('610')))
         ->fillForm(['effective_from' => '2026-08', 'confirm_text' => '01811111111'])
         ->callMountedAction()
         ->assertHasNoActionErrors();
@@ -157,7 +159,7 @@ it('previews the registration fee on the final approval', function (): void {
     $this->actingAs(userWithRole(Role::Secretary));
     Livewire::test(ViewMemberApplication::class, ['record' => $application->getRouteKey()])
         ->mountAction('approve')
-        ->assertMountedActionModalDontSee(__('members.actions.registration_fee_summary', ['amount' => '৳ 300.00']));
+        ->assertMountedActionModalDontSee(__('members.back_dues.total'));
     Livewire::test(ViewMemberApplication::class, ['record' => $application->getRouteKey()])
         ->callAction('approve', ['confirm_text' => '01811111111']);
 
@@ -166,7 +168,19 @@ it('previews the registration fee on the final approval', function (): void {
     Livewire::test(ViewMemberApplication::class, ['record' => $application->getRouteKey()])
         ->mountAction('approve')
         ->fillForm(['shares' => 3, 'effective_from' => '2026-07'])
-        ->assertMountedActionModalSee(__('members.actions.registration_fee_summary', ['amount' => '৳ 300.00']))
+        ->assertMountedActionModalSee(__('members.back_dues.total'))
+        ->assertMountedActionModalSee(Display::moneyShort(Money::ofTaka('300')))
         ->fillForm(['effective_from' => '2026-06'])
         ->assertMountedActionModalSee(__('members.errors.no_rate_plan', ['month' => '2026-06']));
+});
+
+it('bills an approved registration from the joining month even with late joiners on', function (): void {
+    config(['somiti.back_dues.enabled' => true, 'somiti.back_dues.entry_premium_bps' => 1000]);
+    onboard();
+    generateMonth('2026-07');
+
+    $member = approveRegistration(submittedRegistration(), '2026-08')->member;
+
+    expect($member?->dues()->where('origin', DueOrigin::BackDues)->exists())->toBeFalse()
+        ->and($member?->dues_start_month?->equals(YearMonth::parse('2026-08')))->toBeTrue();
 });

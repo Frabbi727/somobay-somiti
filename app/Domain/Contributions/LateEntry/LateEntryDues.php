@@ -45,15 +45,21 @@ final class LateEntryDues
     }
 
     /**
-     * What those months come to for this many shares (deposit + service charge at each month's rate).
+     * Those months with what each comes to for this many shares, at each month's rate.
+     *
+     * @return list<array{month: YearMonth, deposit: Money, serviceCharge: Money}>
      */
-    public function total(int $shares, YearMonth $shareStart): Money
+    public function bill(int $shares, YearMonth $shareStart): array
     {
-        return Money::sum(array_map(function (YearMonth $month) use ($shares): Money {
+        return array_map(function (YearMonth $month) use ($shares): array {
             $plan = $this->rates->for($month);
 
-            return $plan->share_unit_poisha->plus($plan->service_charge_per_share_poisha)->multipliedByInt($shares);
-        }, $this->months($shareStart)));
+            return [
+                'month' => $month,
+                'deposit' => $plan->share_unit_poisha->multipliedByInt($shares),
+                'serviceCharge' => $plan->service_charge_per_share_poisha->multipliedByInt($shares),
+            ];
+        }, $this->months($shareStart));
     }
 
     /**
