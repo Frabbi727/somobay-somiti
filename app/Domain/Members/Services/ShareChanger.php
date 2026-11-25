@@ -63,8 +63,9 @@ final class ShareChanger
     }
 
     /**
-     * Where a new member's shares may start: not before go-live, not in a closed fiscal year or one
-     * whose year-end (dividend) is already prepared, and only where a rate plan exists.
+     * Where a new member's shares may start: not before go-live, not after the first open month
+     * (nobody joins in the future), not in a closed fiscal year or one whose year-end (dividend) is
+     * already prepared, and only where a rate plan exists.
      */
     public function assertJoinMonthAllowed(YearMonth $from): void
     {
@@ -72,6 +73,12 @@ final class ShareChanger
 
         if ($goLive !== null && $from->isBefore($goLive)) {
             throw DomainRuleViolation::because('members.errors.join_before_go_live', ['month' => (string) $goLive]);
+        }
+
+        $latestAllowed = $this->firstOpenMonth();
+
+        if ($from->isAfter($latestAllowed)) {
+            throw DomainRuleViolation::because('members.errors.join_in_future', ['month' => (string) $from, 'latest' => (string) $latestAllowed]);
         }
 
         $fiscalYear = FiscalYear::query()->where('start_year', FiscalCalendar::startYearFor($from))->first();
