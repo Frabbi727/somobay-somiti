@@ -18,9 +18,12 @@ use App\Domain\Members\Services\ShareChanger;
 use App\Domain\Members\Terms\Data\TermsConsent;
 use App\Domain\Members\Terms\Models\TermsAcceptance;
 use App\Domain\Members\Terms\Services\TermsGate;
+use App\Domain\Settings\Contracts\GeneratedMonths;
+use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Models\User;
 use App\Support\Time\YearMonth;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Spatie\Activitylog\Support\CauserResolver;
@@ -42,6 +45,7 @@ final class CreateMember
         private readonly BackDuesPlanner $backDues,
         private readonly BackDuesWriter $backDuesWriter,
         private readonly LateEntryDues $lateEntryDues,
+        private readonly GeneratedMonths $generated,
     ) {}
 
     /**
@@ -53,6 +57,24 @@ final class CreateMember
         $this->rules->assertValid($data);
         $duesStart = $duesStartMonth ?? $effectiveFrom;
 
+        // A dues run for the next month reads its members when it starts and is recorded only when
+        // it ends: a member added in between would get neither that run's dues nor late-entry ones.
+        $running = $this->generated->latest()?->next();
+        $lock = $running === null ? null : Cache::lock('dues:'.$running, 600);
+
+        if ($lock !== null && ! $lock->get()) {
+            throw DomainRuleViolation::because('dues.errors.already_running', ['month' => (string) $running]);
+        }
+
+        try {
+            return $this->create($actor, $data, $shares, $effectiveFrom, $portalUser, $consent, $duesStart);
+        } finally {
+            $lock?->release();
+        }
+    }
+
+    private function create(User $actor, MemberData $data, int $shares, YearMonth $effectiveFrom, ?User $portalUser, ?TermsConsent $consent, YearMonth $duesStart): Member
+    {
         return $this->causer->withCauser($actor, fn (): Member => DB::transaction(function () use ($actor, $data, $shares, $effectiveFrom, $portalUser, $consent, $duesStart): Member {
             $backDues = $this->backDues->plan($shares, $duesStart, $effectiveFrom);
             $number = (int) DB::scalar("SELECT nextval('member_no_seq')");

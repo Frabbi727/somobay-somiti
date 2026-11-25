@@ -5,7 +5,7 @@ declare(strict_types=1);
 return [
     'member' => [
         'dues_start_month' => 'Monthly dues start from',
-        'dues_start_month_help' => 'Only for a new person joining late who must also pay for months before they joined, plus the entry premium. Otherwise keep it the same as the joining month.',
+        'dues_start_month_help' => 'Months before the joining month are billed as back-dues plus the entry premium. It starts at the somiti\'s first month; set it to the joining month to bill only from when they joined.',
         'singular' => 'Member',
         'plural' => 'Members',
         'member_no' => 'Member no.',

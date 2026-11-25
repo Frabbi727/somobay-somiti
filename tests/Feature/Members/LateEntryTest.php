@@ -17,6 +17,7 @@ use App\Domain\Members\Models\Member;
 use App\Domain\Members\Terms\Data\TermsConsent;
 use App\Domain\Members\Terms\Enums\ConsentChannel;
 use App\Domain\Members\Terms\Models\MembershipTerms;
+use App\Domain\Reporting\MemberReports;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Domain\YearEnd\Actions\PrepareYearEnd;
 use App\Domain\YearEnd\Data\AppropriationRates;
@@ -25,6 +26,7 @@ use App\Support\Money\Money;
 use App\Support\Time\YearMonth;
 use Carbon\CarbonImmutable;
 use Database\Seeders\ChartOfAccountsSeeder;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Activity;
@@ -188,4 +190,35 @@ it('logs the late-entry dues on the member', function (): void {
     expect($log->subject_id)->toBe($member->id)
         ->and($log->properties['months'])->toBe(['2026-10', '2026-11', '2026-12'])
         ->and($log->properties['amount_poisha'])->toBe(612000);
+});
+
+it('dates the registration fee of a late entry on the entry day, so it is not overdue yet', function (): void {
+    $member = lateEntry('2026-10');
+
+    $registration = Due::query()->where('member_id', $member->id)->where('type', DueType::Registration)->sole();
+    $defaulters = app(MemberReports::class)->defaulters(CarbonImmutable::parse('2026-11-25', 'Asia/Dhaka'));
+
+    expect($registration->due_date->toDateString())->toBe('2026-11-25')
+        ->and(collect($defaulters)->contains(fn (array $row): bool => $row['member']->is($member)))->toBeFalse();
+});
+
+it('keeps the registration fee of a normal join on its month\'s due day', function (): void {
+    $member = lateEntry('2027-01');
+
+    expect(Due::query()->where('member_id', $member->id)->where('type', DueType::Registration)->sole()->due_date->toDateString())
+        ->toBe('2027-01-10');
+});
+
+it('refuses to add a member while the next month\'s dues are being generated', function (): void {
+    $lock = Cache::lock('dues:2027-01', 600);
+    $lock->get();
+
+    try {
+        expect(lateEntryKey(fn () => lateEntry('2026-10')))->toBe('dues.errors.already_running')
+            ->and(Member::query()->where('mobile', '01799999999')->exists())->toBeFalse();
+    } finally {
+        $lock->release();
+    }
+
+    expect(lateEntry('2026-10')->exists)->toBeTrue();
 });

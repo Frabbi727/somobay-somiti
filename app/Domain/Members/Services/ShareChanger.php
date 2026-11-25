@@ -21,6 +21,7 @@ use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Domain\YearEnd\Models\YearEnd;
 use App\Models\User;
 use App\Support\Time\YearMonth;
+use Carbon\CarbonImmutable;
 
 /**
  * Applies share changes inside the caller's transaction, with the member row already locked.
@@ -55,8 +56,10 @@ final class ShareChanger
     {
         $this->assertCount($shares);
         $this->assertJoinMonthAllowed($from);
+        $latest = $this->generated->latest();
+        $enteredLate = $latest !== null && $from->isSameOrBefore($latest);
 
-        return $this->addLot($actor, $member, $shares, $from, 'Joined');
+        return $this->addLot($actor, $member, $shares, $from, 'Joined', $enteredLate ? CarbonImmutable::now(YearMonth::TIMEZONE) : null);
     }
 
     /**
@@ -84,7 +87,7 @@ final class ShareChanger
         $this->planFor($from);
     }
 
-    private function addLot(User $actor, Member $member, int $shares, YearMonth $from, ?string $reason): ShareLot
+    private function addLot(User $actor, Member $member, int $shares, YearMonth $from, ?string $reason, ?CarbonImmutable $feeDueOn = null): ShareLot
     {
         $plan = $this->planFor($from);
 
@@ -95,7 +98,7 @@ final class ShareChanger
             'created_by' => $actor->id,
         ]);
 
-        $this->fees->chargeNewLot($lot, $plan);
+        $this->fees->chargeNewLot($lot, $plan, $feeDueOn);
         $this->record($actor, $member, ShareChangeType::Increase, $shares, $from, $reason);
 
         return $lot;

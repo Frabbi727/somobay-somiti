@@ -14,6 +14,7 @@ use App\Domain\Settings\Models\RatePlan;
 use App\Domain\Settings\Services\RateResolver;
 use App\Support\Money\Money;
 use App\Support\Time\YearMonth;
+use Carbon\CarbonImmutable;
 
 /**
  * Registration fee dues (BR-4): charged once per share when the share takes effect, at the fee
@@ -26,14 +27,15 @@ final class RegistrationFees
 
     /**
      * Charges a newly acquired lot. Continuation lots (left over after a decrease) are never charged.
+     * $dueOn overrides the due date (a late-entered member's fee is due on the day they were entered).
      */
-    public function chargeNewLot(ShareLot $lot, RatePlan $plan): ?Due
+    public function chargeNewLot(ShareLot $lot, RatePlan $plan, ?CarbonImmutable $dueOn = null): ?Due
     {
         if ($lot->continues_lot_id !== null) {
             return null;
         }
 
-        return $this->charge($lot, $plan, $plan->registration_fee_per_share_poisha->multipliedByInt($lot->shares), 'Registration fee');
+        return $this->charge($lot, $plan, $plan->registration_fee_per_share_poisha->multipliedByInt($lot->shares), 'Registration fee', dueOn: $dueOn);
     }
 
     /**
@@ -82,7 +84,7 @@ final class RegistrationFees
         return $dues;
     }
 
-    private function charge(ShareLot $lot, RatePlan $plan, Money $amount, string $note, ?YearMonth $month = null): ?Due
+    private function charge(ShareLot $lot, RatePlan $plan, Money $amount, string $note, ?YearMonth $month = null, ?CarbonImmutable $dueOn = null): ?Due
     {
         if (! $amount->isPositive()) {
             return null;
@@ -100,7 +102,7 @@ final class RegistrationFees
             'snapshot' => $plan->snapshot(),
             'amount_poisha' => $amount,
             'paid_poisha' => Money::zero(),
-            'due_date' => $dueMonth->day($plan->due_day)->toDateString(),
+            'due_date' => ($dueOn ?? $dueMonth->day($plan->due_day))->toDateString(),
             'status' => DueStatus::Open,
             'note' => $note,
         ]);

@@ -56,7 +56,7 @@ return [
         'password_confirmation' => 'পাসওয়ার্ড আবার লিখুন',
         'requested_shares' => 'কত শেয়ার চান',
         'shares' => 'শেয়ার',
-        'effective_from' => 'শেয়ার শুরুর মাস',
+        'effective_from' => 'সমিতিতে যোগ দিয়েছেন যে মাসে',
         'reason' => 'কারণ',
         'current_step' => 'যার অপেক্ষায়',
         'submitted_at' => 'জমার সময়',
