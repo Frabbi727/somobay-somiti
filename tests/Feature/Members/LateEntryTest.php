@@ -222,3 +222,20 @@ it('refuses to add a member while the next month\'s dues are being generated', f
 
     expect(lateEntry('2026-10')->exists)->toBeTrue();
 });
+
+it('adds late-entry dues to each month\'s run totals without counting an extra run', function (): void {
+    $before = DB::table('monthly_due_runs')->orderBy('month')->get()->keyBy(fn (object $run): string => substr((string) $run->month, 0, 7));
+
+    lateEntry('2026-10');
+
+    $after = DB::table('monthly_due_runs')->orderBy('month')->get()->keyBy(fn (object $run): string => substr((string) $run->month, 0, 7));
+
+    // 2 shares: deposit ৳2,000 + service ৳40 = 2 dues of ৳2,040 a month.
+    foreach (['2026-10', '2026-11', '2026-12'] as $month) {
+        expect($after[$month]->created_dues - $before[$month]->created_dues)->toBe(2)
+            ->and($after[$month]->created_amount_poisha - $before[$month]->created_amount_poisha)->toBe(204000)
+            ->and($after[$month]->runs)->toBe($before[$month]->runs);
+    }
+
+    expect($after['2026-09']->created_dues)->toBe($before['2026-09']->created_dues);
+});
