@@ -124,6 +124,7 @@ it('requires the 10% bad-debt fund only for financing societies', function (): v
 
 it('counts share-months from the share timeline', function (): void {
     $allYear = onboard(2, '2026-07');           // 2 × 12 = 24
+    travelTo('2026-10-01');                     // nobody joins in a future month
     $fromOctober = onboard(1, '2026-10');       // 1 × 9  = 9
     $grows = onboard(1, '2026-07');             // 1 × 6 + 3 × 6 = 24
     app(ChangeShares::class)(userWithRole(Role::Secretary), $grows, 2, YearMonth::of(2027, 1), 'more shares');

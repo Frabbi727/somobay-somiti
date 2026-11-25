@@ -48,3 +48,15 @@ composer test && composer analyse && composer format:check
     php artisan up
 ```
 
+```bash
+cd /home/techreal/shomiti.techrealify.com                                                                                                                 
+php artisan down --retry=60                                                                                                                               
+git pull --ff-only origin production                                                                                                                      
+composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction                                                                            
+npm ci && npm run build                                                                                                                                   
+php artisan migrate --force                                                                                                                               
+php artisan optimize                                                                                                                                      
+php artisan filament:optimize                                                                                                                             
+php artisan queue:restart                                                                                                                                 
+php artisan up   
+```
