@@ -47,3 +47,4 @@ composer test && composer analyse && composer format:check
     php artisan queue:restart
     php artisan up
 ```
+
