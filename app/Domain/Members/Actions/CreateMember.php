@@ -63,7 +63,7 @@ final class CreateMember
             ]);
 
             $this->nominees->replace($member, $data->nominees);
-            $lot = $this->shares->increase($actor, $member, $shares, $effectiveFrom, 'Joined');
+            $lot = $this->shares->join($actor, $member, $shares, $effectiveFrom);
             $this->backDuesWriter->write($actor, $member, $lot, $backDues, CarbonImmutable::now(YearMonth::TIMEZONE));
             $this->portal->forMember($member, $portalUser);
 
