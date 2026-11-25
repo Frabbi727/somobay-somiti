@@ -17,7 +17,8 @@ use Illuminate\Support\Facades\DB;
 /**
  * Late data entry (design 2026-11-25): a new member whose shares start in a month that already
  * has dues gets those months' regular dues, built exactly as the monthly run would have built
- * them, but due on the day they were entered so the delay costs them no late fee.
+ * them, but due on the day they were entered so the delay costs them no late fee. Each month's
+ * run totals (monthly_due_runs) include them, without counting another run.
  */
 final class LateEntryDues
 {
@@ -72,14 +73,28 @@ final class LateEntryDues
         $amount = Money::zero();
 
         foreach ($months as $month) {
+            $monthCreated = 0;
+            $monthAmount = Money::zero();
+
             foreach ($this->builder->rows($month, $this->rates->for($month), [$member->id]) as $row) {
                 $row['due_date'] = $enteredOn->toDateString();
 
                 if (DB::table('dues')->insertOrIgnore($row) === 1) {
-                    $created++;
-                    $amount = $amount->plus(Money::ofPoisha((int) $row['amount_poisha']));
+                    $monthCreated++;
+                    $monthAmount = $monthAmount->plus(Money::ofPoisha((int) $row['amount_poisha']));
                 }
             }
+
+            // Keep the month's run totals true to the dues that exist; this is not another run.
+            if ($monthCreated > 0) {
+                DB::update(
+                    'UPDATE monthly_due_runs SET created_dues = created_dues + ?, created_amount_poisha = created_amount_poisha + ? WHERE month = ?',
+                    [$monthCreated, $monthAmount->poisha, $month->toDateString()],
+                );
+            }
+
+            $created += $monthCreated;
+            $amount = $amount->plus($monthAmount);
         }
 
         if ($created > 0) {
