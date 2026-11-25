@@ -256,16 +256,18 @@ it('shows the amount and date in the submit dialog the way the portal shows mone
         ->assertMountedActionModalDontSee('2026-07-05');
 });
 
-it('requires a screenshot and never lets a member report for someone else', function (): void {
+it('lets a member report a payment without a screenshot', function (): void {
     actAsMember($this, $this->alice);
 
     Livewire::test(PayOnline::class)
-        ->fillForm(['amount' => '100', 'trx_id' => 'BKX99999Q'])
+        ->fillForm(['method' => 'bkash', 'amount' => '1240', 'trx_id' => 'BKX12345Q', 'received_on' => '2026-07-05'])
         ->callAction('submit')
-        ->assertHasFormErrors(['proof_path' => 'required']);
+        ->assertHasNoFormErrors(['proof_path']);
 
-    expect(Payment::query()->count())->toBe(0);
+    expect(Payment::query()->sole()->proof_path)->toBeNull();
+});
 
+it('never lets a member report for someone else', function (): void {
     app(RecordPayment::class)(app(PortalAccounts::class)->forMember($this->alice), PaymentData::fromForm([
         'member_id' => $this->bob->id, 'method' => 'bkash', 'amount' => Money::ofTaka('100'),
         'trx_id' => 'BKX88888Q', 'received_on' => '2026-07-05', 'proof_path' => 'payment-proofs/x.png',

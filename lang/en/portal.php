@@ -108,6 +108,7 @@ return [
         'trx' => 'Transaction ID',
         'date' => 'Date paid',
         'proof' => 'Screenshot',
+        'proof_help' => 'Optional. A screenshot of the payment message or bank slip helps staff check your payment faster.',
         'send' => 'Submit',
         'confirm' => 'Submit this payment for checking?',
         'cancel' => 'Go back',

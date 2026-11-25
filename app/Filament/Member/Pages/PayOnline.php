@@ -96,7 +96,7 @@ final class PayOnline extends Page
                     ->preventFilePathTampering()
                     ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp', 'application/pdf'])
                     ->maxSize((int) config('somiti.max_proof_kb'))
-                    ->required(),
+                    ->helperText(__('portal.submit.proof_help')),
             ]);
     }
 
