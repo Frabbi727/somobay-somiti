@@ -29,3 +29,6 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 .superpowers/
+
+# Impeccable design-checker local cache
+/.impeccable/hook.cache.json
