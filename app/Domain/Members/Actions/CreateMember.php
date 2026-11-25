@@ -6,6 +6,7 @@ namespace App\Domain\Members\Actions;
 
 use App\Domain\Contributions\BackDues\BackDuesPlanner;
 use App\Domain\Contributions\BackDues\BackDuesWriter;
+use App\Domain\Contributions\LateEntry\LateEntryDues;
 use App\Domain\Members\Data\MemberData;
 use App\Domain\Members\Enums\MemberStatus;
 use App\Domain\Members\Events\MemberJoined;
@@ -26,7 +27,8 @@ use Spatie\Activitylog\Support\CauserResolver;
 
 /**
  * Onboarding (W1): creates the member (M-0001, M-0002, …), their nominees and first share lot,
- * and charges the registration fee for those shares at the effective month's rate.
+ * and charges the registration fee for those shares at the effective month's rate. A member
+ * entered late gets the regular dues of months already generated from their share start.
  */
 final class CreateMember
 {
@@ -39,6 +41,7 @@ final class CreateMember
         private readonly CauserResolver $causer,
         private readonly BackDuesPlanner $backDues,
         private readonly BackDuesWriter $backDuesWriter,
+        private readonly LateEntryDues $lateEntryDues,
     ) {}
 
     /**
@@ -64,7 +67,9 @@ final class CreateMember
 
             $this->nominees->replace($member, $data->nominees);
             $lot = $this->shares->join($actor, $member, $shares, $effectiveFrom);
-            $this->backDuesWriter->write($actor, $member, $lot, $backDues, CarbonImmutable::now(YearMonth::TIMEZONE));
+            $enteredOn = CarbonImmutable::now(YearMonth::TIMEZONE);
+            $this->backDuesWriter->write($actor, $member, $lot, $backDues, $enteredOn);
+            $this->lateEntryDues->write($actor, $member, $effectiveFrom, $enteredOn);
             $this->portal->forMember($member, $portalUser);
 
             if ($consent !== null) {

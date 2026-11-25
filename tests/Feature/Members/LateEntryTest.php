@@ -5,10 +5,18 @@ declare(strict_types=1);
 use App\Domain\Accounting\Actions\LockPeriod;
 use App\Domain\Accounting\Actions\OpenFiscalYear;
 use App\Domain\Accounting\Models\FiscalYear;
+use App\Domain\Contributions\Actions\ApplyLateFees;
+use App\Domain\Contributions\Enums\DueOrigin;
+use App\Domain\Contributions\Enums\DueType;
+use App\Domain\Contributions\Models\Due;
 use App\Domain\GoLive\Enums\OpeningImportStatus;
 use App\Domain\GoLive\Models\OpeningImport;
 use App\Domain\Members\Actions\ChangeShares;
+use App\Domain\Members\Actions\CreateMember;
 use App\Domain\Members\Models\Member;
+use App\Domain\Members\Terms\Data\TermsConsent;
+use App\Domain\Members\Terms\Enums\ConsentChannel;
+use App\Domain\Members\Terms\Models\MembershipTerms;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Domain\YearEnd\Actions\PrepareYearEnd;
 use App\Domain\YearEnd\Data\AppropriationRates;
@@ -18,6 +26,8 @@ use App\Support\Time\YearMonth;
 use Carbon\CarbonImmutable;
 use Database\Seeders\ChartOfAccountsSeeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Spatie\Activitylog\Models\Activity;
 
 /*
 | Late data entry (design 2026-11-25): a member who really joined in October is entered in
@@ -101,4 +111,81 @@ it('refuses a join month whose year-end is prepared', function (): void {
     app(PrepareYearEnd::class)($accountant, $fy, AppropriationRates::defaults());
 
     expect(lateEntryKey(fn () => lateEntry('2026-10')))->toBe('members.errors.join_year_end');
+});
+
+/**
+ * @return list<string>
+ */
+function regularMonths(Member $member): array
+{
+    return Due::query()->where('member_id', $member->id)->where('type', DueType::Deposit)->where('origin', DueOrigin::Regular)
+        ->orderBy('month')->get()->map(fn (Due $due): string => (string) $due->month)->all();
+}
+
+it('creates regular dues for every already-billed month from the share start', function (): void {
+    $member = lateEntry('2026-10');
+    $dues = Due::query()->where('member_id', $member->id)->whereIn('type', [DueType::Deposit, DueType::ServiceCharge])->get();
+
+    expect(regularMonths($member))->toBe(['2026-10', '2026-11', '2026-12'])
+        ->and($dues)->toHaveCount(6)
+        ->and($dues->every(fn (Due $due): bool => $due->origin === DueOrigin::Regular && $due->due_date->toDateString() === '2026-11-25'))->toBeTrue()
+        ->and($dues->where('type', DueType::Deposit)->every(fn (Due $due): bool => $due->amount_poisha->equals(Money::ofTaka('2000'))))->toBeTrue()
+        ->and($dues->where('type', DueType::ServiceCharge)->every(fn (Due $due): bool => $due->amount_poisha->equals(Money::ofTaka('40'))))->toBeTrue()
+        ->and(Due::query()->where('member_id', $member->id)->where('type', DueType::EntryPremium)->exists())->toBeFalse();
+});
+
+it('creates one month when the share start is the latest generated month', function (): void {
+    expect(regularMonths(lateEntry('2026-12')))->toBe(['2026-12']);
+});
+
+it('creates no catch-up dues when the share start is after the latest generated month', function (): void {
+    expect(regularMonths(lateEntry('2027-01')))->toBe([]);
+});
+
+it('adds nothing when the monthly run is repeated for the catch-up months', function (): void {
+    $member = lateEntry('2026-10');
+    $before = Due::query()->where('member_id', $member->id)->count();
+
+    foreach (['2026-10', '2026-11', '2026-12'] as $month) {
+        generateMonth($month);
+    }
+
+    expect(Due::query()->where('member_id', $member->id)->count())->toBe($before);
+});
+
+it('charges no late fee for the catch-up months on entry day', function (): void {
+    $member = lateEntry('2026-10');
+
+    app(ApplyLateFees::class)(CarbonImmutable::parse('2026-11-25', 'Asia/Dhaka'));
+
+    expect(Due::query()->where('member_id', $member->id)->where('type', DueType::LateFee)->exists())->toBeFalse();
+});
+
+it('bills back-dues before the share start and regular dues from it', function (): void {
+    config(['somiti.back_dues.enabled' => true, 'somiti.back_dues.entry_premium_bps' => 1000]);
+
+    $member = app(CreateMember::class)(
+        userWithRole(Role::Secretary),
+        memberData(['mobile' => '01799999999']),
+        1,
+        YearMonth::parse('2026-10'),
+        consent: new TermsConsent(MembershipTerms::current()->version, ConsentChannel::Office, (string) Str::uuid()),
+        duesStartMonth: YearMonth::parse('2026-08'),
+    );
+
+    $back = Due::query()->where('member_id', $member->id)->where('type', DueType::Deposit)->where('origin', DueOrigin::BackDues)
+        ->orderBy('month')->get()->map(fn (Due $due): string => (string) $due->month)->all();
+
+    expect($back)->toBe(['2026-08', '2026-09'])
+        ->and(regularMonths($member))->toBe(['2026-10', '2026-11', '2026-12']);
+});
+
+it('logs the late-entry dues on the member', function (): void {
+    $member = lateEntry('2026-10');
+
+    $log = Activity::query()->where('description', 'late_entry_dues_created')->sole();
+
+    expect($log->subject_id)->toBe($member->id)
+        ->and($log->properties['months'])->toBe(['2026-10', '2026-11', '2026-12'])
+        ->and($log->properties['amount_poisha'])->toBe(612000);
 });
