@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Members\Schemas;
 
-use App\Domain\Contributions\BackDues\BackDuesPlanner;
 use App\Domain\Geo\Data\PostalAddress;
 use App\Domain\Members\Enums\MaritalStatus;
 use App\Domain\Members\Enums\RegistrationDocument;
@@ -15,8 +14,7 @@ use App\Domain\Members\Services\ShareChanger;
 use App\Domain\Members\Terms\Models\MembershipTerms;
 use App\Domain\Settings\Services\FinancialSettings;
 use App\Filament\Forms\PersonFields;
-use App\Filament\Resources\Members\Support\BackDuesPreview;
-use App\Filament\Resources\Members\Support\LateEntryPreview;
+use App\Filament\Resources\Members\Support\JoiningBillPreview;
 use App\Support\Contact\MobileNumber;
 use App\Support\Money\Bps;
 use App\Support\Time\YearMonth;
@@ -34,6 +32,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Support\HtmlString;
 
@@ -117,28 +116,30 @@ final class MemberForm
                             ->regex('/^\d{4}-\d{2}$/')
                             ->default(fn (): string => (string) app(ShareChanger::class)->firstOpenMonth())
                             ->live(onBlur: true)
+                            // Monthly dues follow the joining month unless staff chose an earlier one.
+                            ->afterStateUpdated(function (Get $get, Set $set, ?string $old, ?string $state): void {
+                                $duesStart = $get('dues_start_month');
+
+                                if (blank($duesStart) || $duesStart === $old || (is_string($state) && $duesStart > $state)) {
+                                    $set('dues_start_month', $state);
+                                }
+                            })
                             ->required($creating),
                         TextInput::make('dues_start_month')
                             ->label(__('members.member.dues_start_month'))
                             ->helperText(__('members.member.dues_start_month_help'))
                             ->type('month')
                             ->regex('/^\d{4}-\d{2}$/')
-                            ->default(fn (): string => (string) app(BackDuesPlanner::class)->defaultDuesStart(app(ShareChanger::class)->firstOpenMonth()))
+                            ->default(fn (): string => (string) app(ShareChanger::class)->firstOpenMonth())
                             ->visible(fn (?Member $record): bool => $record === null && app(FinancialSettings::class)->current()->backDuesEnabled)
                             ->live(onBlur: true),
-                        TextEntry::make('back_dues_preview')
+                        TextEntry::make('joining_bill')
                             ->label(__('members.back_dues.heading'))
-                            ->state(fn (Get $get): HtmlString => BackDuesPreview::html([
+                            ->state(fn (Get $get): HtmlString => JoiningBillPreview::html([
                                 'shares' => $get('shares'),
                                 'effective_from' => $get('effective_from'),
                                 'dues_start_month' => $get('dues_start_month'),
                             ]))
-                            ->visible(fn (?Member $record): bool => $record === null && app(FinancialSettings::class)->current()->backDuesEnabled)
-                            ->columnSpanFull(),
-                        TextEntry::make('late_entry_preview')
-                            ->hiddenLabel()
-                            ->state(fn (Get $get): string => LateEntryPreview::summary($get('shares'), $get('effective_from')))
-                            ->weight('bold')
                             ->visible(fn (?Member $record): bool => $record === null)
                             ->columnSpanFull(),
                     ]),

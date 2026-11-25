@@ -12,7 +12,7 @@ use App\Domain\Members\Terms\Enums\ConsentChannel;
 use App\Domain\Members\Terms\Models\MembershipTerms;
 use App\Filament\Concerns\ConfirmsWithTier;
 use App\Filament\Resources\Members\MemberResource;
-use App\Filament\Resources\Members\Support\BackDuesPreview;
+use App\Filament\Resources\Members\Support\JoiningBillPreview;
 use App\Filament\Resources\Members\Support\MemberPresenter;
 use App\Filament\Support\ChangeSummary;
 use App\Filament\Support\DomainActionRunner;
@@ -45,7 +45,7 @@ final class CreateMember extends CreateRecord
                     $this->month(),
                 ),
             ),
-            description: fn (): ?string => BackDuesPreview::summary($this->data ?? []),
+            description: fn (): ?string => JoiningBillPreview::summary($this->data ?? []),
             showOld: false,
         )
             ->mountUsing(fn () => $this->form->validate())

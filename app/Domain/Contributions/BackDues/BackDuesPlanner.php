@@ -79,17 +79,6 @@ final class BackDuesPlanner
     }
 
     /**
-     * Where a new member's dues start by default: the society's first month when back-dues are
-     * switched on (the late joiner pays every month), otherwise the share start month.
-     */
-    public function defaultDuesStart(YearMonth $shareStart): YearMonth
-    {
-        $societyStart = $this->settings->current()->backDuesEnabled ? $this->societyStart() : null;
-
-        return $societyStart !== null && $societyStart->isBefore($shareStart) ? $societyStart : $shareStart;
-    }
-
-    /**
      * The first month the society billed in this app: the go-live month, or the first approved
      * rate plan when the society started in the app. Null before any plan is approved.
      */
