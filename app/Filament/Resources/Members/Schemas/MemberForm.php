@@ -16,6 +16,7 @@ use App\Domain\Members\Terms\Models\MembershipTerms;
 use App\Domain\Settings\Services\FinancialSettings;
 use App\Filament\Forms\PersonFields;
 use App\Filament\Resources\Members\Support\BackDuesPreview;
+use App\Filament\Resources\Members\Support\LateEntryPreview;
 use App\Support\Contact\MobileNumber;
 use App\Support\Money\Bps;
 use App\Support\Time\YearMonth;
@@ -133,6 +134,12 @@ final class MemberForm
                                 'dues_start_month' => $get('dues_start_month'),
                             ]))
                             ->visible(fn (?Member $record): bool => $record === null && app(FinancialSettings::class)->current()->backDuesEnabled)
+                            ->columnSpanFull(),
+                        TextEntry::make('late_entry_preview')
+                            ->hiddenLabel()
+                            ->state(fn (Get $get): string => LateEntryPreview::summary($get('shares'), $get('effective_from')))
+                            ->weight('bold')
+                            ->visible(fn (?Member $record): bool => $record === null)
                             ->columnSpanFull(),
                     ]),
                 Section::make(__('members.member.documents_section'))

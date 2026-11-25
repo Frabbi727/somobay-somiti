@@ -215,14 +215,6 @@ final class ShareChanger
         return $generated === null ? YearMonth::current() : YearMonth::current()->max($generated->next());
     }
 
-    /**
-     * The last month that already has dues; no share change may start in or before it.
-     */
-    public function latestGeneratedMonth(): ?YearMonth
-    {
-        return $this->generated->latest();
-    }
-
     public function planFor(YearMonth $month): RatePlan
     {
         try {

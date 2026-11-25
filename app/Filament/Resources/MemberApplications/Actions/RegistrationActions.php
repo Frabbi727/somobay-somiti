@@ -16,6 +16,7 @@ use App\Domain\Members\Services\ShareChanger;
 use App\Domain\Shared\Exceptions\DomainRuleViolation;
 use App\Filament\Concerns\ConfirmsWithTier;
 use App\Filament\Resources\Members\MemberResource;
+use App\Filament\Resources\Members\Support\LateEntryPreview;
 use App\Filament\Support\Display;
 use App\Filament\Support\DomainActionRunner;
 use App\Models\User;
@@ -240,7 +241,8 @@ final class RegistrationActions
     }
 
     /**
-     * "Registration fee due: ৳ 300.00" for the shares and month chosen on the final approval.
+     * "Registration fee due: ৳ 300.00" for the shares and month chosen on the final approval, plus
+     * the already-billed months a late-entered member will owe.
      */
     public static function feeSummary(mixed $shares, mixed $from): string
     {
@@ -252,15 +254,11 @@ final class RegistrationActions
 
         try {
             $month = YearMonth::parse($from);
-            $generated = app(ShareChanger::class)->latestGeneratedMonth();
-
-            if ($generated !== null && $month->isSameOrBefore($generated)) {
-                return __('members.errors.month_generated', ['month' => (string) $month, 'latest' => (string) $generated]);
-            }
+            app(ShareChanger::class)->assertJoinMonthAllowed($month);
 
             $fee = app(ShareChanger::class)->planFor($month)->registration_fee_per_share_poisha->multipliedByInt($count);
 
-            return __('members.actions.registration_fee_summary', ['amount' => Display::money($fee)]);
+            return trim(__('members.actions.registration_fee_summary', ['amount' => Display::money($fee)]).' '.LateEntryPreview::summary($count, $from));
         } catch (DomainRuleViolation $violation) {
             return $violation->getMessage();
         } catch (\Throwable $exception) {

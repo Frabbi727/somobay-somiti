@@ -5,7 +5,7 @@ declare(strict_types=1);
 return [
     'member' => [
         'dues_start_month' => 'Monthly dues start from',
-        'dues_start_month_help' => 'Usually the society\'s first month. Every month before the shares start is billed now, at that month\'s rate, with no late fines.',
+        'dues_start_month_help' => 'Only for a new person joining late who must also pay for months before they joined, plus the entry premium. Otherwise keep it the same as the joining month.',
         'singular' => 'Member',
         'plural' => 'Members',
         'member_no' => 'Member no.',
@@ -36,8 +36,8 @@ return [
         'joined_on' => 'Joined on',
         'shares' => 'Shares',
         'shares_now' => 'Shares now',
-        'effective_from' => 'Shares count from',
-        'effective_from_help' => 'The first month the shares count: monthly billing and dividends start here.',
+        'effective_from' => 'Joined the somiti in',
+        'effective_from_help' => 'The month this member really joined. If you are entering them later, still pick their real joining month; months already billed are added as normal dues.',
         'deactivation_reason' => 'Deactivation reason',
         'personal_section' => 'Personal details',
         'contact_section' => 'Contact',
@@ -154,6 +154,9 @@ return [
         'active' => 'In use',
         'add' => 'Add relation',
         'edit' => 'Edit relation',
+    ],
+    'late_entry' => [
+        'summary' => 'Already billed for :months: these will be added as normal dues of :total.',
     ],
     'back_dues' => [
         'heading' => 'Billed at joining',
