@@ -95,6 +95,12 @@ it('refuses a join month before go-live', function (): void {
     expect(lateEntryKey(fn () => lateEntry('2026-07')))->toBe('members.errors.join_before_go_live');
 });
 
+it('refuses a join month after the first open month', function (): void {
+    // Dues are generated up to December 2026, so January 2027 is the latest a member can join.
+    expect((string) lateEntry('2027-01')->shareLots()->sole()->effective_from)->toBe('2027-01')
+        ->and(lateEntryKey(fn () => onboard(1, '2027-11', ['mobile' => '01788888888'])))->toBe('members.errors.join_in_future');
+});
+
 it('refuses a join month in a closed fiscal year', function (): void {
     DB::table('fiscal_years')->where('id', $this->fiscalYear->id)->update(['status' => 'closed']);
 
